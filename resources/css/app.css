@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* CESSA brand palette, sourced from cessa.com.bo (color.min.css): primary #004c98, link/accent #2196f3, yellow #ffe71e */
+    --color-blue-50: #eef6fd;
+    --color-blue-100: #dceefc;
+    --color-blue-200: #b6ddf8;
+    --color-blue-300: #82c3f2;
+    --color-blue-400: #4ea8ec;
+    --color-blue-500: #2196f3;
+    --color-blue-600: #1c7cd6;
+    --color-blue-700: #17639f;
+    --color-blue-800: #0f4f95;
+    --color-blue-900: #004c98;
+    --color-blue-950: #00335f;
+
+    --color-amber-50: #fffceb;
+    --color-amber-100: #fff9c2;
+    --color-amber-200: #fff385;
+    --color-amber-300: #ffec4d;
+    --color-amber-400: #ffe71e;
+    --color-amber-500: #f5d800;
+    --color-amber-600: #d1b400;
+    --color-amber-700: #a68e00;
+    --color-amber-800: #7a6900;
+    --color-amber-900: #4d4300;
+}
