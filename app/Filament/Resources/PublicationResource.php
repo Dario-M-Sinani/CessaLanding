@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class PublicationResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Publication::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -75,8 +77,10 @@ class PublicationResource extends Resource
                     ->boolean(fn ($state) => $state === 'S'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de Creación')
-                    ->dateTime('d/m/Y H:i'),
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),

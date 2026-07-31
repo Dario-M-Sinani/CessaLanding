@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class CategoryResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';

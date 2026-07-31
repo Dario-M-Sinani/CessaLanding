@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class ScheduledOutageResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = ScheduledOutage::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-bolt-slash';

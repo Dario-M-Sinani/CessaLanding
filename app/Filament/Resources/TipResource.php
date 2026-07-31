@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class TipResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Tip::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-light-bulb';

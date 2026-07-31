@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 
 class ContentResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Content::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -70,6 +72,7 @@ class ContentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('category'))
             ->columns([
                 Tables\Columns\TextColumn::make('title')->label('Título')->searchable(),
                 Tables\Columns\TextColumn::make('alias')->label('Alias'),

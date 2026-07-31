@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 
 class BankResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Bank::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
@@ -68,7 +70,12 @@ class BankResource extends Resource
                 Tables\Columns\IconColumn::make('published')
                     ->label('Publicado')
                     ->boolean(fn ($state) => $state === 'S'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha de Creación')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),

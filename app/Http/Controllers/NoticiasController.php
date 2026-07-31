@@ -13,7 +13,8 @@ class NoticiasController extends Controller
     {
         $newsList = News::where('published', 'S')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Noticias/Index', [
             'newsList' => $newsList,

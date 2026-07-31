@@ -18,6 +18,29 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Administrador CESSA',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
+                'role' => User::ROLE_ADMIN,
+            ]
+        );
+
+        // Atención al Cliente: único rol con acceso a Solicitudes (fotos de C.I., factura, etc.)
+        User::updateOrCreate(
+            ['email' => 'atencion@cessa.com.bo'],
+            [
+                'name' => 'Atención al Cliente CESSA',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+                'role' => User::ROLE_CUSTOMER_SERVICE,
+            ]
+        );
+
+        // Sistemas: control absoluto -- único rol con acceso a Reportes y a gestión de Usuarios.
+        User::updateOrCreate(
+            ['email' => 'sistemas@cessa.com.bo'],
+            [
+                'name' => 'Sistemas CESSA',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+                'role' => User::ROLE_SYSTEM,
             ]
         );
 

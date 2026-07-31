@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\BuscarTramiteController;
+use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
 use App\Http\Controllers\ConsultaDeudaController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\EstructuraTarifariaController;
 use App\Http\Controllers\GaleriaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InformacionController;
@@ -15,6 +17,11 @@ use Illuminate\Support\Facades\Route;
 
 // Home Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Búsqueda del portal (header)
+Route::get('/buscar', [BusquedaController::class, 'index'])
+    ->middleware('throttle:30,1')
+    ->name('buscar');
 
 // La Compañía (Dropdown)
 Route::prefix('la-compania')->name('la-compania.')->group(function () {
@@ -32,17 +39,29 @@ Route::prefix('informacion')->name('informacion.')->group(function () {
     Route::get('/cortes-programados', [InformacionController::class, 'cortesProgramados'])->name('cortes-programados');
     Route::get('/documentos', [InformacionController::class, 'documentos'])->name('documentos');
     Route::get('/faqs', [InformacionController::class, 'faqs'])->name('faqs');
+    Route::get('/consejos-de-seguridad', [InformacionController::class, 'consejosSeguridad'])->name('consejos-de-seguridad');
 });
 
 // Servicios Virtuales (Dropdown)
 Route::get('/consulta-deuda', [ConsultaDeudaController::class, 'index'])->name('consulta-deuda');
+Route::post('/consulta-deuda', [ConsultaDeudaController::class, 'consultar'])
+    ->middleware('throttle:10,1')
+    ->name('consulta-deuda.consultar');
 Route::get('/calculadora', [CalculadoraConsumoController::class, 'index'])->name('calculadora');
-Route::post('/api/calculo-consumo', [CalculadoraConsumoController::class, 'calcular']);
+Route::post('/api/calculo-consumo', [CalculadoraConsumoController::class, 'calcular'])
+    ->middleware('throttle:20,1');
+Route::get('/importante/estructura-tarifaria', [EstructuraTarifariaController::class, 'index'])->name('estructura-tarifaria');
+Route::get('/api/estructura-tarifaria/{id}', [EstructuraTarifariaController::class, 'detalle'])
+    ->middleware('throttle:30,1')
+    ->name('estructura-tarifaria.detalle');
 Route::get('/nueva-conexion', [NuevaConexionController::class, 'index'])->name('nueva-conexion.index');
 Route::get('/suspension-servicio', [NuevaConexionController::class, 'suspension'])->name('suspension-servicio.index');
 Route::get('/otras-solicitudes', [NuevaConexionController::class, 'otras'])->name('otras-solicitudes.index');
 Route::post('/solicitudes', [NuevaConexionController::class, 'store'])->name('solicitudes.store');
 Route::get('/buscar-tramite', [BuscarTramiteController::class, 'index'])->name('buscar-tramite');
+Route::post('/buscar-tramite', [BuscarTramiteController::class, 'buscar'])
+    ->middleware('throttle:10,1')
+    ->name('buscar-tramite.buscar');
 
 // Noticias
 Route::get('/noticias', [NoticiasController::class, 'index'])->name('noticias.index');

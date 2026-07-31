@@ -22,7 +22,6 @@ class CessaApiService
     protected function client()
     {
         return Http::baseUrl($this->baseUrl)
-            ->withoutVerifying()
             ->withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => $this->authorizationToken,

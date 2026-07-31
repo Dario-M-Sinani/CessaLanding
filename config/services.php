@@ -44,4 +44,8 @@ return [
         'notify_email' => env('CONTACT_NOTIFICATION_EMAIL', 'cloudflare.dtic@cessa.com.bo'),
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

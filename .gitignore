@@ -19,6 +19,9 @@
 /public/hot
 /public/storage
 /storage/*.key
+# Fotos de C.I./factura/medidor subidas por el público en los formularios de trámites --
+# son datos personales reales de clientes, nunca deben ir al repo.
+/storage/app/public/requests/*
 /storage/pail
 /vendor
 _ide_helper.php

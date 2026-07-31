@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 
 class ImageResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Image::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';

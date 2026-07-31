@@ -10,6 +10,11 @@ class EditCessaRequest extends EditRecord
 {
     protected static string $resource = CessaRequestResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Editar Solicitud '.($this->record->formatted_code ?? '');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

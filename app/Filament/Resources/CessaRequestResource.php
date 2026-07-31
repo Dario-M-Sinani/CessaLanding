@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CessaRequestResource\Pages;
+use App\Http\Controllers\NuevaConexionController;
 use App\Models\CessaRequest;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -26,6 +27,17 @@ class CessaRequestResource extends Resource
 
     protected static ?int $navigationSort = 110;
 
+    public static function serviceTypeOptions(): array
+    {
+        return [
+            'NUEVO_SUMINISTRO' => 'Nueva Conexión',
+            'SUSPENSION_TEMPORAL' => 'Suspensión Temporal',
+            'SUSPENSION_DEFINITIVA' => 'Suspensión Definitiva',
+            'SUSPENSION_INSPECCION' => 'Suspensión con Inspección',
+            'OTRAS_SOLICITUDES' => 'Otras Solicitudes',
+        ];
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -34,12 +46,7 @@ class CessaRequestResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('service_type')
                             ->label('Tipo de Solicitud')
-                            ->options([
-                                'NUEVO_SUMINISTRO' => 'Nueva Conexión',
-                                'SUSPENSION_TEMPORAL' => 'Suspensión Temporal',
-                                'SUSPENSION_DEFINITIVA' => 'Suspensión Definitiva',
-                                'OTRAS_SOLICITUDES' => 'Otras Solicitudes',
-                            ])
+                            ->options(static::serviceTypeOptions())
                             ->native(false)
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('fullname')
@@ -83,6 +90,87 @@ class CessaRequestResource extends Resource
                             ->numeric(),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Detalles Técnicos de la Conexión')
+                    ->description('Datos capturados en el paso 2 del formulario público de Nueva Conexión.')
+                    ->visible(fn (?CessaRequest $record): bool => $record?->service_type === 'NUEVO_SUMINISTRO')
+                    ->schema([
+                        Forms\Components\Select::make('area')
+                            ->label('Área')
+                            ->options(['URBAN' => 'Urbana', 'RURAL' => 'Rural'])
+                            ->native(false),
+                        Forms\Components\Select::make('consumer_type')
+                            ->label('Categoría')
+                            ->options(['RESIDENTIAL' => 'Domiciliaria', 'GENERAL' => 'General / Comercial', 'INDUSTRIAL' => 'Industrial'])
+                            ->native(false),
+                        Forms\Components\Select::make('phase_type')
+                            ->label('Tipo de Servicio')
+                            ->options(['MONOPHASE' => 'Monofásico', 'TRIPHASIC' => 'Trifásico'])
+                            ->native(false),
+                    ])->columns(3),
+
+                Forms\Components\Section::make('Detalles de la Suspensión')
+                    ->description('Datos capturados en el paso 2 del formulario público de Suspensión de Servicio.')
+                    ->visible(fn (?CessaRequest $record): bool => str_starts_with((string) $record?->service_type, 'SUSPENSION'))
+                    ->schema([
+                        Forms\Components\TextInput::make('last_meter_reading')
+                            ->label('Valor Leído en el Medidor')
+                            ->disabled(),
+                    ]),
+
+                Forms\Components\Section::make('Detalles de Otras Solicitudes')
+                    ->description('Datos capturados en el paso 1 y 2 del formulario público de Otras Solicitudes.')
+                    ->visible(fn (?CessaRequest $record): bool => $record?->service_type === 'OTRAS_SOLICITUDES')
+                    ->schema([
+                        Forms\Components\Select::make('user_type')
+                            ->label('Tipo de Cliente')
+                            ->options(['POSSESSOR' => 'Poseedor', 'OWNER' => 'Titular'])
+                            ->native(false),
+                        Forms\Components\Select::make('request_type_id')
+                            ->label('Trámite Específico')
+                            ->options(NuevaConexionController::OTRAS_REQUEST_TYPE_IDS)
+                            ->native(false)
+                            ->columnSpanFull(),
+                        Forms\Components\Select::make('area')
+                            ->label('Área')
+                            ->options(['URBAN' => 'Urbana', 'RURAL' => 'Rural'])
+                            ->native(false),
+                        Forms\Components\Select::make('consumer_type')
+                            ->label('Categoría')
+                            ->options(['RESIDENTIAL' => 'Domiciliaria', 'GENERAL' => 'General / Comercial', 'INDUSTRIAL' => 'Industrial'])
+                            ->native(false),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Documentos Adjuntos')
+                    ->description('Solo lectura -- verificalos antes de aprobar o rechazar la solicitud.')
+                    ->schema([
+                        Forms\Components\FileUpload::make('url_document_front')
+                            ->label('C.I. - Anverso')
+                            ->disk('public')
+                            ->image()
+                            ->disabled()
+                            ->dehydrated(false),
+                        Forms\Components\FileUpload::make('url_document_back')
+                            ->label('C.I. - Reverso')
+                            ->disk('public')
+                            ->image()
+                            ->disabled()
+                            ->dehydrated(false),
+                        Forms\Components\FileUpload::make('url_invoice')
+                            ->label('Factura')
+                            ->disk('public')
+                            ->image()
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn (?CessaRequest $record): bool => str_starts_with((string) $record?->service_type, 'SUSPENSION') || $record?->service_type === 'OTRAS_SOLICITUDES'),
+                        Forms\Components\FileUpload::make('url_last_meter_reading')
+                            ->label('Foto del Medidor')
+                            ->disk('public')
+                            ->image()
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn (?CessaRequest $record): bool => str_starts_with((string) $record?->service_type, 'SUSPENSION')),
+                    ])->columns(2),
+
                 Forms\Components\Section::make('Estado y Observaciones')
                     ->schema([
                         Forms\Components\Select::make('status')
@@ -105,9 +193,15 @@ class CessaRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('formatted_code')
+                    ->label('Código')
+                    ->weight('bold')
+                    ->searchable(query: function ($query, string $search) {
+                        $numeric = ltrim(preg_replace('/\D/', '', $search), '0');
+
+                        return $query->when($numeric !== '', fn ($q) => $q->where('code_number', $numeric));
+                    })
+                    ->sortable(['code_number']),
                 Tables\Columns\TextColumn::make('fullname')
                     ->label('Solicitante')
                     ->searchable()
@@ -115,16 +209,10 @@ class CessaRequestResource extends Resource
                 Tables\Columns\TextColumn::make('service_type')
                     ->label('Tipo')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'NUEVO_SUMINISTRO' => 'Nueva Conexión',
-                        'SUSPENSION_TEMPORAL' => 'Suspensión Temporal',
-                        'SUSPENSION_DEFINITIVA' => 'Suspensión Definitiva',
-                        'OTRAS_SOLICITUDES' => 'Otras Solicitudes',
-                        default => $state ?? '—',
-                    })
+                    ->formatStateUsing(fn (?string $state): string => static::serviceTypeOptions()[$state] ?? ($state ?? '—'))
                     ->color(fn (?string $state): string => match ($state) {
                         'NUEVO_SUMINISTRO' => 'success',
-                        'SUSPENSION_TEMPORAL', 'SUSPENSION_DEFINITIVA' => 'danger',
+                        'SUSPENSION_TEMPORAL', 'SUSPENSION_DEFINITIVA', 'SUSPENSION_INSPECCION' => 'danger',
                         'OTRAS_SOLICITUDES' => 'info',
                         default => 'secondary',
                     }),
@@ -161,15 +249,13 @@ class CessaRequestResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('service_type')
                     ->label('Tipo de Solicitud')
-                    ->options([
-                        'NUEVO_SUMINISTRO' => 'Nueva Conexión',
-                        'SUSPENSION_TEMPORAL' => 'Suspensión Temporal',
-                        'SUSPENSION_DEFINITIVA' => 'Suspensión Definitiva',
-                        'OTRAS_SOLICITUDES' => 'Otras Solicitudes',
-                    ]),
+                    ->options(static::serviceTypeOptions()),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
+                Tables\Actions\EditAction::make()
+                    ->label('Editar'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -188,6 +274,7 @@ class CessaRequestResource extends Resource
         return [
             'index' => Pages\ListCessaRequests::route('/'),
             'create' => Pages\CreateCessaRequest::route('/create'),
+            'view' => Pages\ViewCessaRequest::route('/{record}'),
             'edit' => Pages\EditCessaRequest::route('/{record}/edit'),
         ];
     }

@@ -131,9 +131,6 @@
               <Link href="/informacion/faqs" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Preguntas Frecuentes
               </Link>
-              <Link href="/contenido/consejos-de-seguridad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Consejos de Seguridad
-              </Link>
               <Link href="/contenido/personal-autorizado-cessa" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Personal Autorizado
               </Link>
@@ -144,11 +141,56 @@
           </div>
         </div>
 
+        <!-- Dropdown 2bis: Consumidor -->
+        <div class="relative group" @mouseenter="openDropdown = 'consumidor'" @mouseleave="openDropdown = null">
+          <button
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-900 hover:bg-gray-50 flex items-center space-x-1 transition-all"
+            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': $page.url.startsWith('/informacion/consejos-de-seguridad') }"
+          >
+            <span>Consumidor</span>
+            <svg class="w-3.5 h-3.5 text-amber-500 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <div
+            v-show="openDropdown === 'consumidor'"
+            class="absolute top-full left-0 w-64 pt-1 shadow-xl z-50 transition-all duration-200"
+          >
+            <div class="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-2xl">
+              <Link href="/contenido/nuevas-instalaciones" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Nuevas Instalaciones
+              </Link>
+              <Link href="/contenido/descuentos-y-privilegios-para-personas-de-la-tercera-edad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Descuentos Tercera Edad
+              </Link>
+              <Link href="/contenido/otros-tramites-y-servicios" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Otros Trámites y Servicios
+              </Link>
+              <Link href="/contenido/procedimiento-para-reclamos" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Procedimiento para Reclamos
+              </Link>
+              <Link href="/contenido/derechos-y-obligaciones" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Derechos y Obligaciones
+              </Link>
+              <Link href="/contenido/generacion-distribuida" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Generación Distribuida
+              </Link>
+              <Link href="/informacion/consejos-de-seguridad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Consejos de Seguridad
+              </Link>
+              <Link href="/contenido/comunicados-aetn" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Comunicados AETN
+              </Link>
+            </div>
+          </div>
+        </div>
+
         <!-- Dropdown 3: Servicios -->
         <div class="relative group" @mouseenter="openDropdown = 'servicios'" @mouseleave="openDropdown = null">
           <button
             class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-900 hover:bg-gray-50 flex items-center space-x-1 transition-all"
-            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': ['/consulta-deuda', '/calculadora', '/nueva-conexion', '/suspension-servicio', '/otras-solicitudes', '/buscar-tramite'].includes($page.url) }"
+            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': ['/consulta-deuda', '/calculadora', '/nueva-conexion', '/suspension-servicio', '/otras-solicitudes', '/buscar-tramite', '/importante/estructura-tarifaria'].includes($page.url) }"
           >
             <span>Servicios</span>
             <svg class="w-3.5 h-3.5 text-amber-500 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,6 +209,9 @@
               <Link href="/calculadora" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Calculadora de Consumo
               </Link>
+              <Link href="/importante/estructura-tarifaria" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Estructura Tarifaria
+              </Link>
               <Link href="/nueva-conexion" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Nueva Conexión
               </Link>
@@ -178,9 +223,6 @@
               </Link>
               <Link href="/buscar-tramite" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Buscar Trámite
-              </Link>
-              <Link href="/contenido/generacion-distribuida" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Generación Distribuida
               </Link>
             </div>
           </div>
@@ -253,20 +295,31 @@
         <Link href="/informacion/cortes-programados" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Cortes Programados</Link>
         <Link href="/informacion/documentos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Documentos Institucionales</Link>
         <Link href="/informacion/faqs" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Preguntas Frecuentes</Link>
-        <Link href="/contenido/consejos-de-seguridad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Consejos de Seguridad</Link>
         <Link href="/contenido/personal-autorizado-cessa" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Personal Autorizado</Link>
         <Link href="/contenido/tramites-derechos-y-requisitos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Trámites, Derechos y Requisitos</Link>
+      </div>
+
+      <div class="space-y-1 border-t border-gray-100 pt-2">
+        <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Consumidor</span>
+        <Link href="/contenido/nuevas-instalaciones" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Nuevas Instalaciones</Link>
+        <Link href="/contenido/descuentos-y-privilegios-para-personas-de-la-tercera-edad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Descuentos Tercera Edad</Link>
+        <Link href="/contenido/otros-tramites-y-servicios" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Otros Trámites y Servicios</Link>
+        <Link href="/contenido/procedimiento-para-reclamos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Procedimiento para Reclamos</Link>
+        <Link href="/contenido/derechos-y-obligaciones" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Derechos y Obligaciones</Link>
+        <Link href="/contenido/generacion-distribuida" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Generación Distribuida</Link>
+        <Link href="/informacion/consejos-de-seguridad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Consejos de Seguridad</Link>
+        <Link href="/contenido/comunicados-aetn" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Comunicados AETN</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Servicios</span>
         <Link href="/consulta-deuda" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Consulta de Deuda</Link>
         <Link href="/calculadora" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Calculadora de Consumo</Link>
+        <Link href="/importante/estructura-tarifaria" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Estructura Tarifaria</Link>
         <Link href="/nueva-conexion" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Nueva Conexión</Link>
         <Link href="/suspension-servicio" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Suspensión Temporal o Definitiva</Link>
         <Link href="/otras-solicitudes" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Otras Solicitudes</Link>
         <Link href="/buscar-tramite" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Buscar Trámite</Link>
-        <Link href="/contenido/generacion-distribuida" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Generación Distribuida</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
@@ -299,7 +352,7 @@ const handleImageError = () => {
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
-    router.get('/buscar-tramite', { nro_solicitud: searchQuery.value.trim() });
+    router.get('/buscar', { q: searchQuery.value.trim() });
   }
 };
 </script>

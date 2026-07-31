@@ -12,9 +12,9 @@
           </p>
         </div>
 
-        <div v-if="newsList && newsList.length" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div v-if="newsList.data && newsList.data.length" class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Link
-            v-for="item in newsList"
+            v-for="item in newsList.data"
             :key="item.id"
             :href="`/noticias/${item.id}`"
             class="group p-6 bg-gray-50 border border-gray-200 hover:border-blue-900 rounded-2xl space-y-4 shadow-sm hover:shadow-md transition-all"
@@ -33,6 +33,20 @@
           <svg class="w-6 h-6 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.25 2A2.25 2.25 0 002 4.25v11.5A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.75V4.25A2.25 2.25 0 0015.75 2H4.25zM5 6.75A.75.75 0 015.75 6h4.5a.75.75 0 010 1.5h-4.5A.75.75 0 015 6.75zm0 3A.75.75 0 015.75 9h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 015 9.75zm0 3a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
           No hay publicaciones recientes registradas.
         </div>
+
+        <div v-if="newsList.links && newsList.links.length > 3" class="flex flex-wrap items-center justify-center gap-2 pt-4">
+          <Link
+            v-for="(link, idx) in newsList.links"
+            :key="idx"
+            :href="link.url || '#'"
+            v-html="link.label"
+            :class="[
+              'px-3.5 py-2 rounded-lg text-sm font-semibold transition-all',
+              link.active ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-100',
+              !link.url ? 'opacity-40 pointer-events-none' : '',
+            ]"
+          />
+        </div>
       </div>
     </div>
   </AppLayout>
@@ -44,6 +58,6 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 import { formatFechaPublicacion } from '../../utils/formatFecha';
 
 defineProps({
-  newsList: Array,
+  newsList: Object,
 });
 </script>

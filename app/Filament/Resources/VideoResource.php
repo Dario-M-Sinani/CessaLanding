@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class VideoResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Video::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-video-camera';

@@ -1,2 +1,16 @@
 *
 !.gitignore
+
+# Assets curados que sí queremos versionar (logos de bancos, imágenes de contenido
+# público bajadas del legacy). Quedan excluidos a propósito:
+# - "requests/": fotos reales de C.I./factura/medidor subidas por clientes.
+# - "institucional/": 768 MB de PDFs institucionales, algunos de +100 MB (el límite
+#   duro de GitHub) -- se suben/sincronizan aparte del repo, no por git.
+!bancos/
+!bancos/**
+!images_gen/
+!images_gen/**
+!comunicados_aetn/
+!comunicados_aetn/**
+!nuevas_instalaciones/
+!nuevas_instalaciones/**

@@ -10,80 +10,44 @@
           </span>
           <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-950">Estado de Cuenta y Avisos de Cobranza</h1>
           <p class="text-gray-600 text-sm max-w-xl mx-auto">
-            Verifica el estado de tus facturas ingresando tu número de abonado o tu número de cuenta.
+            Verifica el estado de tus facturas ingresando tu número de abonado y tu N° de Cuenta.
           </p>
         </div>
 
         <!-- Search Card -->
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
-
-          <!-- Mode Tabs -->
-          <div class="flex border-b border-gray-200 space-x-6">
-            <button
-              @click="searchMode = 'nro'"
-              :class="[
-                searchMode === 'nro'
-                  ? 'border-blue-900 text-blue-900 font-bold border-b-2'
-                  : 'text-gray-500 hover:text-gray-800',
-                'pb-3 text-sm transition-colors'
-              ]"
-            >
-              Por Número de Abonado
-            </button>
-            <button
-              @click="searchMode = 'ubicacion'"
-              :class="[
-                searchMode === 'ubicacion'
-                  ? 'border-blue-900 text-blue-900 font-bold border-b-2'
-                  : 'text-gray-500 hover:text-gray-800',
-                'pb-3 text-sm transition-colors'
-              ]"
-            >
-              Por N° de Cuenta
-            </button>
-          </div>
-
-          <!-- Search Form 1: Nro Abonado -->
-          <form v-if="searchMode === 'nro'" @submit.prevent="submitSearch" class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1">
+          <form @submit.prevent="submitSearch" class="space-y-4">
+            <div>
               <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Número de Abonado</label>
               <input
                 v-model="form.nro_cliente"
                 type="text"
+                inputmode="numeric"
                 placeholder="Ejemplo: 123456"
                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm font-mono"
                 required
               />
             </div>
-            <div class="sm:self-end">
-              <button
-                type="submit"
-                :disabled="loading"
-                class="w-full sm:w-auto px-8 py-3 bg-amber-500 hover:bg-amber-400 text-blue-950 font-extrabold rounded-xl transition-all shadow-md text-sm disabled:opacity-50"
-              >
-                Consultar
-              </button>
-            </div>
-          </form>
 
-          <!-- Search Form 2: N° de Cuenta -->
-          <form v-else @submit.prevent="submitSearch" class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1">
+            <div>
               <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">N° de Cuenta</label>
               <input
                 :value="form.nro_cuenta"
                 @input="onNroCuentaInput"
                 type="text"
                 inputmode="numeric"
-                placeholder="Ejemplo: 05-059-07421"
+                placeholder="Ejemplo: 00-000-00000"
                 maxlength="12"
-                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm font-mono"
                 required
+                class="w-full sm:w-72 px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm font-mono"
               />
               <p v-if="formatError" class="text-[11px] text-red-600 mt-1.5">{{ formatError }}</p>
-              <p v-else class="text-[11px] text-gray-500 mt-1.5">Formato Zona-Manzano-Correlativo, tal como aparece en tu factura.</p>
+              <p v-else class="text-[11px] text-gray-500 mt-1.5">
+                Formato Zona-Manzano-Correlativo, tal como aparece en la parte superior de tu factura.
+              </p>
             </div>
-            <div class="sm:self-end">
+
+            <div>
               <button
                 type="submit"
                 :disabled="loading"
@@ -93,7 +57,6 @@
               </button>
             </div>
           </form>
-
         </div>
 
         <!-- Error Alert -->
@@ -182,7 +145,6 @@ const props = defineProps({
   error: String,
 });
 
-const searchMode = ref('nro');
 const loading = ref(false);
 
 const camposUbicacion = props.filters?.zona && props.filters?.manzano && props.filters?.correlativo
@@ -214,21 +176,18 @@ const mesLiteral = (mes) => MESES[parseInt(mes, 10) - 1] ?? mes;
 const submitSearch = () => {
   formatError.value = '';
 
-  let params;
-  if (searchMode.value === 'nro') {
-    params = { nro_cliente: form.nro_cliente };
-  } else {
-    const partes = form.nro_cuenta.split('-').map((p) => p.trim()).filter(Boolean);
-    if (partes.length !== 3) {
-      formatError.value = 'El N° de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
-      return;
-    }
-    const [zona, manzano, correlativo] = partes;
-    params = { zona, manzano, correlativo };
+  const partes = form.nro_cuenta.split('-').map((p) => p.trim()).filter(Boolean);
+  if (partes.length !== 3) {
+    formatError.value = 'El N° de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
+    return;
   }
+  const [zona, manzano, correlativo] = partes;
+  const params = { nro_cliente: form.nro_cliente, zona, manzano, correlativo };
 
   loading.value = true;
-  router.get('/consulta-deuda', params, {
+  router.post('/consulta-deuda', params, {
+    preserveState: true,
+    preserveScroll: true,
     onFinish: () => loading.value = false,
   });
 };

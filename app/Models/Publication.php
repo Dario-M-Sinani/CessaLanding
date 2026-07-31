@@ -19,6 +19,8 @@ class Publication extends Model
         'published',
         'created_by',
         'modified_by',
+        'created_by_user_id',
+        'updated_by_user_id',
     ];
 
     protected $casts = [
@@ -28,6 +30,16 @@ class Publication extends Model
     public function documents()
     {
         return $this->hasMany(Document::class, 'publication_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function editor()
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id');
     }
 
     public static function getTypes(): array

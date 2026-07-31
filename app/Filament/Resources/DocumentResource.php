@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 
 class DocumentResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = Document::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-folder-arrow-down';

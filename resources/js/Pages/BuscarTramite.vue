@@ -23,18 +23,21 @@
                 v-model="form.nro_solicitud"
                 type="text"
                 placeholder="Ej. 1025"
+                required
                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 text-sm focus:border-blue-900 focus:outline-none font-mono"
               />
             </div>
 
             <div class="sm:col-span-5">
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">O Documento de Identidad (CI/NIT)</label>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Documento de Identidad (CI/NIT) del titular</label>
               <input
                 v-model="form.nro_documento"
                 type="text"
                 placeholder="Ej. 6543210 CB"
+                required
                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 text-sm focus:border-blue-900 focus:outline-none font-mono"
               />
+              <p class="text-[11px] text-gray-500 mt-1.5">Se piden ambos datos para proteger la privacidad de tu trámite.</p>
             </div>
 
             <div class="sm:col-span-2 sm:self-end">
@@ -136,9 +139,12 @@ const form = reactive({
 });
 
 const search = () => {
-  router.get('/buscar-tramite', {
+  router.post('/buscar-tramite', {
     nro_solicitud: form.nro_solicitud,
     nro_documento: form.nro_documento,
+  }, {
+    preserveState: true,
+    preserveScroll: true,
   });
 };
 </script>

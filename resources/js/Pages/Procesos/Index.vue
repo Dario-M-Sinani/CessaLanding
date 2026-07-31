@@ -12,8 +12,8 @@
           </p>
         </div>
 
-        <div v-if="publications && publications.length" class="space-y-6">
-          <div v-for="pub in publications" :key="pub.id" class="p-6 sm:p-8 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-sm">
+        <div v-if="publications.data && publications.data.length" class="space-y-6">
+          <div v-for="pub in publications.data" :key="pub.id" class="p-6 sm:p-8 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-sm">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-gray-200 pb-4">
               <span class="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-[11px] font-bold uppercase tracking-wider inline-block w-fit">
                 {{ typeLabels[pub.type] ?? pub.type }}
@@ -47,16 +47,31 @@
             No hay procesos de licitación abiertos en este momento. Las convocatorias públicas se publican en cumplimiento de la normativa vigente.
           </div>
         </div>
+
+        <div v-if="publications.links && publications.links.length > 3" class="flex flex-wrap items-center justify-center gap-2 pt-4">
+          <Link
+            v-for="(link, idx) in publications.links"
+            :key="idx"
+            :href="link.url || '#'"
+            v-html="link.label"
+            :class="[
+              'px-3.5 py-2 rounded-lg text-sm font-semibold transition-all',
+              link.active ? 'bg-blue-900 text-white' : 'text-gray-700 hover:bg-gray-100',
+              !link.url ? 'opacity-40 pointer-events-none' : '',
+            ]"
+          />
+        </div>
       </div>
     </div>
   </AppLayout>
 </template>
 
 <script setup>
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 defineProps({
-  publications: Array,
+  publications: Object,
   typeLabels: Object,
 });
 

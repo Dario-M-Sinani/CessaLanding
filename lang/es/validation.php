@@ -77,6 +77,7 @@ return [
     'starts_with' => 'El campo :attribute debe comenzar con uno de los siguientes valores: :values.',
     'string' => 'El campo :attribute debe ser una cadena de texto.',
     'unique' => 'El :attribute ya ha sido registrado.',
+    'uploaded' => 'El archivo de :attribute no se pudo subir (puede ser demasiado grande para el servidor).',
     'url' => 'El formato del campo :attribute no es válido.',
     'uuid' => 'El campo :attribute debe ser un UUID válido.',
 

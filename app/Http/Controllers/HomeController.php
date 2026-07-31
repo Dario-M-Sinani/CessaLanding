@@ -42,6 +42,7 @@ class HomeController extends Controller
             'consejos' => $consejos,
             'video' => $video,
             'popupNews' => $popupNews,
+            'googleMapsApiKey' => config('services.google_maps.key'),
         ]);
     }
 }

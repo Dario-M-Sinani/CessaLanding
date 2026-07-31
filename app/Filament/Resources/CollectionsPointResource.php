@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 
 class CollectionsPointResource extends Resource
 {
+    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
+
     protected static ?string $model = CollectionsPoint::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
@@ -71,6 +73,7 @@ class CollectionsPointResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('bank'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Nombre')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('address')->label('Dirección')->limit(30),
@@ -80,7 +83,12 @@ class CollectionsPointResource extends Resource
                 Tables\Columns\IconColumn::make('published')
                     ->label('Publicado')
                     ->boolean(fn ($state) => $state === 'S'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha de Creación')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('bank_id')
                     ->label('Banco')

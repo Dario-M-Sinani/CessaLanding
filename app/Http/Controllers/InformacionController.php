@@ -15,21 +15,27 @@ class InformacionController extends Controller
     {
         $outages = ScheduledOutage::where('published', 'S')
             ->orderBy('execution_date', 'desc')
-            ->get();
+            ->paginate(6)
+            ->withQueryString();
 
         return Inertia::render('Informacion/CortesProgramados', [
             'outages' => $outages,
         ]);
     }
 
-    public function documentos(): Response
+    public function documentos(Request $request): Response
     {
+        $search = $request->string('q')->trim()->toString();
+
         $documents = Document::where('published', 'S')
+            ->when($search !== '', fn ($query) => $query->where('title', 'like', '%'.$search.'%'))
             ->orderBy('position', 'asc')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Informacion/Documentos', [
             'documents' => $documents,
+            'filters' => ['q' => $search],
         ]);
     }
 
@@ -42,5 +48,10 @@ class InformacionController extends Controller
         return Inertia::render('Informacion/Faqs', [
             'faqs' => $faqs,
         ]);
+    }
+
+    public function consejosSeguridad(): Response
+    {
+        return Inertia::render('Informacion/ConsejosSeguridad');
     }
 }

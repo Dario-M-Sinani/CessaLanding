@@ -60,7 +60,7 @@
           <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Ahora puede solicitar servicios desde nuestro sitio web
           </h2>
-          <p class="text-blue-200 text-sm">
+          <p class="text-blue-200 text-base">
             Gestiona tus trámites de conexión, suspensión y otras solicitudes sin necesidad de acercarte a nuestras oficinas.
           </p>
         </div>
@@ -77,7 +77,7 @@
             </div>
             <div class="space-y-2 grow">
               <h3 class="text-lg font-bold text-blue-950">Nueva Conexión</h3>
-              <p class="text-gray-600 text-xs leading-relaxed">Registre una nueva solicitud de servicio eléctrico para su inmueble.</p>
+              <p class="text-gray-600 text-sm leading-relaxed">Registre una nueva solicitud de servicio eléctrico para su inmueble.</p>
             </div>
             <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-blue-900">
               <span>Saber más</span>
@@ -95,7 +95,7 @@
             </div>
             <div class="space-y-2 grow">
               <h3 class="text-lg font-bold text-blue-950">Suspensión Temporal o Definitiva</h3>
-              <p class="text-gray-600 text-xs leading-relaxed">Solicite la suspensión temporal o definitiva de su servicio eléctrico.</p>
+              <p class="text-gray-600 text-sm leading-relaxed">Solicite la suspensión temporal o definitiva de su servicio eléctrico.</p>
             </div>
             <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-blue-900">
               <span>Saber más</span>
@@ -113,7 +113,7 @@
             </div>
             <div class="space-y-2 grow">
               <h3 class="text-lg font-bold text-blue-950">Otras Solicitudes</h3>
-              <p class="text-gray-600 text-xs leading-relaxed">Registre otros tipos de solicitudes o trámites relacionados a su servicio.</p>
+              <p class="text-gray-600 text-sm leading-relaxed">Registre otros tipos de solicitudes o trámites relacionados a su servicio.</p>
             </div>
             <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-blue-900">
               <span>Saber más</span>
@@ -131,7 +131,7 @@
 
         <div class="text-center space-y-3">
           <h2 class="text-3xl font-extrabold text-blue-950 tracking-tight">Servicios Virtuales Disponibles</h2>
-          <p class="text-gray-600 text-sm max-w-xl mx-auto">
+          <p class="text-gray-600 text-base max-w-xl mx-auto">
             Accede a todas las operaciones comerciales directamente desde tu dispositivo.
           </p>
         </div>
@@ -148,7 +148,7 @@
               <h3 class="text-xl font-bold text-blue-950 group-hover:text-blue-700 transition-colors">
                 Consulta de Avisos y Deuda
               </h3>
-              <p class="text-gray-600 text-xs leading-relaxed">
+              <p class="text-gray-600 text-sm leading-relaxed">
                 Ingresa tu código de cliente o ubicación de medidor para revisar tus facturas emitidas, fechas de vencimiento y monto total.
               </p>
             </div>
@@ -169,7 +169,7 @@
               <h3 class="text-xl font-bold text-blue-950 group-hover:text-blue-700 transition-colors">
                 Calculadora de Consumo
               </h3>
-              <p class="text-gray-600 text-xs leading-relaxed">
+              <p class="text-gray-600 text-sm leading-relaxed">
                 Estima el costo proyectado de tu aviso mensual ingresando los kilovatios-hora consumidos en tu hogar o negocio.
               </p>
             </div>
@@ -209,10 +209,10 @@
                 {{ formatHora(outage.start_time) }} - {{ formatHora(outage.finish_time) }}
               </span>
             </div>
-            <p class="p-5 text-xs text-gray-600 leading-relaxed line-clamp-3">{{ outage.location }}</p>
+            <p class="p-5 text-sm text-gray-600 leading-relaxed line-clamp-3">{{ outage.location }}</p>
           </div>
         </div>
-        <div v-else class="p-8 bg-white border border-gray-200 rounded-2xl text-center text-sm text-emerald-800 font-semibold flex items-center justify-center gap-2">
+        <div v-else class="p-8 bg-white border border-gray-200 rounded-2xl text-center text-base text-emerald-800 font-semibold flex items-center justify-center gap-2">
           <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
           No hay cortes programados en los próximos días.
         </div>
@@ -249,7 +249,7 @@
             class="group p-6 bg-gray-50 border border-gray-200 hover:border-blue-900 rounded-2xl text-center space-y-3 transition-all"
           >
             <svg class="w-8 h-8 mx-auto text-blue-900" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4zm0 2h7v3a2 2 0 002 2h3v9H4V4zm9 .5L15.5 7H13V4.5z" clip-rule="evenodd" /></svg>
-            <span class="text-xs font-bold text-blue-950 block leading-snug">{{ doc.title }}</span>
+            <span class="text-sm font-bold text-blue-950 block leading-snug">{{ doc.title }}</span>
             <span class="text-[11px] font-bold text-blue-700 group-hover:text-blue-900">VER →</span>
           </Link>
         </div>
@@ -268,7 +268,7 @@
           <h2 class="text-2xl font-extrabold text-white tracking-tight">Consejos Importantes</h2>
           <div v-if="consejos" class="space-y-3">
             <h3 class="text-lg font-bold text-amber-400">{{ consejos.title }}</h3>
-            <p class="text-gray-300 text-sm leading-relaxed line-clamp-5">{{ consejos.summary }}</p>
+            <p class="text-gray-300 text-base leading-relaxed line-clamp-5">{{ consejos.summary }}</p>
             <Link :href="`/contenido/${consejos.alias ?? 'consejos-de-seguridad'}`" class="inline-block text-xs font-bold text-amber-400 hover:text-amber-300">
               Leer consejos completos →
             </Link>
@@ -294,12 +294,12 @@
     <!-- Mapa de Ubicación -->
     <section class="relative">
       <div class="relative h-[420px] w-full">
-        <iframe
-          src="https://www.google.com/maps?q=-19.046007,-65.262855&z=16&output=embed"
-          class="w-full h-full border-0"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-        ></iframe>
+        <StaticLocationMap
+          :lat="-19.046007"
+          :lng="-65.262855"
+          :zoom="16"
+          :google-maps-api-key="googleMapsApiKey"
+        />
 
         <div class="absolute top-6 left-6 max-w-xs p-5 bg-white rounded-2xl shadow-2xl border border-gray-200 space-y-2">
           <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Oficina Central</span>
@@ -325,6 +325,7 @@ import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '../Layouts/AppLayout.vue';
 import PopupNews from '../Components/PopupNews.vue';
+import StaticLocationMap from '../Components/StaticLocationMap.vue';
 import { formatFechaLarga, formatHora } from '../utils/formatFecha';
 
 defineProps({
@@ -333,6 +334,7 @@ defineProps({
   consejos: Object,
   video: Object,
   popupNews: Object,
+  googleMapsApiKey: { type: String, default: '' },
 });
 
 const nroCliente = ref('');

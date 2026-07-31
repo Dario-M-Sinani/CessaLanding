@@ -14,7 +14,8 @@ class ProcesosController extends Controller
         $publications = Publication::where('published', 'S')
             ->with('documents')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         return Inertia::render('Procesos/Index', [
             'publications' => $publications,

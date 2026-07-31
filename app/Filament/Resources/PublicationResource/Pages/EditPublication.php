@@ -16,4 +16,11 @@ class EditPublication extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['updated_by_user_id'] = auth()->id();
+
+        return $data;
+    }
 }
