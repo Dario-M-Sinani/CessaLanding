@@ -9,9 +9,16 @@ use Inertia\Response;
 
 class ProcesosController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $groups = Publication::getGroups();
+        $activeGroup = $request->string('group')->toString();
+        if (!isset($groups[$activeGroup])) {
+            $activeGroup = '';
+        }
+
         $publications = Publication::where('published', 'S')
+            ->when($activeGroup !== '', fn ($query) => $query->whereIn('type', $groups[$activeGroup]))
             ->with('documents')
             ->orderBy('created_at', 'desc')
             ->paginate(12)
@@ -20,6 +27,9 @@ class ProcesosController extends Controller
         return Inertia::render('Procesos/Index', [
             'publications' => $publications,
             'typeLabels' => Publication::getTypes(),
+            'groupLabels' => Publication::getGroupLabels(),
+            'groupCounts' => Publication::countsByGroup(),
+            'activeGroup' => $activeGroup,
         ]);
     }
 }

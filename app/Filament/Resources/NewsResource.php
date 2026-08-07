@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\NewsResource\Pages;
+use App\Filament\Support\FileManagerAction;
 use App\Models\News;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,8 +13,6 @@ use Filament\Tables\Table;
 
 class NewsResource extends Resource
 {
-    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
-
     protected static ?string $model = News::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-newspaper';
@@ -50,6 +49,16 @@ class NewsResource extends Resource
                     ->helperText('Se usa como cabecera del comunicado pop-up en el inicio. Opcional: si no se sube, el pop-up se muestra solo con texto.')
                     ->directory('noticias')
                     ->image()
+                    ->hintAction(FileManagerAction::make('image_url', 'noticias', 'path'))
+                    ->columnSpanFull(),
+                Forms\Components\FileUpload::make('images')
+                    ->label('Galería de Imágenes (opcional)')
+                    ->helperText('Imágenes adicionales que se muestran en la página completa de la noticia, además de la imagen de cabecera.')
+                    ->directory('noticias')
+                    ->image()
+                    ->multiple()
+                    ->reorderable()
+                    ->hintAction(FileManagerAction::make('images', 'noticias', 'path', multiple: true))
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('tags')
                     ->label('Etiquetas (ej. CESSA, Redes, Sucre)')
@@ -72,7 +81,12 @@ class NewsResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\ImageColumn::make('image_url')->label('Imagen')->square(),
+                Tables\Columns\ImageColumn::make('image_url')
+                    ->label('Imagen')
+                    ->square()
+                    // ver FileManagerAction::resolveUrl() -- ImageColumn no reconoce como
+                    // URL válida el formato en que este campo puede tener guardada la ruta.
+                    ->getStateUsing(fn ($record) => FileManagerAction::resolveUrl($record->image_url)),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Título')
                     ->searchable()

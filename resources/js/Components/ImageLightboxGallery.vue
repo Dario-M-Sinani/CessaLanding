@@ -1,18 +1,18 @@
 <template>
   <div>
-    <div v-if="images.data && images.data.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <div v-if="images.data && images.data.length" class="columns-2 sm:columns-3 md:columns-4 gap-4">
       <button
         v-for="(image, index) in images.data"
         :key="image.id"
         type="button"
-        class="group block aspect-square bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+        class="group block w-full mb-4 break-inside-avoid bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm"
         @click="open(index)"
       >
         <img
           :src="image.url"
           :alt="image.title"
           loading="lazy"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          class="w-full h-auto block group-hover:scale-105 transition-transform duration-300"
         />
       </button>
     </div>

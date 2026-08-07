@@ -12,6 +12,27 @@
           </p>
         </div>
 
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href="/procesos"
+            preserve-scroll
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+            :class="!activeGroup ? 'bg-blue-900 text-white' : 'bg-gray-50 border border-gray-200 text-gray-700 hover:border-blue-900'"
+          >
+            Todos
+          </Link>
+          <Link
+            v-for="(label, key) in groupLabels"
+            :key="key"
+            :href="`/procesos?group=${key}`"
+            preserve-scroll
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+            :class="activeGroup === key ? 'bg-blue-900 text-white' : 'bg-gray-50 border border-gray-200 text-gray-700 hover:border-blue-900'"
+          >
+            {{ label }} <span class="opacity-70">({{ groupCounts[key] ?? 0 }})</span>
+          </Link>
+        </div>
+
         <div v-if="publications.data && publications.data.length" class="space-y-6">
           <div v-for="pub in publications.data" :key="pub.id" class="p-6 sm:p-8 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-sm">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-gray-200 pb-4">
@@ -73,6 +94,9 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 defineProps({
   publications: Object,
   typeLabels: Object,
+  groupLabels: Object,
+  groupCounts: Object,
+  activeGroup: String,
 });
 
 const docUrl = (url) => (url?.startsWith('http') ? url : `/storage/${url}`);

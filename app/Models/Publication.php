@@ -52,4 +52,34 @@ class Publication extends Model
             'OTHERS' => 'Otros',
         ];
     }
+
+    // Agrupación pública de los tipos de proceso, usada en Inicio y en el filtro
+    // de /procesos. Convocatoria y Remate de Activos se muestran juntos como
+    // "Convocatorias y Pujas" porque para el usuario final son la misma idea.
+    public static function getGroups(): array
+    {
+        return [
+            'invitaciones' => ['INVITATION'],
+            'licitaciones' => ['BIDDING'],
+            'convocatorias_pujas' => ['ANNOUNCEMENT', 'ASSETS_SALES'],
+            'documentos' => ['OTHERS'],
+        ];
+    }
+
+    public static function getGroupLabels(): array
+    {
+        return [
+            'invitaciones' => 'Invitaciones',
+            'licitaciones' => 'Licitaciones',
+            'convocatorias_pujas' => 'Convocatorias y Pujas',
+            'documentos' => 'Documentos',
+        ];
+    }
+
+    public static function countsByGroup(): array
+    {
+        return collect(self::getGroups())
+            ->map(fn (array $types) => self::where('published', 'S')->whereIn('type', $types)->count())
+            ->all();
+    }
 }

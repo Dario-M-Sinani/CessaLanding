@@ -47,7 +47,7 @@
               </p>
             </div>
 
-            <div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
               <button
                 type="submit"
                 :disabled="loading"
@@ -55,8 +55,29 @@
               >
                 Consultar
               </button>
+
+              <button
+                type="button"
+                @click="mostrarAyuda = !mostrarAyuda"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2 text-blue-900 font-bold text-xs uppercase tracking-wider hover:underline"
+              >
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                ¿Dónde encuentro estos datos?
+              </button>
             </div>
           </form>
+
+          <!-- Help Panel -->
+          <div v-if="mostrarAyuda" class="p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+            <p class="text-sm text-blue-950">
+              Encuentras tu <span class="font-bold">N° de Cliente</span> y tu <span class="font-bold">N° de Cuenta</span> en la parte superior de tu factura o aviso de cobro, como se muestra a continuación:
+            </p>
+            <img
+              src="/img/ayuda/consulta-deuda.png"
+              alt="Ejemplo de factura CESSA señalando la ubicación del número de cliente y del número de cuenta"
+              class="w-full max-w-xl mx-auto rounded-lg border border-blue-200 shadow-sm"
+            />
+          </div>
         </div>
 
         <!-- Error Alert -->
@@ -146,6 +167,7 @@ const props = defineProps({
 });
 
 const loading = ref(false);
+const mostrarAyuda = ref(false);
 
 const camposUbicacion = props.filters?.zona && props.filters?.manzano && props.filters?.correlativo
   ? `${props.filters.zona}-${props.filters.manzano}-${props.filters.correlativo}`

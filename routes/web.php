@@ -73,7 +73,10 @@ Route::get('/procesos', [ProcesosController::class, 'index'])->name('procesos.in
 // Galería
 Route::get('/galeria', [GaleriaController::class, 'index'])->name('galeria.index');
 Route::get('/galeria/imagenes', [GaleriaController::class, 'imagenes'])->name('galeria.imagenes');
-Route::get('/galeria/trabajadores', [GaleriaController::class, 'trabajadores'])->name('galeria.trabajadores');
 
 // Páginas institucionales genéricas (migradas de la CMS legacy)
 Route::get('/contenido/{alias}', [ContentController::class, 'show'])->name('contenido.show');
+
+// Imagen de Códigos QR (panel admin) -- requiere sesión, la usa el recurso de Filament
+Route::get('/rcadmin/qr-codes/{qrCode}/image', [\App\Http\Controllers\QrCodeImageController::class, 'show'])
+    ->name('qr-codes.image');

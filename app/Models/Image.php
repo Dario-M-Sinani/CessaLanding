@@ -17,7 +17,14 @@ class Image extends Model
         'url',
         'position',
         'published',
+        'home_carousel',
+        'home_carousel_mobile',
         'created_by',
         'modified_by',
+    ];
+
+    protected $casts = [
+        'home_carousel' => 'boolean',
+        'home_carousel_mobile' => 'boolean',
     ];
 }

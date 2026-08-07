@@ -38,7 +38,7 @@
         @foreach ($this->files() as $file)
             <button
                 type="button"
-                onclick="window.dispatchEvent(new CustomEvent('archivo-seleccionado', { detail: { url: '{{ $file['url'] }}' } }))"
+                onclick="window.dispatchEvent(new CustomEvent('archivo-seleccionado', { detail: { url: '{{ $file['url'] }}', path: '{{ $file['path'] }}' } }))"
                 class="p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 flex flex-col items-center gap-1.5 hover:border-primary-500 transition-colors"
             >
                 @if (in_array($file['ext'], ['jpg', 'jpeg', 'png', 'gif', 'webp']))

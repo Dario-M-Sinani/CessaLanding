@@ -1,11 +1,27 @@
 <template>
-  <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-    
+  <header
+    :class="[
+      isHomePage ? 'fixed top-0 left-0 right-0' : 'sticky top-0',
+      'z-50 border-b transition-all duration-700',
+      transparentActive ? 'border-transparent shadow-none nav-transparent' : 'bg-white border-gray-200 shadow-sm',
+    ]"
+    @mouseenter="onHeaderEnter"
+    @mouseleave="onHeaderLeave"
+  >
+
+    <!-- Wrapper medido por el ResizeObserver para --nav-height: solo la barra superior +
+         la barra de nav, sin el drawer mobile (si el drawer entrara en esta medición, abrirlo
+         hace crecer el alto medido, lo que reduce el max-height del propio drawer -- ver bug
+         corregido en §3.18bis del continuity doc). -->
+    <div ref="navContentRef">
     <!-- Top Header Bar -->
-    <div class="bg-blue-900 border-b border-blue-950 py-2 px-4 sm:px-6 lg:px-8 text-xs text-white">
-      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div
+      :class="transparentActive ? 'bg-transparent border-transparent' : 'bg-blue-900 border-b border-blue-950'"
+      class="py-1.5 sm:py-2 px-4 sm:px-6 lg:px-8 text-xs text-white transition-all duration-700"
+    >
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
         <div class="flex items-center space-x-4">
-          <span class="flex items-center space-x-1 text-amber-400 font-bold">
+          <span class="flex items-baseline space-x-1 text-amber-400 font-bold">
             <span>Emergencias 24/7:</span>
             <span class="text-white font-mono">176 - 46214500</span>
           </span>
@@ -13,9 +29,40 @@
           <span class="hidden md:inline text-blue-100">Atención al Cliente: (591-4) 64-51200</span>
         </div>
 
-        <div class="flex items-center space-x-3">
-          <!-- Header Search Box -->
-          <div class="relative">
+        <!-- Header Search Box -->
+        <div class="relative flex items-center">
+          <!-- Mobile: solo ícono de lupa, el input se despliega al tocar (se ve más limpio,
+               sobre todo con el header transparente -- menos elementos "flotando"). -->
+          <button
+            v-if="!mobileSearchOpen"
+            type="button"
+            @click="mobileSearchOpen = true"
+            class="sm:hidden w-7 h-7 flex items-center justify-center text-blue-200 hover:text-amber-400 transition-colors"
+            aria-label="Buscar"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+          </button>
+
+          <div v-if="mobileSearchOpen" class="sm:hidden flex items-center gap-1">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar..."
+              autofocus
+              class="w-32 px-3 py-1 bg-blue-950 border border-blue-800 rounded-full text-white text-[11px] placeholder-blue-300 focus:outline-none focus:border-amber-400"
+              @keyup.enter="handleSearch"
+              @keyup.escape="mobileSearchOpen = false"
+            />
+            <button @click="handleSearch" type="button" aria-label="Buscar" class="text-blue-300 hover:text-amber-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+            </button>
+            <button @click="mobileSearchOpen = false" type="button" aria-label="Cerrar búsqueda" class="text-blue-300 hover:text-white">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <!-- Desktop / tablet: input completo con el texto "Buscar", siempre visible -->
+          <div class="relative hidden sm:block">
             <input
               v-model="searchQuery"
               type="text"
@@ -32,16 +79,29 @@
     </div>
 
     <!-- Main Navigation Bar -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between">
+
       <!-- Brand Logo -->
+      <!-- Dos versiones superpuestas con cruce suave: la de texto negro (normal, sobre fondo
+           blanco del nav) y la de texto blanco (cuando el nav está transparente sobre la foto
+           del hero -- "CESSA" negro ahí sería casi ilegible). -->
       <Link href="/" class="flex items-center space-x-3 group">
-        <img
-          src="/img/cessa_logo.jpg"
-          alt="CESSA Logo"
-          class="h-16 w-auto object-contain"
-          @error="handleImageError"
-        />
+        <div class="relative h-10 sm:h-12 lg:h-16">
+          <img
+            src="/img/Logo_CESSA_240x240.png"
+            alt="CESSA Logo"
+            class="h-full w-auto object-contain transition-opacity duration-700"
+            :class="transparentActive ? 'opacity-0' : 'opacity-100'"
+            @error="handleImageError"
+          />
+          <img
+            src="/img/Logo_CESSA_240x240_white-text.png"
+            alt=""
+            aria-hidden="true"
+            class="absolute inset-0 h-full w-auto object-contain transition-opacity duration-700 pointer-events-none"
+            :class="transparentActive ? 'opacity-100' : 'opacity-0'"
+          />
+        </div>
         <div v-if="imageError" class="flex items-center space-x-2">
           <div class="w-10 h-10 rounded-xl bg-blue-900 flex items-center justify-center text-amber-400 font-black text-xl border-2 border-amber-400">
             C
@@ -257,9 +317,6 @@
               <Link href="/galeria/imagenes" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Galería de Fotos
               </Link>
-              <Link href="/galeria/trabajadores" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Galería de Trabajadores
-              </Link>
             </div>
           </div>
         </div>
@@ -277,9 +334,22 @@
         </svg>
       </button>
     </div>
+    </div>
 
     <!-- Mobile Drawer -->
-    <div v-if="mobileOpen" class="lg:hidden bg-white border-b border-gray-200 px-4 py-4 space-y-3">
+    <!-- Solo en el Home el header es fixed (queda fuera del flujo del documento), así que ahí
+         el drawer necesita su propio scroll interno acotado a la altura real de nav (si no, el
+         gesto de scroll se le escapa a la página de atrás). En el resto de las páginas el header
+         es sticky (sigue en el flujo normal), así que el drawer simplemente empuja el contenido
+         y la página entera scrollea -- no hace falta (ni conviene) recortarlo ahí. -->
+    <div
+      v-if="mobileOpen"
+      :class="[
+        'lg:hidden bg-white border-b border-gray-200 px-4 py-4 space-y-3',
+        isHomePage ? 'overflow-y-auto overscroll-contain' : '',
+      ]"
+      :style="isHomePage ? { maxHeight: 'calc(100vh - var(--nav-height, 120px))' } : null"
+    >
       <div class="space-y-1">
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">La Compañía</span>
         <Link href="/la-compania/quienes-somos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Quiénes Somos</Link>
@@ -326,7 +396,6 @@
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Galería</span>
         <Link href="/galeria" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Galería de Videos</Link>
         <Link href="/galeria/imagenes" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Galería de Fotos</Link>
-        <Link href="/galeria/trabajadores" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Galería de Trabajadores</Link>
       </div>
 
       <div class="border-t border-gray-100 pt-2 flex flex-col space-y-1">
@@ -338,11 +407,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 
 const openDropdown = ref(null);
 const mobileOpen = ref(false);
+const mobileSearchOpen = ref(false);
 const searchQuery = ref('');
 const imageError = ref(false);
 
@@ -355,4 +425,84 @@ const handleSearch = () => {
     router.get('/buscar', { q: searchQuery.value.trim() });
   }
 };
+
+// En la home, el nav flota transparente sobre el fondo del hero mientras el
+// usuario no lo esté usando -- así la imagen tiene todo el protagonismo.
+// Solo se vuelve opaco si el mouse pasa por encima del nav (hover) o si se
+// hace scroll (deja de estar "atTop"). Mover el mouse sobre el resto de la
+// página (la imagen) no lo revela.
+const page = usePage();
+const isHomePage = computed(() => page.url === '/');
+
+const navContentRef = ref(null);
+const atTop = ref(true);
+const isIdle = ref(false);
+const transparentActive = computed(() => isHomePage.value && atTop.value && isIdle.value);
+
+let idleTimer = null;
+let resizeObserver = null;
+
+const startIdleTimer = (delay = 2800) => {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    isIdle.value = true;
+  }, delay);
+};
+
+const onHeaderEnter = () => {
+  if (!isHomePage.value) return;
+  clearTimeout(idleTimer);
+  isIdle.value = false;
+};
+
+const onHeaderLeave = () => {
+  if (!isHomePage.value) return;
+  startIdleTimer(1200);
+};
+
+const updateAtTop = () => {
+  atTop.value = window.scrollY <= 10;
+};
+
+onMounted(() => {
+  // Se mide en todas las páginas (no solo Home): el drawer mobile de las páginas con header
+  // sticky también lee --nav-height como fallback de referencia, y Home.vue lo usa para el
+  // padding-top del hero.
+  if (navContentRef.value) {
+    const setNavHeightVar = () => {
+      document.documentElement.style.setProperty('--nav-height', navContentRef.value.offsetHeight + 'px');
+    };
+    setNavHeightVar();
+    resizeObserver = new ResizeObserver(setNavHeightVar);
+    resizeObserver.observe(navContentRef.value);
+  }
+
+  if (!isHomePage.value) return;
+
+  window.addEventListener('scroll', updateAtTop, { passive: true });
+
+  updateAtTop();
+  startIdleTimer();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', updateAtTop);
+  clearTimeout(idleTimer);
+  if (resizeObserver) resizeObserver.disconnect();
+});
 </script>
+
+<style scoped>
+header.nav-transparent nav .text-gray-700,
+header.nav-transparent nav .text-blue-900 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+header.nav-transparent .text-white,
+header.nav-transparent .text-amber-400,
+header.nav-transparent .text-blue-100,
+header.nav-transparent .text-blue-300 {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+</style>

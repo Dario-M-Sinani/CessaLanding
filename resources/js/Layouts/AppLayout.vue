@@ -39,7 +39,7 @@
 
         <!-- Col 1: Brand Info -->
         <div class="space-y-4">
-          <img src="/img/cessa_logo.jpg" alt="CESSA Logo" class="h-14 w-auto bg-white p-1.5 rounded-lg" />
+          <img src="/img/Logo_CESSA_240x240.png" alt="CESSA Logo" class="h-14 w-auto bg-white p-1.5 rounded-lg" />
           <p class="text-xs font-bold text-amber-400 uppercase tracking-wide">La Energía del Desarrollo</p>
           <p class="text-xs text-neutral-400 leading-relaxed">
             Compañía Eléctrica Sucre S.A. — Distribución y comercialización de energía eléctrica en el Departamento de Chuquisaca.
@@ -57,6 +57,44 @@
             <a href="https://www.youtube.com/channel/UCgs6_sEf0wx9AMlYnVICgmA" target="_blank" aria-label="YouTube" class="w-8 h-8 rounded-full bg-neutral-800 hover:bg-amber-400 flex items-center justify-center text-neutral-300 hover:text-neutral-900 transition-colors">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 0 0 .5 6.19 31.6 31.6 0 0 0 0 12a31.6 31.6 0 0 0 .5 5.81 3.02 3.02 0 0 0 2.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14A31.6 31.6 0 0 0 24 12a31.6 31.6 0 0 0-.5-5.81zM9.6 15.6V8.4l6.27 3.6-6.27 3.6z"/></svg>
             </a>
+          </div>
+
+          <!-- App Móvil -->
+          <div class="space-y-2 pt-1">
+            <p class="text-xs font-bold text-amber-400 uppercase tracking-wide">Descargá Nuestra App</p>
+            <div class="flex flex-col space-y-2">
+              <a
+                href="https://apps.apple.com/bo/app/cessa/id6453522570"
+                target="_blank"
+                rel="noopener"
+                class="flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 transition-colors"
+              >
+                <svg class="w-5 h-5 flex-shrink-0 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14.94 5.19A4.38 4.38 0 0 0 16 2 4.44 4.44 0 0 0 13 3.52a4.17 4.17 0 0 0-1 3.09 3.69 3.69 0 0 0 2.94-1.42zm2.52 7.44a4.51 4.51 0 0 1 2.16-3.81 4.66 4.66 0 0 0-3.66-2c-1.56-.16-3 .91-3.83.91s-2-.89-3.3-.87a4.92 4.92 0 0 0-4.14 2.53C2.93 12.45 4.24 17 6 19.47c.8 1.21 1.8 2.58 3.12 2.53s1.75-.82 3.28-.82 2 .82 3.3.79 2.22-1.24 3.06-2.45a11 11 0 0 0 1.38-2.85 4.41 4.41 0 0 1-2.68-4.04z" />
+                </svg>
+                <span class="leading-tight">
+                  <span class="block text-[9px] text-neutral-400">Disponible en</span>
+                  <span class="block text-xs font-bold text-white">App Store</span>
+                </span>
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=bo.systems.itgroup.appcessausuarios"
+                target="_blank"
+                rel="noopener"
+                class="flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 transition-colors"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                  <path d="M3.6 2.3c-.4.3-.6.8-.6 1.4v16.6c0 .6.2 1.1.6 1.4l.1.1L13 12v-.2L3.7 2.2z" fill="#00d2ff" />
+                  <path d="M16.1 15.1 13 12v-.2l3.1-3.1 6.9 3.9c1 .6 1 1.5 0 2.1z" fill="#ffcf00" />
+                  <path d="M16.1 15.1 13 12 3.7 21.4c.4.4 1 .4 1.7.1z" fill="#ff3a44" />
+                  <path d="M16.1 8.7 5.4 2.5c-.7-.3-1.3-.3-1.7.1L13 12z" fill="#00e876" />
+                </svg>
+                <span class="leading-tight">
+                  <span class="block text-[9px] text-neutral-400">Disponible en</span>
+                  <span class="block text-xs font-bold text-white">Google Play</span>
+                </span>
+              </a>
+            </div>
           </div>
         </div>
 

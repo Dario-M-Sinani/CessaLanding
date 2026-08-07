@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DocumentResource\Pages;
+use App\Filament\Support\FileManagerAction;
 use App\Models\Document;
+use App\Models\Publication;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,6 +39,29 @@ class DocumentResource extends Resource
                     ->required()
                     ->maxLength(240)
                     ->columnSpanFull(),
+                Forms\Components\Select::make('publication_id')
+                    ->label('Categoría / Proceso relacionado')
+                    ->relationship('publication', 'title')
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->helperText('Elige a qué proceso pertenece (Licitación, Invitación, Convocatoria, Remate de Activos u Otros). Si no existe todavía, créalo aquí mismo.')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('title')
+                            ->label('Título del proceso')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Select::make('type')
+                            ->label('Tipo')
+                            ->options(Publication::getTypes())
+                            ->default('OTHERS')
+                            ->required(),
+                        Forms\Components\Select::make('published')
+                            ->label('Estado')
+                            ->options(['S' => 'Publicado', 'N' => 'Oculto'])
+                            ->default('S'),
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\FileUpload::make('url')
                     ->label('Archivo PDF / Documento')
                     ->helperText('PDF, imagen (JPG/PNG) o ZIP, máximo 100 MB.')
@@ -46,6 +71,7 @@ class DocumentResource extends Resource
                     ->downloadable()
                     ->openable()
                     ->required()
+                    ->hintAction(FileManagerAction::make('url', 'institucional', 'path'))
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('position')
                     ->label('Orden de Visualización')
@@ -66,6 +92,10 @@ class DocumentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('title')->label('Título')->searchable(),
+                Tables\Columns\TextColumn::make('publication.type')
+                    ->label('Categoría')
+                    ->formatStateUsing(fn (?string $state): string => $state ? (Publication::getTypes()[$state] ?? $state) : 'Sin categoría')
+                    ->badge(),
                 Tables\Columns\IconColumn::make('published')
                     ->label('Publicado')
                     ->boolean(fn ($state) => $state === 'S'),

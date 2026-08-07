@@ -13,8 +13,6 @@ use Filament\Tables\Table;
 
 class CollectionsPointResource extends Resource
 {
-    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
-
     protected static ?string $model = CollectionsPoint::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';

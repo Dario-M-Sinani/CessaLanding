@@ -1,9 +1,28 @@
 <template>
   <AppLayout>
     <!-- Hero Banner Section -->
-    <section class="relative overflow-hidden py-16 lg:py-24 bg-gradient-to-b from-blue-50 via-white to-white border-b border-gray-100">
-      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-        
+    <!-- El Navbar es fixed en esta página (ver Navbar.vue), así que compensamos
+         con el alto real medido vía --nav-height para que el contenido no quede tapado.
+         min-h-screen: para que la imagen ocupe casi toda la pantalla al cargar y
+         "Trámites en Línea" quede debajo del scroll inicial, dándole protagonismo. -->
+    <section
+      class="relative overflow-hidden min-h-screen flex items-center pb-16 lg:pb-24"
+      style="padding-top: calc(var(--nav-height, 120px) + 2.5rem);"
+    >
+      <HeroBackgroundCarousel
+        v-if="galleryHighlights && galleryHighlights.length"
+        :images="galleryHighlights"
+        :images-mobile="galleryHighlightsMobile ?? []"
+        :interval-ms="8000"
+      />
+      <div
+        v-else
+        class="absolute inset-0 bg-cover bg-center"
+        style="background-image: linear-gradient(rgba(0,20,40,0.6), rgba(0,20,40,0.7)), url('/img/casa-libertad-hero.webp');"
+      ></div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 w-full">
+
         <!-- Status Pill -->
         <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-900 text-white text-xs font-semibold shadow-md">
           <span class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -11,11 +30,11 @@
         </div>
 
         <!-- Headline -->
-        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-blue-950 max-w-4xl mx-auto leading-tight">
-          Energía eficiente y <span class="text-blue-700">servicios en línea</span>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+          Energía eficiente y <span class="text-amber-400">servicios en línea</span>
         </h1>
 
-        <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        <p class="text-blue-100 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
           Consulta tus avisos de cobranza en segundos, simula tus costos tarifarios mensuales y gestiona tus nuevos suministros eléctricos sin filas.
         </p>
 
@@ -36,7 +55,7 @@
               Consultar Deuda
             </button>
           </div>
-          <div class="mt-3 flex items-center justify-center space-x-4 text-xs text-gray-500 font-medium">
+          <div class="mt-3 flex items-center justify-center space-x-4 text-xs text-blue-100 font-medium">
             <span>✓ Consulta gratuita 24/7</span>
             <span>•</span>
             <span>✓ Detalle de avisos</span>
@@ -222,7 +241,7 @@
     <!-- Parallax Sucre Panel -->
     <section
       class="relative py-24 lg:py-32 bg-cover bg-center"
-      style="background-image: linear-gradient(rgba(0,20,40,0.55), rgba(0,20,40,0.65)), url('/img/sucre-parallax.jpg');"
+      style="background-image: linear-gradient(rgba(0,20,40,0.6), rgba(0,20,40,0.7)), url('/storage/galeria/95.webp');"
     >
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
@@ -241,29 +260,32 @@
           <h2 class="text-3xl font-extrabold text-blue-950 tracking-tight">Documentos</h2>
         </div>
 
-        <div v-if="documents && documents.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div v-if="documentGroups && documentGroups.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           <Link
-            v-for="doc in documents"
-            :key="doc.id"
-            href="/informacion/documentos"
+            v-for="group in documentGroups"
+            :key="group.key"
+            :href="`/procesos?group=${group.key}`"
             class="group p-6 bg-gray-50 border border-gray-200 hover:border-blue-900 rounded-2xl text-center space-y-3 transition-all"
           >
             <svg class="w-8 h-8 mx-auto text-blue-900" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.914a2 2 0 00-.586-1.414l-3.914-3.914A2 2 0 0012.086 2H4zm0 2h7v3a2 2 0 002 2h3v9H4V4zm9 .5L15.5 7H13V4.5z" clip-rule="evenodd" /></svg>
-            <span class="text-sm font-bold text-blue-950 block leading-snug">{{ doc.title }}</span>
-            <span class="text-[11px] font-bold text-blue-700 group-hover:text-blue-900">VER →</span>
+            <span class="text-sm font-bold text-blue-950 block leading-snug">{{ group.label }}</span>
+            <span class="text-[11px] font-bold text-blue-700 group-hover:text-blue-900">{{ group.count }} disponibles →</span>
           </Link>
         </div>
         <div class="text-center">
-          <Link href="/procesos" class="text-xs font-bold text-blue-900 hover:text-blue-700">
-            Ver Licitaciones y Convocatorias →
+          <Link href="/informacion/documentos" class="text-xs font-bold text-blue-900 hover:text-blue-700">
+            Ver Documentos Institucionales →
           </Link>
         </div>
       </div>
     </section>
 
     <!-- Consejos Importantes + Video Consejo -->
-    <section class="py-16 bg-[#20242e]">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12">
+    <section
+      class="relative py-16 bg-cover bg-center"
+      style="background-image: linear-gradient(rgba(15,17,23,0.85), rgba(15,17,23,0.9)), url('/storage/galeria/140.webp');"
+    >
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12">
         <div class="space-y-4">
           <h2 class="text-2xl font-extrabold text-white tracking-tight">Consejos Importantes</h2>
           <div v-if="consejos" class="space-y-3">
@@ -326,14 +348,17 @@ import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '../Layouts/AppLayout.vue';
 import PopupNews from '../Components/PopupNews.vue';
 import StaticLocationMap from '../Components/StaticLocationMap.vue';
+import HeroBackgroundCarousel from '../Components/HeroBackgroundCarousel.vue';
 import { formatFechaLarga, formatHora } from '../utils/formatFecha';
 
 defineProps({
   outages: Array,
-  documents: Array,
+  documentGroups: Array,
   consejos: Object,
   video: Object,
   popupNews: Object,
+  galleryHighlights: Array,
+  galleryHighlightsMobile: Array,
   googleMapsApiKey: { type: String, default: '' },
 });
 

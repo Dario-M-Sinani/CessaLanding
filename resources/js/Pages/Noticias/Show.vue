@@ -21,9 +21,46 @@
           </div>
         </div>
 
+        <img
+          v-if="news.image_url"
+          :src="imageUrlFor(news.image_url)"
+          :alt="news.title"
+          class="w-full max-h-[420px] object-contain rounded-2xl bg-gray-50 border border-gray-200"
+        />
+
         <div class="p-6 sm:p-10 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm space-y-6">
           <p class="text-gray-800 text-sm leading-relaxed font-semibold">{{ news.summary }}</p>
           <div class="text-gray-700 text-sm leading-relaxed prose prose-sm max-w-none" v-html="news.full_text"></div>
+
+          <ImageCarousel v-if="galleryImages.length" :images="galleryImages" />
+        </div>
+
+        <div class="flex items-stretch justify-between gap-3 pt-4 border-t border-gray-200">
+          <Link
+            v-if="previous"
+            :href="`/noticias/${previous.id}`"
+            class="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+          >
+            <span class="text-blue-900">←</span>
+            <span class="min-w-0">
+              <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Anterior</span>
+              <span class="block text-sm font-semibold text-blue-950 truncate">{{ previous.title }}</span>
+            </span>
+          </Link>
+          <div v-else class="flex-1"></div>
+
+          <Link
+            v-if="next"
+            :href="`/noticias/${next.id}`"
+            class="flex-1 flex items-center justify-end gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-right"
+          >
+            <span class="min-w-0">
+              <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Siguiente</span>
+              <span class="block text-sm font-semibold text-blue-950 truncate">{{ next.title }}</span>
+            </span>
+            <span class="text-blue-900">→</span>
+          </Link>
+          <div v-else class="flex-1"></div>
         </div>
       </div>
     </div>
@@ -31,11 +68,21 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import ImageCarousel from '../../Components/ImageCarousel.vue';
 import { formatFechaPublicacion } from '../../utils/formatFecha';
 
-defineProps({
+const props = defineProps({
   news: Object,
+  previous: Object,
+  next: Object,
 });
+
+const imageUrlFor = (url) => (url.startsWith('http') ? url : `/storage/${url}`);
+
+const galleryImages = computed(() =>
+  (props.news.images || []).map((url) => ({ src: imageUrlFor(url), alt: props.news.title }))
+);
 </script>

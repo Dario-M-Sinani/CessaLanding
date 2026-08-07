@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
-use App\Models\Document;
+use App\Models\Image;
 use App\Models\News;
+use App\Models\Publication;
 use App\Models\ScheduledOutage;
 use App\Models\Video;
 use Inertia\Inertia;
@@ -20,10 +21,14 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
-        $documents = Document::where('published', 'S')
-            ->orderBy('position')
-            ->limit(4)
-            ->get();
+        $documentGroupCounts = Publication::countsByGroup();
+        $documentGroups = collect(Publication::getGroupLabels())
+            ->map(fn ($label, $key) => [
+                'key' => $key,
+                'label' => $label,
+                'count' => $documentGroupCounts[$key] ?? 0,
+            ])
+            ->values();
 
         $consejos = Content::where('alias', 'consejos-de-seguridad')
             ->where('published', 'S')
@@ -36,12 +41,24 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        $galleryHighlights = Image::where('published', 'S')
+            ->where('home_carousel', true)
+            ->orderBy('position')
+            ->get(['id', 'title', 'url']);
+
+        $galleryHighlightsMobile = Image::where('published', 'S')
+            ->where('home_carousel_mobile', true)
+            ->orderBy('position')
+            ->get(['id', 'title', 'url']);
+
         return Inertia::render('Home', [
             'outages' => $outages,
-            'documents' => $documents,
+            'documentGroups' => $documentGroups,
             'consejos' => $consejos,
             'video' => $video,
             'popupNews' => $popupNews,
+            'galleryHighlights' => $galleryHighlights,
+            'galleryHighlightsMobile' => $galleryHighlightsMobile,
             'googleMapsApiKey' => config('services.google_maps.key'),
         ]);
     }

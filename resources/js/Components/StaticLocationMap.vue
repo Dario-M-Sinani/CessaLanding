@@ -13,7 +13,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { buildCessaMarkerIcon } from '../utils/mapMarkerIcon';
+import { buildCessaLogoMarkerIcon } from '../utils/mapMarkerIcon';
 
 const props = defineProps({
   lat: { type: Number, required: true },
@@ -71,9 +71,9 @@ onMounted(async () => {
     gestureHandling: 'cooperative',
   });
 
-  // Marcador más chico que el de los formularios de trámites: acá es solo referencia
-  // visual de la oficina, no algo que el usuario tenga que "leer" con precisión.
-  new window.google.maps.Marker({ position: center, map, icon: buildCessaMarkerIcon(0.7) });
+  // Pin con el isotipo de CESSA para identificar la oficina sin ambigüedad
+  // frente a otros puntos de interés que Google pueda mostrar cerca.
+  new window.google.maps.Marker({ position: center, map, icon: buildCessaLogoMarkerIcon(0.85) });
 
   status.value = 'ready';
 });

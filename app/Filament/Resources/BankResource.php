@@ -13,8 +13,6 @@ use Filament\Tables\Table;
 
 class BankResource extends Resource
 {
-    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
-
     protected static ?string $model = Bank::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
@@ -64,7 +62,12 @@ class BankResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('img_url')->label('Logo')->square(),
+                Tables\Columns\ImageColumn::make('img_url')
+                    ->label('Logo')
+                    ->square()
+                    // ver FileManagerAction::resolveUrl() -- ImageColumn no reconoce como
+                    // URL válida el formato en que este campo puede tener guardada la ruta.
+                    ->getStateUsing(fn ($record) => FileManagerAction::resolveUrl($record->img_url)),
                 Tables\Columns\TextColumn::make('name')->label('Nombre')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('url')->label('Página del Banco')->limit(40),
                 Tables\Columns\IconColumn::make('published')

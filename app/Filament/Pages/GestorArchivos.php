@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +13,14 @@ use Illuminate\Support\Str;
 
 class GestorArchivos extends Page
 {
+    // Mismos roles que ya pueden usar los pickers de imagen/documento desde Bank/News/Content/
+    // Document (ver FileManagerAction) -- Atención al Cliente queda afuera, igual que del resto
+    // del panel (antes no tenía ninguna restricción, ver ESTADO_SEGURIDAD_MIGRACION.md §3.14).
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRole(User::ROLE_ADMIN, User::ROLE_SYSTEM, User::ROLE_PUBLICATIONS) ?? false;
+    }
+
     protected static ?string $navigationIcon = 'heroicon-o-folder-open';
 
     protected static ?string $navigationLabel = 'Gestor de Archivos';
@@ -105,6 +114,38 @@ class GestorArchivos extends Page
         $this->dispatch('open-modal', id: 'confirmar-eliminar');
     }
 
+    /**
+     * jpg/jpeg/png se convierten a WebP apenas se suben (más liviano, misma calidad
+     * visible) -- pdf/zip/webp quedan tal cual, no hay nada que convertir. Filament ya
+     * guardó el archivo original en su formato de origen antes de llegar acá, así que
+     * lo convertimos y borramos el original.
+     */
+    protected function convertToWebpIfImage(string $storedPath): void
+    {
+        $ext = strtolower(pathinfo($storedPath, PATHINFO_EXTENSION));
+
+        if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            return;
+        }
+
+        $disk = $this->disk();
+        $source = $ext === 'png'
+            ? imagecreatefrompng($disk->path($storedPath))
+            : imagecreatefromjpeg($disk->path($storedPath));
+
+        if ($ext === 'png') {
+            imagepalettetotruecolor($source);
+            imagealphablending($source, true);
+            imagesavealpha($source, true);
+        }
+
+        $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $storedPath);
+        imagewebp($source, $disk->path($webpPath), 82);
+        imagedestroy($source);
+
+        $disk->delete($storedPath);
+    }
+
     public function confirmDelete(): void
     {
         if ($this->confirmDeletePath === null) {
@@ -149,12 +190,18 @@ class GestorArchivos extends Page
                         ->label('Archivo')
                         ->required()
                         ->maxSize(100 * 1024)
+                        ->acceptedFileTypes([
+                            'image/jpeg', 'image/png', 'image/webp',
+                            'application/pdf', 'application/zip', 'application/x-zip-compressed',
+                        ])
                         ->disk('public')
                         ->directory(fn () => $this->path !== '' ? $this->path : '.')
                         ->visibility('public')
                         ->preserveFilenames(),
                 ])
-                ->action(function (): void {
+                ->action(function (array $data): void {
+                    $this->convertToWebpIfImage($data['archivo']);
+
                     Notification::make()->title('Archivo subido')->success()->send();
                 }),
         ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use App\Models\ContactInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -18,6 +19,13 @@ class LaCompaniaController extends Controller
             'title' => $content->title,
             'summary' => $content->summary,
             'full_text' => $content->full_text,
+            'image_url' => $content->image_url,
+            'show_image' => $content->show_image,
+            'org_chart_image' => $content->org_chart_image,
+            'pei_document' => $content->pei_document,
+            'staff_yearly_stats' => $content->staff_yearly_stats,
+            'gender_yearly_stats' => $content->gender_yearly_stats,
+            'show_org_chart' => $content->show_org_chart,
         ] : null;
     }
 
@@ -58,32 +66,42 @@ class LaCompaniaController extends Controller
 
     public function contacto(): Response
     {
-        return Inertia::render('LaCompania/Contacto');
+        return Inertia::render('LaCompania/Contacto', [
+            'contactInfo' => ContactInfo::first(),
+            'googleMapsApiKey' => config('services.google_maps.key'),
+        ]);
     }
 
     public function contactoStore(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:180',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|email|max:180',
+            'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
+            'subject' => 'required|string|max:150',
             'message' => 'required|string|max:2000',
         ]);
+
+        $fullName = trim("{$validated['first_name']} {$validated['last_name']}");
 
         try {
             Mail::raw(
                 "Nuevo mensaje de contacto recibido desde el sitio web:\n\n" .
-                "Nombre: {$validated['name']}\n" .
-                "Correo: {$validated['email']}\n\n" .
+                "Nombre: {$fullName}\n" .
+                "Correo: {$validated['email']}\n" .
+                "Celular: {$validated['phone']}\n" .
+                "Asunto: {$validated['subject']}\n\n" .
                 "Mensaje:\n{$validated['message']}",
-                function ($mail) use ($validated) {
+                function ($mail) use ($validated, $fullName) {
                     $mail->to(config('services.contact.notify_email'))
-                        ->replyTo($validated['email'], $validated['name'])
+                        ->replyTo($validated['email'], $fullName)
                         ->subject('Ha recibido un nuevo mensaje desde la Página Web de la Compañía Eléctrica Sucre S.A.');
                 }
             );
 
             Mail::raw(
-                "Estimado(a) {$validated['name']},\n\n" .
+                "Estimado(a) {$fullName},\n\n" .
                 "Gracias por contactarse con la Compañía Eléctrica Sucre S.A. Hemos recibido su mensaje y nos pondremos en contacto a la brevedad.\n\n" .
                 "Atentamente,\nCompañía Eléctrica Sucre S.A.",
                 function ($mail) use ($validated) {

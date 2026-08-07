@@ -23,11 +23,27 @@ class NoticiasController extends Controller
 
     public function show($id): Response
     {
-        $news = News::findOrFail($id);
+        $news = News::where('published', 'S')->findOrFail($id);
         $news->increment('hits');
+
+        $orderedIds = News::where('published', 'S')
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->pluck('id')
+            ->toArray();
+
+        $position = array_search($news->id, $orderedIds, true);
+        $previous = $position !== false && $position > 0
+            ? News::find($orderedIds[$position - 1], ['id', 'title'])
+            : null;
+        $next = $position !== false && $position < count($orderedIds) - 1
+            ? News::find($orderedIds[$position + 1], ['id', 'title'])
+            : null;
 
         return Inertia::render('Noticias/Show', [
             'news' => $news,
+            'previous' => $previous,
+            'next' => $next,
         ]);
     }
 }

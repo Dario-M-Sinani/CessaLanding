@@ -12,8 +12,6 @@ use Filament\Tables\Table;
 
 class TagResource extends Resource
 {
-    use \App\Filament\Resources\Concerns\RestrictedFromCustomerService;
-
     protected static ?string $model = Tag::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';

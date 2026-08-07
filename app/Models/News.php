@@ -17,6 +17,7 @@ class News extends Model
         'summary',
         'full_text',
         'image_url',
+        'images',
         'tags',
         'hits',
         'popup',
@@ -27,5 +28,6 @@ class News extends Model
 
     protected $casts = [
         'popup' => 'boolean',
+        'images' => 'array',
     ];
 }

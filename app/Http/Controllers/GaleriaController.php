@@ -25,24 +25,11 @@ class GaleriaController extends Controller
     {
         $images = Image::where('published', 'S')
             ->where('category', 'galeria')
-            ->orderBy('position', 'asc')
+            ->orderBy('position', 'desc')
             ->paginate(24)
             ->withQueryString();
 
         return Inertia::render('Galeria/Imagenes', [
-            'images' => $images,
-        ]);
-    }
-
-    public function trabajadores(): Response
-    {
-        $images = Image::where('published', 'S')
-            ->where('category', 'trabajadores')
-            ->orderBy('position', 'asc')
-            ->paginate(24)
-            ->withQueryString();
-
-        return Inertia::render('Galeria/Trabajadores', [
             'images' => $images,
         ]);
     }
