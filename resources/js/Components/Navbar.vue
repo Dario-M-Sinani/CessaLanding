@@ -218,29 +218,16 @@
             class="absolute top-full left-0 w-64 pt-1 shadow-xl z-50 transition-all duration-200"
           >
             <div class="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-2xl">
-              <Link href="/contenido/nuevas-instalaciones" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Nuevas Instalaciones
-              </Link>
-              <Link href="/contenido/descuentos-y-privilegios-para-personas-de-la-tercera-edad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Descuentos Tercera Edad
-              </Link>
-              <Link href="/contenido/otros-tramites-y-servicios" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Otros Trámites y Servicios
-              </Link>
-              <Link href="/contenido/procedimiento-para-reclamos" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Procedimiento para Reclamos
-              </Link>
-              <Link href="/contenido/derechos-y-obligaciones" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Derechos y Obligaciones
-              </Link>
-              <Link href="/contenido/generacion-distribuida" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Generación Distribuida
+              <Link
+                v-for="item in $page.props.consumidorLinks"
+                :key="item.href"
+                :href="item.href"
+                class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all"
+              >
+                {{ item.label }}
               </Link>
               <Link href="/informacion/consejos-de-seguridad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Consejos de Seguridad
-              </Link>
-              <Link href="/contenido/comunicados-aetn" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Comunicados AETN
               </Link>
             </div>
           </div>
@@ -371,14 +358,14 @@
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Consumidor</span>
-        <Link href="/contenido/nuevas-instalaciones" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Nuevas Instalaciones</Link>
-        <Link href="/contenido/descuentos-y-privilegios-para-personas-de-la-tercera-edad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Descuentos Tercera Edad</Link>
-        <Link href="/contenido/otros-tramites-y-servicios" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Otros Trámites y Servicios</Link>
-        <Link href="/contenido/procedimiento-para-reclamos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Procedimiento para Reclamos</Link>
-        <Link href="/contenido/derechos-y-obligaciones" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Derechos y Obligaciones</Link>
-        <Link href="/contenido/generacion-distribuida" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Generación Distribuida</Link>
+        <Link
+          v-for="item in $page.props.consumidorLinks"
+          :key="item.href"
+          :href="item.href"
+          @click="mobileOpen = false"
+          class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50"
+        >{{ item.label }}</Link>
         <Link href="/informacion/consejos-de-seguridad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Consejos de Seguridad</Link>
-        <Link href="/contenido/comunicados-aetn" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Comunicados AETN</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">

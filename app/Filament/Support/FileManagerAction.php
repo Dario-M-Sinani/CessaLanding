@@ -51,12 +51,32 @@ class FileManagerAction
             ->modalHeading('Elegir o Subir Archivo')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Cerrar')
-            ->modalWidth('2xl')
+            ->modalWidth('3xl')
             ->modalContent(fn () => view('filament.forms.file-picker-modal', [
                 'target' => $targetField,
                 'directory' => $directory,
-                'valueType' => $valueType,
-                'multiple' => $multiple,
-            ]));
+            ]))
+            // Setear el campo y cerrar el modal deben pasar en el MISMO request Livewire
+            // (callMountedFormComponentAction ya hace ambas cosas atómicamente, es el mismo
+            // mecanismo que usa cualquier acción de Filament al enviar su formulario). Antes esto
+            // se hacía en dos pasos desde JS ($wire.set() + cerrar el modal a mano) y la respuesta
+            // del primer paso podía llegar a mitad de la transición de cierre del segundo,
+            // remorfeando el modal a medio cerrar -- se veía "colgado" (ver ESTADO_SEGURIDAD_MIGRACION.md).
+            ->action(function (array $arguments, $livewire) use ($targetField, $valueType, $multiple) {
+                $value = $valueType === 'path' ? ($arguments['path'] ?? null) : ($arguments['url'] ?? null);
+
+                if (blank($value)) {
+                    return;
+                }
+
+                $statePath = "data.{$targetField}";
+
+                if ($valueType === 'path') {
+                    $current = $multiple ? array_values((array) data_get($livewire, $statePath, [])) : [];
+                    data_set($livewire, $statePath, [...$current, $value]);
+                } else {
+                    data_set($livewire, $statePath, $value);
+                }
+            });
     }
 }

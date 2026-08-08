@@ -10,6 +10,13 @@
           <p v-if="content.summary" class="text-gray-600 text-base max-w-2xl mx-auto">{{ content.summary }}</p>
         </div>
 
+        <img
+          v-if="content.image_url && content.show_image"
+          :src="imageUrlFor(content.image_url)"
+          :alt="content.title"
+          class="w-full max-h-[420px] object-contain rounded-2xl bg-gray-50 border border-gray-200"
+        />
+
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 sm:p-12 shadow-sm">
           <ContentBody :html="content.full_text" />
         </div>
@@ -25,4 +32,6 @@ import ContentBody from '../../Components/ContentBody.vue';
 defineProps({
   content: Object,
 });
+
+const imageUrlFor = (url) => (url.startsWith('http') ? url : `/storage/${url}`);
 </script>
