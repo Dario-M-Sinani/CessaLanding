@@ -48,4 +48,19 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'sip' => [
+        'base_url' => env('SIP_BASE_URL', 'https://dev-sip.mc4.com.bo:8443'),
+        'apikey' => env('SIP_QR_API_KEY'),
+        'username' => env('SIP_USERNAME'),
+        'password' => env('SIP_PASSWORD'),
+        'apikey_servicio' => env('SIP_SERVICE_API_KEY'),
+        'callback_username' => env('SIP_CALLBACK_USERNAME'),
+        'callback_password' => env('SIP_CALLBACK_PASSWORD'),
+    ],
+
+    'sms' => [
+        // 'log' (por defecto, solo escribe al log) hasta tener la API real de Tigo.
+        'provider' => env('SMS_PROVIDER', 'log'),
+    ],
+
 ];

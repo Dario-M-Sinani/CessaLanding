@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActualizarDatosController;
 use App\Http\Controllers\BuscarTramiteController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\InformacionController;
 use App\Http\Controllers\LaCompaniaController;
 use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\NuevaConexionController;
+use App\Http\Controllers\Payments\SipCallbackController;
 use App\Http\Controllers\ProcesosController;
 use Illuminate\Support\Facades\Route;
 
@@ -63,6 +65,14 @@ Route::post('/buscar-tramite', [BuscarTramiteController::class, 'buscar'])
     ->middleware('throttle:10,1')
     ->name('buscar-tramite.buscar');
 
+Route::get('/actualizar-datos', [ActualizarDatosController::class, 'index'])->name('actualizar-datos');
+Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class, 'verificarCuenta'])
+    ->middleware('throttle:10,1');
+Route::post('/api/actualizar-datos/enviar-codigos', [ActualizarDatosController::class, 'enviarCodigos'])
+    ->middleware('throttle:5,1');
+Route::post('/api/actualizar-datos/confirmar-codigos', [ActualizarDatosController::class, 'confirmarCodigos'])
+    ->middleware('throttle:10,1');
+
 // Noticias
 Route::get('/noticias', [NoticiasController::class, 'index'])->name('noticias.index');
 Route::get('/noticias/{id}', [NoticiasController::class, 'show'])->name('noticias.show');
@@ -80,3 +90,9 @@ Route::get('/contenido/{alias}', [ContentController::class, 'show'])->name('cont
 // Imagen de Códigos QR (panel admin) -- requiere sesión, la usa el recurso de Filament
 Route::get('/rcadmin/qr-codes/{qrCode}/image', [\App\Http\Controllers\QrCodeImageController::class, 'show'])
     ->name('qr-codes.image');
+
+// Callback de SIP (cobros QR vía Banco BISA) -- lo llama el servidor de SIP, no un navegador;
+// se autentica por Basic Auth (VerifySipCallbackAuth), no por sesión/CSRF (ver bootstrap/app.php).
+Route::post('/api/pagos/sip/confirmar-pago', [SipCallbackController::class, 'confirmarPago'])
+    ->middleware('sip.callback.auth')
+    ->name('pagos.sip.callback');

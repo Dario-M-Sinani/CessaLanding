@@ -18,6 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
         $middleware->trustProxies(at: '*');
+        $middleware->alias([
+            'sip.callback.auth' => \App\Http\Middleware\VerifySipCallbackAuth::class,
+        ]);
+        // El callback de SIP es un POST servidor-a-servidor sin sesión/cookie de este sitio,
+        // así que no puede llevar un token CSRF -- se autentica solo por Basic Auth (ver
+        // VerifySipCallbackAuth), igual que exige la especificación de SIP.
+        $middleware->validateCsrfTokens(except: [
+            'api/pagos/sip/confirmar-pago',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
