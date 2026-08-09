@@ -6,6 +6,7 @@ use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
 use App\Http\Controllers\ConsultaDeudaController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\DemoActualizarDatosController;
 use App\Http\Controllers\EstructuraTarifariaController;
 use App\Http\Controllers\GaleriaController;
 use App\Http\Controllers\HomeController;
@@ -71,6 +72,16 @@ Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class
 Route::post('/api/actualizar-datos/enviar-codigos', [ActualizarDatosController::class, 'enviarCodigos'])
     ->middleware('throttle:5,1');
 Route::post('/api/actualizar-datos/confirmar-codigos', [ActualizarDatosController::class, 'confirmarCodigos'])
+    ->middleware('throttle:10,1');
+
+// Versión "demo": misma verificación real (SIIC + doble código), pero pensada para ser
+// llamada desde un sitio estático completamente aparte (ver DemoActualizarDatosController)
+// -- sin sesión compartida, el estado entre pasos viaja en un token cifrado.
+Route::post('/api/demo/actualizar-datos/verificar', [DemoActualizarDatosController::class, 'verificarCuenta'])
+    ->middleware('throttle:10,1');
+Route::post('/api/demo/actualizar-datos/enviar-codigos', [DemoActualizarDatosController::class, 'enviarCodigos'])
+    ->middleware('throttle:5,1');
+Route::post('/api/demo/actualizar-datos/confirmar-codigos', [DemoActualizarDatosController::class, 'confirmarCodigos'])
     ->middleware('throttle:10,1');
 
 // Noticias

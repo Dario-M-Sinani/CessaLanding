@@ -24,8 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // El callback de SIP es un POST servidor-a-servidor sin sesión/cookie de este sitio,
         // así que no puede llevar un token CSRF -- se autentica solo por Basic Auth (ver
         // VerifySipCallbackAuth), igual que exige la especificación de SIP.
+        //
+        // La versión demo de Actualizar Datos se llama desde otro origen (otro sitio estático,
+        // sin cookie de sesión de este dominio) -- su protección es el token cifrado que viaja
+        // en el body (ver DemoActualizarDatosController), no CSRF.
         $middleware->validateCsrfTokens(except: [
             'api/pagos/sip/confirmar-pago',
+            'api/demo/actualizar-datos/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
