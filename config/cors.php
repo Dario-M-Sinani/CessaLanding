@@ -17,7 +17,10 @@ return [
 
     'paths' => ['api/demo/*'],
 
-    'allowed_methods' => ['POST'],
+    // GET se suma por el listado protegido por token para la página oculta de administración
+    // (ver DemoActualizarDatosController::registros()) -- el resto de las rutas demo siguen
+    // siendo POST.
+    'allowed_methods' => ['GET', 'POST'],
 
     'allowed_origins' => ['*'],
 

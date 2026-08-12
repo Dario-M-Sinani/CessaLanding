@@ -66,9 +66,12 @@ class ReciboResource extends Resource
                         ->formatStateUsing(fn (Recibo $record): string => number_format((float) $record->amount, 2).' '.$record->currency),
                     TextEntry::make('glosa')
                         ->label('Glosa'),
+                    TextEntry::make('nro_cliente')
+                        ->label('N° Cliente')
+                        ->placeholder('— (generado desde el panel)'),
                     TextEntry::make('expires_at')
                         ->label('Vence')
-                        ->date('d/m/Y'),
+                        ->dateTime('d/m/Y H:i'),
                     TextEntry::make('destination_bank')
                         ->label('Banco Destino')
                         ->placeholder('—'),
@@ -148,7 +151,7 @@ class ReciboResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('expires_at')
                     ->label('Vence')
-                    ->date('d/m/Y')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paid_at')
                     ->label('Pagado')

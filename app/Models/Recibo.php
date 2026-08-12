@@ -15,6 +15,7 @@ class Recibo extends Model
     protected $fillable = [
         'provider',
         'alias',
+        'nro_cliente',
         'amount',
         'currency',
         'glosa',
@@ -37,7 +38,7 @@ class Recibo extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'status' => PaymentStatus::class,
-        'expires_at' => 'date',
+        'expires_at' => 'datetime',
         'paid_at' => 'datetime',
         'callback_payload' => 'array',
     ];

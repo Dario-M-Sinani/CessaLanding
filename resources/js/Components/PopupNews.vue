@@ -41,7 +41,6 @@
           <Link
             :href="`/noticias/${news.id}`"
             class="px-5 py-2.5 bg-amber-400 hover:bg-blue-900 text-blue-950 hover:text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
-            @click="dismiss"
           >
             Seguir leyendo
           </Link>
@@ -59,8 +58,10 @@ const props = defineProps({
   news: Object,
 });
 
-const storageKey = `cessa-popup-news-${props.news?.id}`;
-const visible = ref(!!props.news && sessionStorage.getItem(storageKey) !== '1');
+// A pedido del usuario: el modal se muestra en cada carga de la página,
+// sin recordar que ya se cerró (antes se guardaba en sessionStorage y no
+// volvía a aparecer hasta cerrar la pestaña).
+const visible = ref(!!props.news);
 
 const imageSrc = computed(() => {
   const url = props.news?.image_url;
@@ -68,12 +69,7 @@ const imageSrc = computed(() => {
   return url.startsWith('http') ? url : `/storage/${url}`;
 });
 
-const dismiss = () => {
-  sessionStorage.setItem(storageKey, '1');
-};
-
 const close = () => {
-  dismiss();
   visible.value = false;
 };
 </script>

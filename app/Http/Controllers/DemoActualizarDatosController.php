@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Mail\CodigoVerificacionMail;
+use App\Models\DemoActualizarDatosRegistro;
+use App\Models\DemoConfiguracion;
 use App\Services\CessaApiService;
 use App\Services\Sms\Contracts\SmsProviderInterface;
 use App\Services\Sms\Exceptions\SmsException;
@@ -221,8 +223,21 @@ class DemoActualizarDatosController extends Controller
         }
 
         // A propósito NO se guarda en ClientContactUpdate (esa tabla es la recopilación real
-        // del sitio institucional) -- esta es la versión demo, solo verifica de verdad; el
-        // resultado se lo queda el propio sitio estático para armar su CSV en el navegador.
+        // del sitio institucional) -- esta es la versión demo, solo verifica de verdad. El
+        // resultado principal se lo queda el propio sitio estático (localStorage) para armar
+        // su CSV, pero además se guarda acá un respaldo aislado (SQLite aparte, ver
+        // DemoActualizarDatosRegistro) para que ese localStorage no sea la única copia.
+        $capturadoEn = now();
+
+        DemoActualizarDatosRegistro::create([
+            'nro_cliente' => $otp['nro_cliente'],
+            'cuenta' => $otp['cuenta'],
+            'nombre' => $otp['nombre'],
+            'email' => $otp['email'],
+            'phone' => $otp['phone'],
+            'capturado_en' => $capturadoEn,
+        ]);
+
         return response()->json([
             'success' => true,
             'registro' => [
@@ -231,8 +246,96 @@ class DemoActualizarDatosController extends Controller
                 'nombre' => $otp['nombre'],
                 'email' => $otp['email'],
                 'phone' => $otp['phone'],
+                'capturado_en' => $capturadoEn->toIso8601String(),
             ],
         ]);
+    }
+
+    /**
+     * Login de la página oculta de administración (Admin.vue): valida usuario/contraseña
+     * (DEMO_ADMIN_USERNAME/PASSWORD en .env, mismo criterio simple que
+     * VerifySipCallbackAuth) y devuelve el token compartido que ya protegía `registros()`/
+     * `actualizarTokenSms()` -- así nadie tiene que copiar/pegar ese token a mano, y no
+     * queda expuesto en pantalla como texto plano en el frontend.
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $throttleKey = 'demo-admin-login:'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response()->json(['success' => false, 'message' => 'Demasiados intentos. Espera unos minutos.'], 429);
+        }
+
+        $usernameOk = config('services.demo_actualizar_datos.admin_username');
+        $passwordOk = config('services.demo_actualizar_datos.admin_password');
+
+        $valido = filled($usernameOk) && filled($passwordOk)
+            && hash_equals($usernameOk, $validated['username'])
+            && hash_equals($passwordOk, $validated['password']);
+
+        if (! $valido) {
+            RateLimiter::hit($throttleKey, 300);
+            Log::warning('demo_actualizar_datos.login_fallido', ['ip' => $request->ip()]);
+
+            return response()->json(['success' => false, 'message' => 'Usuario o contraseña incorrectos.'], 401);
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        return response()->json(['success' => true, 'token' => config('services.demo_actualizar_datos.admin_token')]);
+    }
+
+    /**
+     * Listado del respaldo en SQLite, para la página oculta de administración de la
+     * herramienta aparte (no la principal, que solo muestra un contador). Protegido por un
+     * token compartido simple (no es autenticación real, es la misma filosofía de "ruta
+     * oculta" del frontend, pero al menos exige conocer un secreto, no solo la URL) -- ver
+     * DEMO_ACTUALIZAR_DATOS_ADMIN_TOKEN en .env.
+     */
+    public function registros(Request $request): JsonResponse
+    {
+        if (! $this->tokenAdminValido($request)) {
+            return response()->json(['success' => false, 'message' => 'Token inválido.'], 403);
+        }
+
+        $registros = DemoActualizarDatosRegistro::orderByDesc('capturado_en')->get([
+            'nro_cliente', 'cuenta', 'nombre', 'email', 'phone', 'capturado_en',
+        ]);
+
+        return response()->json(['success' => true, 'registros' => $registros]);
+    }
+
+    /**
+     * Actualiza el token de Tigo SMS en caliente (ver DemoConfiguracion + SmsServiceProvider)
+     * desde la página oculta de administración -- sin esto, cada vez que vence (24h en el
+     * primero que se probó) había que editar TIGO_SMS_TOKEN en .env a mano y reiniciar el
+     * servidor. Mismo token compartido de admin que `registros()`.
+     */
+    public function actualizarTokenSms(Request $request): JsonResponse
+    {
+        if (! $this->tokenAdminValido($request)) {
+            return response()->json(['success' => false, 'message' => 'Token inválido.'], 403);
+        }
+
+        $validated = $request->validate([
+            'sms_token' => ['required', 'string', 'min:10'],
+        ]);
+
+        DemoConfiguracion::guardar('tigo_sms_token', trim($validated['sms_token']));
+
+        return response()->json(['success' => true]);
+    }
+
+    private function tokenAdminValido(Request $request): bool
+    {
+        $tokenEsperado = config('services.demo_actualizar_datos.admin_token');
+
+        return filled($tokenEsperado) && hash_equals($tokenEsperado, (string) $request->input('token'));
     }
 
     private function encode(array $payload): string

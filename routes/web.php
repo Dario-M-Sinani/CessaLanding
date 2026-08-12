@@ -14,7 +14,9 @@ use App\Http\Controllers\InformacionController;
 use App\Http\Controllers\LaCompaniaController;
 use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\NuevaConexionController;
+use App\Http\Controllers\PagoQrController;
 use App\Http\Controllers\Payments\SipCallbackController;
+use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ProcesosController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +68,13 @@ Route::post('/buscar-tramite', [BuscarTramiteController::class, 'buscar'])
     ->middleware('throttle:10,1')
     ->name('buscar-tramite.buscar');
 
+// Pago por QR propio (BISA/SIP), disparado por el cliente desde Consulta de Deuda -- junto a
+// la opción existente de Síntesis. Ver PagoQrController.
+Route::post('/api/pagos/generar-qr', [PagoQrController::class, 'generar'])
+    ->middleware('throttle:10,1');
+Route::get('/api/pagos/estado-qr/{alias}', [PagoQrController::class, 'estado'])
+    ->middleware('throttle:60,1');
+
 Route::get('/actualizar-datos', [ActualizarDatosController::class, 'index'])->name('actualizar-datos');
 Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class, 'verificarCuenta'])
     ->middleware('throttle:10,1');
@@ -83,6 +92,12 @@ Route::post('/api/demo/actualizar-datos/enviar-codigos', [DemoActualizarDatosCon
     ->middleware('throttle:5,1');
 Route::post('/api/demo/actualizar-datos/confirmar-codigos', [DemoActualizarDatosController::class, 'confirmarCodigos'])
     ->middleware('throttle:10,1');
+Route::post('/api/demo/actualizar-datos/login', [DemoActualizarDatosController::class, 'login'])
+    ->middleware('throttle:10,1');
+Route::get('/api/demo/actualizar-datos/registros', [DemoActualizarDatosController::class, 'registros'])
+    ->middleware('throttle:20,1');
+Route::post('/api/demo/actualizar-datos/actualizar-token-sms', [DemoActualizarDatosController::class, 'actualizarTokenSms'])
+    ->middleware('throttle:10,1');
 
 // Noticias
 Route::get('/noticias', [NoticiasController::class, 'index'])->name('noticias.index');
@@ -97,6 +112,10 @@ Route::get('/galeria/imagenes', [GaleriaController::class, 'imagenes'])->name('g
 
 // Páginas institucionales genéricas (migradas de la CMS legacy)
 Route::get('/contenido/{alias}', [ContentController::class, 'show'])->name('contenido.show');
+
+// Personal (Autorizado / Externo Cortes y Reconexiones / Externo Lectura de Medidores)
+Route::redirect('/personal', '/personal/autorizado');
+Route::get('/personal/{categoria}', [PersonalController::class, 'show'])->name('personal.show');
 
 // Imagen de Códigos QR (panel admin) -- requiere sesión, la usa el recurso de Filament
 Route::get('/rcadmin/qr-codes/{qrCode}/image', [\App\Http\Controllers\QrCodeImageController::class, 'show'])

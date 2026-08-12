@@ -71,6 +71,36 @@ class ConsultaDeudaController extends Controller
                 ]);
                 $error = 'Los datos ingresados no coinciden con ningún abonado registrado.';
             } else {
+                // Del más antiguo al más reciente -- SIIC exige pagar en ese orden (no se
+                // puede saltar un mes viejo para pagar solo el último), así que la tabla y
+                // el selector de "cuántos meses pagar" del pago QR usan el mismo orden.
+                $pendientes = collect($data['deuda'] ?? [])
+                    ->sortBy([
+                        fn ($a, $b) => ((int) $a['anio']) <=> ((int) $b['anio']),
+                        fn ($a, $b) => ((int) $a['mes']) <=> ((int) $b['mes']),
+                    ])
+                    ->values()
+                    // No se confía en que SIIC ya mande `importe` con el signo correcto para
+                    // las conciliaciones (no hay forma de confirmarlo sin un caso real en
+                    // producción) -- se trata `importe` como magnitud y el signo se deriva
+                    // siempre de `debito_credito`, que sí es un campo explícito. Se manda
+                    // aparte como `importe_firmado` para no pisar el dato crudo de SIIC.
+                    //
+                    // `debito_credito` NO distingue factura de conciliación -- solo el signo.
+                    // Confirmado con cuentas reales: hay conciliaciones "NC." (Nota de
+                    // Crédito, débito_credito=CREDITO, restan) Y conciliaciones "ND." (Nota de
+                    // Débito, debito_credito=DEBITO, suman) -- estas últimas comparten
+                    // debito_credito con una factura real y quedaban mal etiquetadas. El
+                    // discriminador real es el texto de `detalle` ("... CONCILIACIÓN ...").
+                    ->map(function (array $item) {
+                        $magnitud = abs((float) ($item['importe'] ?? 0));
+                        $item['importe_firmado'] = ($item['debito_credito'] ?? 'DEBITO') === 'CREDITO' ? -$magnitud : $magnitud;
+                        $item['es_conciliacion'] = str_contains(mb_strtoupper($item['detalle'] ?? ''), 'CONCILIA');
+
+                        return $item;
+                    })
+                    ->all();
+
                 // nro_cliente + N° de Cuenta verificados contra SIIC -> detalle completo.
                 $resultado = [
                     'nivel' => 'completo',
@@ -81,7 +111,7 @@ class ConsultaDeudaController extends Controller
                     'estado_codigo' => $data['estado_codigo'] ?? null,
                     'estado_descripcion' => $data['estado_descripcion'] ?? null,
                     'categoria_descripcion' => $data['categoria_descripcion'] ?? null,
-                    'pendientes' => $data['deuda'] ?? [],
+                    'pendientes' => $pendientes,
                     'total_deuda' => number_format((float) ($data['deuda_total'] ?? 0), 2, '.', ''),
                 ];
             }

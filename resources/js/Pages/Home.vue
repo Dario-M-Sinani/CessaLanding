@@ -23,12 +23,6 @@
 
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 w-full">
 
-        <!-- Status Pill -->
-        <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-900 text-white text-xs font-semibold shadow-md">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span>Plataforma Virtual Comercial CESSA</span>
-        </div>
-
         <!-- Headline -->
         <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
           Energía eficiente y <span class="text-amber-400">servicios en línea</span>

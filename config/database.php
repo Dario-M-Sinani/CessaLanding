@@ -44,6 +44,19 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        // Respaldo aislado, solo para la herramienta de recolección aparte (Vite/Vue en
+        // `documentosss/CESSA/herramienta-actualizar-datos/`, ver DemoActualizarDatosController).
+        // A propósito NO comparte base con `mysql` (cessa_bdweb) -- esa es la del sitio
+        // institucional real, y el flujo demo nunca debe escribir ahí. Un archivo SQLite
+        // aparte alcanza porque es solo un respaldo de lo que ya vive en el localStorage del
+        // navegador de quien recolecta, no un sistema transaccional real.
+        'demo_registros' => [
+            'driver' => 'sqlite',
+            'database' => env('DEMO_REGISTROS_DB', database_path('demo_actualizar_datos.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),

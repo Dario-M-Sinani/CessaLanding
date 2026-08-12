@@ -109,7 +109,7 @@
             <li><Link href="/la-compania/rrhh" class="hover:text-amber-400 transition-colors">Recursos Humanos</Link></li>
             <li><Link href="/la-compania/contacto" class="hover:text-amber-400 transition-colors">Contáctenos</Link></li>
             <li><Link href="/contenido/tramites-derechos-y-requisitos" class="hover:text-amber-400 transition-colors">Trámites, Derechos y Requisitos</Link></li>
-            <li><Link href="/contenido/personal-autorizado-cessa" class="hover:text-amber-400 transition-colors">Personal Autorizado</Link></li>
+            <li><Link href="/personal/autorizado" class="hover:text-amber-400 transition-colors">Personal Autorizado</Link></li>
           </ul>
         </div>
 
@@ -143,7 +143,7 @@
 
       <!-- Regulatory / Partner Badges -->
       <div class="border-t border-neutral-800 bg-black/20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 sm:grid-cols-5 gap-6 items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 items-center">
           <a href="https://www.aetn.gob.bo/web/" target="_blank" class="flex flex-col items-center text-center gap-2">
             <img src="/img/footer/aetn.jpg" alt="AETN" class="h-12 w-auto rounded bg-white p-1" />
             <span class="text-[9px] text-neutral-500 leading-tight">Fiscalizada y regulada por la AETN</span>
@@ -159,16 +159,30 @@
           <a href="https://m.certipedia.com/?id=9000003691" target="_blank" class="flex items-center justify-center">
             <img src="/img/footer/iso9001.jpg" alt="ISO 9001:2015" class="h-10 w-auto rounded bg-white p-1" />
           </a>
-          <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" class="flex items-center justify-center">
-            <img src="/img/footer/pago-qr.png" alt="Pago de factura digital mediante QR" class="h-14 w-auto" />
-          </a>
         </div>
       </div>
 
       <!-- Copyright Bottom Bar -->
       <div class="border-t border-neutral-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 text-center text-xs text-neutral-500">
-          Copyright &copy; {{ new Date().getFullYear() }} CESSA.
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500">
+          <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3 text-center sm:text-left">
+            <span>Copyright &copy; {{ new Date().getFullYear() }} CESSA.</span>
+            <span class="hidden sm:inline text-neutral-700">•</span>
+            <span class="inline-flex items-center gap-1.5 text-neutral-400">
+              <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+              Desarrollado por <span class="text-neutral-300 font-semibold">DTIC CESSA</span>
+            </span>
+          </div>
+
+          <a
+            href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA"
+            target="_blank"
+            class="flex items-center gap-1.5 text-neutral-600 hover:text-neutral-400 transition-colors"
+            title="Pago de factura digital mediante QR (Síntesis)"
+          >
+            <img src="/img/footer/pago-qr.png" alt="Síntesis" class="h-4 w-auto opacity-70" />
+            <span class="text-[10px]">Pago QR vía Síntesis</span>
+          </a>
         </div>
       </div>
     </footer>

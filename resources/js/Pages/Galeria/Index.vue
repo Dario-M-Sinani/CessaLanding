@@ -60,6 +60,14 @@ const embedUrl = (url) => {
     return url;
   }
 
+  // Facebook no tiene un ID de video simple para armar como YouTube -- su reproductor
+  // embebido siempre pasa por este plugin, con la URL original completa como parámetro
+  // `href` (funciona igual para facebook.com/watch, facebook.com/{página}/videos/{id} y
+  // enlaces cortos fb.watch, mientras el video sea público).
+  if (url.includes('facebook.com/') || url.includes('fb.watch/')) {
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+  }
+
   return null;
 };
 </script>

@@ -40,7 +40,8 @@ class VideoResource extends Resource
                     ->maxLength(240)
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('url')
-                    ->label('URL del Video (YouTube embed)')
+                    ->label('URL del Video (YouTube, Facebook o Vimeo)')
+                    ->helperText('Se embebe automáticamente en la Galería pública. Otras plataformas quedan como link de respaldo, sin reproductor.')
                     ->url()
                     ->required()
                     ->maxLength(240)
