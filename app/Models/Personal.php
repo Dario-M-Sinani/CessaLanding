@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Personal extends Model
 {
@@ -11,17 +12,8 @@ class Personal extends Model
 
     protected $table = 'personal';
 
-    // Categorías fijas del dominio (calcan las 3 páginas /personal/* del legacy) --
-    // no ameritan una tabla de categorías administrable como Content/Category, que
-    // sirve a un menú dinámico distinto (Consumidor).
-    public const CATEGORIAS = [
-        'autorizado' => 'Personal Autorizado',
-        'cortes-reconexiones' => 'Personal Externo - Cortes y Reconexiones',
-        'lectura-medidores' => 'Personal Externo - Lectura de Medidores',
-    ];
-
     protected $fillable = [
-        'categoria',
+        'personal_categoria_id',
         'nombre',
         'ci',
         'tipo_sangre',
@@ -33,4 +25,9 @@ class Personal extends Model
         'created_by',
         'modified_by',
     ];
+
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(PersonalCategoria::class, 'personal_categoria_id');
+    }
 }

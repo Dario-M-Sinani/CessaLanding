@@ -40,8 +40,8 @@ class VideoResource extends Resource
                     ->maxLength(240)
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('url')
-                    ->label('URL del Video (YouTube, Facebook o Vimeo)')
-                    ->helperText('Se embebe automáticamente en la Galería pública. Otras plataformas quedan como link de respaldo, sin reproductor.')
+                    ->label('URL del Video (YouTube, Facebook, Instagram, TikTok o Vimeo)')
+                    ->helperText('Se embebe automáticamente en la Galería pública (pegar la URL completa de la publicación/video, no un link corto). Otras plataformas quedan como link de respaldo, sin reproductor.')
                     ->url()
                     ->required()
                     ->maxLength(240)

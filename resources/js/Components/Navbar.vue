@@ -223,14 +223,13 @@
             class="absolute top-full left-0 w-64 pt-1 shadow-xl z-50 transition-all duration-200"
           >
             <div class="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-2xl">
-              <Link href="/personal/autorizado" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Personal Autorizado
-              </Link>
-              <Link href="/personal/cortes-reconexiones" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Externo - Cortes y Reconexiones
-              </Link>
-              <Link href="/personal/lectura-medidores" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Externo - Lectura de Medidores
+              <Link
+                v-for="item in $page.props.personalLinks"
+                :key="item.href"
+                :href="item.href"
+                class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all"
+              >
+                {{ item.label }}
               </Link>
             </div>
           </div>
@@ -402,9 +401,13 @@
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Personal</span>
-        <Link href="/personal/autorizado" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Personal Autorizado</Link>
-        <Link href="/personal/cortes-reconexiones" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Externo - Cortes y Reconexiones</Link>
-        <Link href="/personal/lectura-medidores" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Externo - Lectura de Medidores</Link>
+        <Link
+          v-for="item in $page.props.personalLinks"
+          :key="item.href"
+          :href="item.href"
+          @click="mobileOpen = false"
+          class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50"
+        >{{ item.label }}</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">

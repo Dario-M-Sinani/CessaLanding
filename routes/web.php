@@ -113,8 +113,15 @@ Route::get('/galeria/imagenes', [GaleriaController::class, 'imagenes'])->name('g
 // Páginas institucionales genéricas (migradas de la CMS legacy)
 Route::get('/contenido/{alias}', [ContentController::class, 'show'])->name('contenido.show');
 
-// Personal (Autorizado / Externo Cortes y Reconexiones / Externo Lectura de Medidores)
-Route::redirect('/personal', '/personal/autorizado');
+// Personal (categorías administrables desde el panel, ver PersonalCategoriaResource) -- /personal
+// redirige a la primera por posición en vez de un alias fijo, para no romper si algún día
+// "autorizado" deja de ser la primera categoría.
+Route::get('/personal', function () {
+    $primera = \App\Models\PersonalCategoria::orderBy('position')->first();
+    abort_unless($primera, 404);
+
+    return redirect("/personal/{$primera->alias}");
+});
 Route::get('/personal/{categoria}', [PersonalController::class, 'show'])->name('personal.show');
 
 // Imagen de Códigos QR (panel admin) -- requiere sesión, la usa el recurso de Filament

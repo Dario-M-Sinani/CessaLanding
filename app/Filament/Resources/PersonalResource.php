@@ -15,26 +15,28 @@ class PersonalResource extends Resource
 {
     protected static ?string $model = Personal::class;
 
+    protected static ?string $cluster = \App\Filament\Clusters\Personal::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
-    protected static ?string $navigationLabel = 'Personal';
+    protected static ?string $navigationLabel = 'Listado';
 
     protected static ?string $modelLabel = 'Persona';
 
     protected static ?string $pluralModelLabel = 'Personal';
 
-    protected static ?string $navigationGroup = 'Menú Principal';
-
-    protected static ?int $navigationSort = 85;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('categoria')
+                Forms\Components\Select::make('personal_categoria_id')
                     ->label('Categoría')
-                    ->options(Personal::CATEGORIAS)
+                    ->relationship('categoria', 'nombre', fn ($query) => $query->orderBy('position'))
                     ->required()
+                    ->searchable()
+                    ->preload()
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('nombre')
                     ->label('Nombre Completo')
@@ -88,6 +90,7 @@ class PersonalResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('categoria'))
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                     ->label('Foto')
@@ -96,10 +99,9 @@ class PersonalResource extends Resource
                     // URL válida el formato en que este campo puede tener guardada la ruta.
                     ->getStateUsing(fn ($record) => FileManagerAction::resolveUrl($record->foto)),
                 Tables\Columns\TextColumn::make('nombre')->label('Nombre')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('categoria')
+                Tables\Columns\TextColumn::make('categoria.nombre')
                     ->label('Categoría')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state) => Personal::CATEGORIAS[$state] ?? $state),
+                    ->badge(),
                 Tables\Columns\TextColumn::make('ci')->label('C.I.'),
                 Tables\Columns\TextColumn::make('celular')->label('Celular'),
                 Tables\Columns\IconColumn::make('published')
@@ -108,9 +110,9 @@ class PersonalResource extends Resource
             ])
             ->defaultSort('position')
             ->filters([
-                Tables\Filters\SelectFilter::make('categoria')
+                Tables\Filters\SelectFilter::make('personal_categoria_id')
                     ->label('Categoría')
-                    ->options(Personal::CATEGORIAS),
+                    ->relationship('categoria', 'nombre'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

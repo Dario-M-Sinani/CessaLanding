@@ -85,6 +85,19 @@ class HandleInertiaRequests extends Middleware
                     'href' => "/contenido/{$content->alias}",
                 ])
                 ->values(),
+
+            // Dropdown "Personal" del Navbar: ahora sale de personal_categorias (administrable
+            // desde PersonalCategoriaResource, ver ESTADO_SEGURIDAD_MIGRACION.md §3.31) en vez
+            // de 3 links fijos -- una categoría nueva ("Inspectores", etc.) aparece sola acá sin
+            // tocar código.
+            'personalLinks' => fn () => \App\Models\PersonalCategoria::query()
+                ->orderBy('position')
+                ->get(['nombre', 'alias'])
+                ->map(fn ($categoria) => [
+                    'label' => $categoria->nombre,
+                    'href' => "/personal/{$categoria->alias}",
+                ])
+                ->values(),
         ];
     }
 }

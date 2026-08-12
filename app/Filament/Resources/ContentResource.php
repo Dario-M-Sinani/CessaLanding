@@ -8,9 +8,11 @@ use App\Models\Category;
 use App\Models\Content;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ContentResource extends Resource
 {
@@ -34,18 +36,50 @@ class ContentResource extends Resource
             ->schema([
                 Forms\Components\Select::make('category_id')
                     ->label('Categoría')
-                    ->options(Category::pluck('title', 'id'))
+                    ->options(function (?Content $record) {
+                        $query = Category::query();
+
+                        // "Personal" quedó obsoleta como categoría de Contenidos -- reemplazada
+                        // por el módulo Personal real (ver ESTADO_SEGURIDAD_MIGRACION.md §3.26/
+                        // §3.31). Se saca de las opciones para que nadie la elija en contenido
+                        // nuevo. Si un registro viejo ya la tiene asignada (ej. el Content de
+                        // prueba de §3.31), se deja igual para que su nombre siga resolviendo
+                        // bien acá abajo, aunque el campo esté deshabilitado.
+                        if (! $record || $record->category?->title !== 'Personal') {
+                            $query->where('title', '!=', 'Personal');
+                        }
+
+                        return $query->pluck('title', 'id');
+                    })
+                    // Editable solo al crear -- una vez que un Content ya tiene categoría
+                    // asignada, cambiarla a mano podría romper los menús dinámicos que dependen
+                    // de ella (Consumidor/La Compañía, ver §3.20ter/§3.30) sin que quede claro
+                    // en el panel por qué. Se sigue mostrando (deshabilitado, no oculto) para
+                    // que quede claro en qué categoría está cada página.
+                    ->disabled(fn (?Content $record) => $record !== null)
+                    ->required()
                     ->searchable(),
                 Forms\Components\TextInput::make('title')
                     ->label('Título')
                     ->required()
                     ->maxLength(240)
+                    ->live(onBlur: true)
+                    // Autocompleta el alias a partir del título, pero solo al crear -- si se
+                    // hiciera también al editar, cambiar el título de una página ya publicada
+                    // le movería la URL sola y rompería los links que ya apunten a ella.
+                    // Sigue siendo editable a mano en cualquier momento (ej. para acortarlo).
+                    ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
+                        if ($operation === 'create') {
+                            $set('alias', Str::slug($state));
+                        }
+                    })
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('alias')
                     ->label('Alias (URL: /contenido/alias)')
                     ->required()
                     ->maxLength(240)
                     ->unique(ignoreRecord: true)
+                    ->rules(['alpha_dash'])
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('summary')
                     ->label('Resumen Breve')
@@ -172,7 +206,7 @@ class ContentResource extends Resource
                     // URL válida el formato en que este campo puede tener guardada la ruta.
                     ->getStateUsing(fn ($record) => FileManagerAction::resolveUrl($record->image_url)),
                 Tables\Columns\TextColumn::make('title')->label('Título')->searchable(),
-                Tables\Columns\TextColumn::make('alias')->label('Alias'),
+                Tables\Columns\TextColumn::make('alias')->label('Alias')->searchable()->copyable(),
                 Tables\Columns\TextColumn::make('category.title')->label('Categoría'),
                 Tables\Columns\IconColumn::make('published')
                     ->label('Publicado')
