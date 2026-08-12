@@ -161,6 +161,14 @@
               <Link href="/la-compania/contacto" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Contáctanos
               </Link>
+              <Link
+                v-for="item in $page.props.companiaLinks"
+                :key="item.href"
+                :href="item.href"
+                class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all"
+              >
+                {{ item.label }}
+              </Link>
             </div>
           </div>
         </div>
@@ -375,6 +383,13 @@
         <Link href="/la-compania/estructura" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Estructura Organizacional</Link>
         <Link href="/la-compania/rrhh" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Recursos Humanos</Link>
         <Link href="/la-compania/contacto" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Contáctanos</Link>
+        <Link
+          v-for="item in $page.props.companiaLinks"
+          :key="item.href"
+          :href="item.href"
+          @click="mobileOpen = false"
+          class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50"
+        >{{ item.label }}</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">

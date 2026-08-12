@@ -19,6 +19,7 @@ class Recibo extends Model
         'amount',
         'currency',
         'glosa',
+        'descripcion_pago',
         'status',
         'expires_at',
         'qr_image_path',

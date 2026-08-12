@@ -140,23 +140,38 @@ class PagoQrController extends Controller
             ? "{$MESES[(int) $primero['mes']]}/{$primero['anio']}"
             : "{$MESES[(int) $primero['mes']]}-{$MESES[(int) $ultimo['mes']]}/{$ultimo['anio']}";
 
-        // Glosa que viaja al QR/banco: SIP la corta a 30 caracteres, así que va compacta
-        // (mes y año en número, no en texto) pero con lo que el cliente necesita para
-        // identificar el pago en su comprobante: importe, cuántos meses paga, qué periodo
-        // y su número de cliente -- este último nunca se debe truncar (es la clave de
-        // conciliación), así que si agregar "cuántos meses" no entra en 30 caracteres se
-        // omite ese dato antes de arriesgarse a cortar el resto.
-        $mesInicioNum = str_pad((string) $primero['mes'], 2, '0', STR_PAD_LEFT);
-        $mesFinNum = str_pad((string) $ultimo['mes'], 2, '0', STR_PAD_LEFT);
-        $periodoNumerico = $primero === $ultimo
-            ? "{$mesInicioNum}/{$primero['anio']}"
-            : "{$mesInicioNum}-{$mesFinNum}/{$ultimo['anio']}";
-        $montoTexto = floor($monto) == $monto
+        // Glosa que viaja al QR/banco: SIP la corta a 30 caracteres. Ahora que existe la
+        // descripción de constancia interna (abajo, sin límite) con el detalle completo de
+        // fechas, la glosa se simplifica a un formato genérico y fijo -- "CESSA {cantidad de
+        // comprobantes} comp {N° cliente} B{monto con 2 decimales}" -- sin fechas, así nunca
+        // se acerca al límite salvo en el caso extremo de un cliente con muchos dígitos y
+        // muchos comprobantes, donde se saca el prefijo "CESSA " (única parte prescindible,
+        // el resto -- cantidad, cliente, monto -- nunca se debe truncar). Probado con Tinker
+        // el peor caso real posible (cliente de 10 dígitos, 24 comprobantes, Bs. 50.000): entra
+        // justo sin el prefijo (28 caracteres).
+        $montoTexto = number_format($monto, 2, '.', '');
+        $glosaConPrefijo = "CESSA {$cantidadMeses} comp {$validated['nro_cliente']} B{$montoTexto}";
+        $glosaSinPrefijo = "{$cantidadMeses} comp {$validated['nro_cliente']} B{$montoTexto}";
+        $glosa = mb_strlen($glosaConPrefijo) <= 30 ? $glosaConPrefijo : $glosaSinPrefijo;
+
+        // Descripción de constancia interna: mismos datos que antes armaba la glosa (y más),
+        // sin el límite de 30 caracteres de SIP -- todo va completo y sin abreviar: "bolivianos"
+        // en vez de "Bs", "comprobante(s)" además de "mes(es)" (cada aviso pendiente pagado es
+        // un comprobante), fecha exacta de cada periodo con año completo (no solo el rango
+        // "Enero-Marzo/2026"), y "Cliente" sin abreviar.
+        $mesesTexto = $cantidadMeses === 1 ? '1 mes' : "{$cantidadMeses} meses";
+        $comprobantesTexto = $cantidadMeses === 1 ? '1 comprobante' : "{$cantidadMeses} comprobantes";
+        $periodosExactos = $aPagar->map(fn (array $item) => "{$MESES[(int) $item['mes']]} {$item['anio']}")->all();
+        $fechasExactas = count($periodosExactos) > 1
+            ? implode(', ', array_slice($periodosExactos, 0, -1)).' y '.end($periodosExactos)
+            : $periodosExactos[0];
+        // Monto "legible" sin ceros decimales de más (1489, no 1489.00) -- distinto del
+        // $montoTexto de la glosa, que sí necesita los 2 decimales fijos siempre.
+        $montoLegible = floor($monto) == $monto
             ? number_format($monto, 0, '.', '')
             : number_format($monto, 2, '.', '');
-        $glosaBase = "{$montoTexto}Bs {$periodoNumerico} C{$validated['nro_cliente']}";
-        $glosaConCantidad = "{$montoTexto}Bs {$cantidadMeses}m {$periodoNumerico} C{$validated['nro_cliente']}";
-        $glosa = mb_strlen($glosaConCantidad) <= 30 ? $glosaConCantidad : Str::limit($glosaBase, 30, '');
+        $descripcionPago = "Pago de {$mesesTexto} ({$comprobantesTexto}) por {$montoLegible} bolivianos"
+            ." — Cliente {$validated['nro_cliente']} — Períodos: {$fechasExactas}";
 
         $provider = app(QrPaymentProviderInterface::class);
         $alias = 'CESSA-WEB-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
@@ -216,6 +231,7 @@ class PagoQrController extends Controller
             'amount' => $monto,
             'currency' => 'BOB',
             'glosa' => $glosa,
+            'descripcion_pago' => $descripcionPago,
             'status' => PaymentStatus::Pendiente,
             'expires_at' => $expiresAt,
             'qr_image_path' => $qrImagePath,

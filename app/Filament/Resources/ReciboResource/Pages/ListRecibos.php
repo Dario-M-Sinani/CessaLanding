@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListRecibos extends ListRecords
 {
@@ -23,6 +24,12 @@ class ListRecibos extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('exportarCsv')
+                ->label('Exportar Excel')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('gray')
+                ->action(fn (): StreamedResponse => $this->exportarCsv()),
+
             Actions\Action::make('generarCobroQr')
                 ->label('Generar Cobro QR')
                 ->icon('heroicon-o-qr-code')
@@ -85,6 +92,16 @@ class ListRecibos extends ListRecords
                         'amount' => $data['amount'],
                         'currency' => $data['currency'],
                         'glosa' => $data['glosa'],
+                        // No hay meses/N° de cliente en este flujo (lo genera el staff a mano,
+                        // no viene de Consulta de Deuda) -- descripción simple sin ese detalle,
+                        // ver PagoQrController::generar() para el caso con más datos.
+                        'descripcion_pago' => sprintf(
+                            '%s %s — %s — Vence %s',
+                            number_format((float) $data['amount'], 2),
+                            $data['currency'],
+                            $data['glosa'],
+                            Carbon::parse($data['expires_at'])->format('d/m/Y'),
+                        ),
                         'status' => PaymentStatus::Pendiente,
                         'expires_at' => $result->expiresAt,
                         'qr_image_path' => $qrImagePath,
@@ -102,5 +119,55 @@ class ListRecibos extends ListRecords
                         ->send();
                 }),
         ];
+    }
+
+    // Mismo patrón que ClientContactUpdateResource::exportarCsv() -- CSV con BOM UTF-8 para
+    // que Excel en Windows lo abra directo sin romper tildes/ñ, streameado en chunks (no carga
+    // todos los recibos en memoria de una vez).
+    private function exportarCsv(): StreamedResponse
+    {
+        $filename = 'cobros-qr-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () {
+            $handle = fopen('php://output', 'w');
+
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            // Orden pedido explícitamente por el usuario: Monto, Glosa, Descripción y N° Cliente
+            // primero (lo que identifica el pago de un vistazo), Banco Destino después de esos
+            // 4 -- el resto de columnas (auditoría/trazabilidad) va al final, sin quitarlas.
+            fputcsv($handle, [
+                'Monto', 'Moneda', 'Glosa', 'Descripción de Pago', 'N° Cliente', 'Banco Destino',
+                'Alias', 'Fecha de Creación', 'Estado', 'Cuenta Destino',
+                'N° de Orden', 'Pagador', 'Documento Pagador', 'Fecha de Pago', 'Generado Por',
+            ]);
+
+            Recibo::query()
+                ->with('creator')
+                ->orderByDesc('created_at')
+                ->chunk(200, function ($recibos) use ($handle) {
+                    foreach ($recibos as $recibo) {
+                        fputcsv($handle, [
+                            number_format((float) $recibo->amount, 2),
+                            $recibo->currency,
+                            $recibo->glosa,
+                            $recibo->descripcion_pago,
+                            $recibo->nro_cliente,
+                            $recibo->destination_bank,
+                            $recibo->alias,
+                            $recibo->created_at?->format('d/m/Y H:i'),
+                            $recibo->status->label(),
+                            $recibo->destination_account,
+                            $recibo->provider_order_number,
+                            $recibo->payer_name,
+                            $recibo->payer_document,
+                            $recibo->paid_at?->format('d/m/Y H:i'),
+                            $recibo->creator?->name,
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 }

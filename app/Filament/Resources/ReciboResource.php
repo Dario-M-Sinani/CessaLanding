@@ -65,7 +65,11 @@ class ReciboResource extends Resource
                         ->label('Monto')
                         ->formatStateUsing(fn (Recibo $record): string => number_format((float) $record->amount, 2).' '.$record->currency),
                     TextEntry::make('glosa')
-                        ->label('Glosa'),
+                        ->label('Glosa (enviada al proveedor)'),
+                    TextEntry::make('descripcion_pago')
+                        ->label('Descripción de Pago (constancia interna)')
+                        ->placeholder('—')
+                        ->columnSpanFull(),
                     TextEntry::make('nro_cliente')
                         ->label('N° Cliente')
                         ->placeholder('— (generado desde el panel)'),
@@ -166,6 +170,11 @@ class ReciboResource extends Resource
                     ->label('Fecha de Creación')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('descripcion_pago')
+                    ->label('Descripción de Pago')
+                    ->placeholder('—')
+                    ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
