@@ -17,6 +17,7 @@ class Content extends Model
         'alias',
         'summary',
         'full_text',
+        'documentos',
         'image_url',
         'show_image',
         'org_chart_image',
@@ -36,6 +37,7 @@ class Content extends Model
         'show_org_chart' => 'boolean',
         'staff_yearly_stats' => 'array',
         'gender_yearly_stats' => 'array',
+        'documentos' => 'array',
     ];
 
     public function category()

@@ -193,6 +193,10 @@ class GestorArchivos extends Page
                         ->acceptedFileTypes([
                             'image/jpeg', 'image/png', 'image/webp',
                             'application/pdf', 'application/zip', 'application/x-zip-compressed',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                            'application/vnd.ms-excel', // .xls
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+                            'application/msword', // .doc
                         ])
                         ->disk('public')
                         ->directory(fn () => $this->path !== '' ? $this->path : '.')

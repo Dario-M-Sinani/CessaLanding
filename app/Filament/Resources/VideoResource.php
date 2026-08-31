@@ -71,6 +71,7 @@ class VideoResource extends Resource
                     ->boolean(fn ($state) => $state === 'S'),
                 Tables\Columns\TextColumn::make('created_at')->label('Fecha')->dateTime('d/m/Y'),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),

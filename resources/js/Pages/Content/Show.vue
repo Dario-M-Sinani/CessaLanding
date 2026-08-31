@@ -17,8 +17,12 @@
           class="w-full max-h-[420px] object-contain rounded-2xl bg-gray-50 border border-gray-200"
         />
 
+        <!-- Widget Interactivo de Materiales para Nuevas Instalaciones -->
+        <SelectorMaterialesInstalacion v-if="content.alias === 'nuevas-instalaciones'" />
+
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 sm:p-12 shadow-sm">
           <ContentBody :html="content.full_text" />
+          <DocumentLinks v-if="documentos.length" :documents="documentos" />
         </div>
       </div>
     </div>
@@ -26,12 +30,24 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import ContentBody from '../../Components/ContentBody.vue';
+import DocumentLinks from '../../Components/DocumentLinks.vue';
+import SelectorMaterialesInstalacion from '../../Components/SelectorMaterialesInstalacion.vue';
 
-defineProps({
+const props = defineProps({
   content: Object,
 });
 
 const imageUrlFor = (url) => (url.startsWith('http') ? url : `/storage/${url}`);
+
+// content.documentos: [{ titulo, archivo (ruta relativa al disco) }] -- armado desde el panel
+// (ContentResource, sección "Documentos Adjuntos"), se muestran con el mismo componente de
+// tarjetas que ya usa ContentBody para las tablas de links migradas del legacy.
+const documentos = computed(() => (props.content.documentos ?? []).map((doc) => ({
+  href: `/storage/${doc.archivo}`,
+  label: doc.titulo,
+  ext: (doc.archivo.split('.').pop() || '').toLowerCase(),
+})));
 </script>

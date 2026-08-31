@@ -4,6 +4,7 @@ use App\Http\Controllers\ActualizarDatosController;
 use App\Http\Controllers\BuscarTramiteController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
+use App\Http\Controllers\ComprobanteTicketController;
 use App\Http\Controllers\ConsultaDeudaController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DemoActualizarDatosController;
@@ -133,3 +134,13 @@ Route::get('/rcadmin/qr-codes/{qrCode}/image', [\App\Http\Controllers\QrCodeImag
 Route::post('/api/pagos/sip/confirmar-pago', [SipCallbackController::class, 'confirmarPago'])
     ->middleware('sip.callback.auth')
     ->name('pagos.sip.callback');
+
+// Vista imprimible de comprobante / ticket simplificado para pagos por QR
+Route::get('/comprobante/ticket/{alias}', [ComprobanteTicketController::class, 'show'])
+    ->name('comprobante.ticket');
+
+// Vista imprimible en Blanco y Negro de la lista de materiales para nuevas instalaciones
+Route::get('/instalaciones/imprimir/{tipo}', [\App\Http\Controllers\InstalacionMaterialesController::class, 'imprimir'])
+    ->name('instalaciones.imprimir');
+
+

@@ -14,6 +14,7 @@ class GaleriaController extends Controller
     {
         $videos = Video::where('published', 'S')
             ->orderBy('position', 'asc')
+            ->orderByDesc('id')
             ->get();
 
         return Inertia::render('Galeria/Index', [

@@ -17,15 +17,17 @@ return new class extends Migration
 
     public function up(): void
     {
-        Schema::connection('demo_registros')->create('registros', function (Blueprint $table) {
-            $table->id();
-            $table->string('nro_cliente', 20);
-            $table->string('cuenta', 20);
-            $table->string('nombre')->nullable();
-            $table->string('email');
-            $table->string('phone', 20);
-            $table->timestamp('capturado_en');
-        });
+        if (!Schema::connection('demo_registros')->hasTable('registros')) {
+            Schema::connection('demo_registros')->create('registros', function (Blueprint $table) {
+                $table->id();
+                $table->string('nro_cliente', 20);
+                $table->string('cuenta', 20);
+                $table->string('nombre')->nullable();
+                $table->string('email');
+                $table->string('phone', 20);
+                $table->timestamp('capturado_en');
+            });
+        }
     }
 
     public function down(): void

@@ -12,3 +12,7 @@ Artisan::command('inspire', function () {
 // -- ver PLAN_MIGRACION_LARAVEL.md, Hostinger es shared hosting sin daemon para queue:work,
 // así que esto se resuelve con el scheduler en vez de un job en cola.
 Schedule::command('pagos:expirar-vencidos')->everyMinute();
+
+// No hace nada mientras services.cobranzas.enabled esté en false (default) -- ver
+// RegistrarFacturacionCobranzas y config/services.php.
+Schedule::command('pagos:registrar-facturacion')->everyMinute();

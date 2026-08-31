@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ReciboResource\Pages;
 
 use App\Filament\Resources\ReciboResource;
+use App\Services\Cobranzas\FacturacionRecibo;
 use App\Services\Payments\Contracts\QrPaymentProviderInterface;
 use App\Services\Payments\Exceptions\QrPaymentException;
 use App\Services\Payments\PaymentStatus;
@@ -22,6 +23,14 @@ class ViewRecibo extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('imprimirTicket')
+                ->label('Imprimir Ticket CESSA')
+                ->icon('heroicon-o-printer')
+                ->color('success')
+                ->url(fn (): string => route('comprobante.ticket', ['alias' => $this->record->alias]))
+                ->openUrlInNewTab()
+                ->visible(fn (): bool => in_array($this->record->status, [PaymentStatus::Pagado, PaymentStatus::Facturado], true)),
+
             Actions\Action::make('actualizarEstado')
                 ->label('Actualizar Estado')
                 ->icon('heroicon-o-arrow-path')
@@ -55,6 +64,29 @@ class ViewRecibo extends ViewRecord
                         ->success()
                         ->send();
                 }),
+
+            Actions\Action::make('reintentarFacturacion')
+                ->label('Reintentar Facturación')
+                ->icon('heroicon-o-document-currency-dollar')
+                ->color('warning')
+                ->visible(fn (): bool => $this->record->status === PaymentStatus::ErrorFacturacion)
+                ->action(function (FacturacionRecibo $facturacion): void {
+                    $facturacion->procesar($this->record);
+                    $this->record->refresh();
+
+                    if ($this->record->status === PaymentStatus::Facturado) {
+                        Notification::make()
+                            ->title('Factura registrada correctamente')
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Sigue sin poder facturarse')
+                            ->body($this->record->facturacion_error)
+                            ->danger()
+                            ->send();
+                    }
+                }),
         ];
     }
 
@@ -72,8 +104,15 @@ class ViewRecibo extends ViewRecord
             return;
         }
 
+        // SIP solo conoce sus propios estados (Pendiente/Pagado/Inhabilitado/Expirado/Error) --
+        // nunca sabe si ya se registró la factura acá. Si el recibo ya avanzó a Facturado o
+        // ErrorFacturacion, no dejar que este sync lo retroceda a "Pagado" a secas.
+        $yaAvanzoAFacturacion = in_array($this->record->status, [
+            PaymentStatus::Facturado, PaymentStatus::ErrorFacturacion,
+        ], true);
+
         $this->record->update([
-            'status' => $result->status,
+            'status' => $yaAvanzoAFacturacion ? $this->record->status : $result->status,
             'paid_at' => $result->processedAt ?? $this->record->paid_at,
             'provider_order_number' => $result->providerOrderNumber ?? $this->record->provider_order_number,
             'payer_account' => $result->payerAccount ?? $this->record->payer_account,

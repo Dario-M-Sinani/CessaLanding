@@ -34,7 +34,10 @@ class CessaApiService
     public function getPeriods(string $id = ''): array
     {
         $path = '/v1/periodos-tarifas' . ($id ? '/' . $id : '');
-        return $this->fixEncoding($this->client()->get($path)->json());
+
+        return Cache::remember('cessa_periods' . ($id ? ":{$id}" : ''), 3600, function () use ($path) {
+            return $this->fixEncoding($this->client()->get($path)->json());
+        });
     }
 
     public function getCategories(): array

@@ -232,6 +232,12 @@ class PagoQrController extends Controller
             'currency' => 'BOB',
             'glosa' => $glosa,
             'descripcion_pago' => $descripcionPago,
+            // Snapshot exacto de lo que se está pagando -- hace falta tal cual para registrar
+            // la factura real contra api-cobranzas-bancos una vez que el pago se confirma (ver
+            // FacturacionRecibo). $aPagar ya viene con `importe_firmado` calculado arriba, que
+            // no es un campo real de SIIC -- se guarda igual por si sirve de referencia, pero
+            // no reemplaza a `importe` (el campo real que probablemente espere "pagar").
+            'debt_items' => $aPagar->values()->all(),
             'status' => PaymentStatus::Pendiente,
             'expires_at' => $expiresAt,
             'qr_image_path' => $qrImagePath,
@@ -268,6 +274,9 @@ class PagoQrController extends Controller
             'status' => $recibo->status->value,
             'amount' => (string) $recibo->amount,
             'currency' => $recibo->currency,
+            'comprobante_url' => $recibo->comprobante_path
+                ? Storage::disk('public')->url($recibo->comprobante_path)
+                : null,
         ]);
     }
 }

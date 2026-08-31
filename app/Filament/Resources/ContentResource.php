@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Content;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -88,6 +89,58 @@ class ContentResource extends Resource
                     ->label('Contenido Completo')
                     ->required()
                     ->columnSpanFull(),
+                Forms\Components\Section::make('Documentos Adjuntos')
+                    ->description('Formularios, resoluciones, PDFs, etc. Se muestran como tarjetas debajo del contenido -- no hace falta editar el HTML de arriba para agregar/quitar uno.')
+                    ->columnSpanFull()
+                    ->schema([
+                        Forms\Components\Repeater::make('documentos')
+                            ->label('')
+                            ->schema([
+                                Forms\Components\FileUpload::make('archivo')
+                                    ->label('Archivo')
+                                    ->required()
+                                    ->directory(fn (Get $get) => 'documentos/'.Str::slug($get('../../alias') ?: 'contenidos'))
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                        'application/vnd.ms-excel',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        'application/msword',
+                                        'application/zip', 'application/x-zip-compressed',
+                                    ])
+                                    ->helperText('PDF, Excel, Word o ZIP. Arrastrá el archivo o hacé clic para buscarlo.')
+                                    ->preserveFilenames()
+                                    // Autocompleta el Título con el nombre del archivo apenas se sube -- para
+                                    // que quien carga el documento no tenga que pensar un título desde cero,
+                                    // solo ajustarlo si hace falta. No pisa un título que ya se haya escrito
+                                    // a mano (ej. al reemplazar el archivo de un documento existente).
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                        // $state acá es el TemporaryUploadedFile de Livewire (todavía no se
+                                        // guardó en disco) -- necesita ->getClientOriginalName() para el
+                                        // nombre real que eligió el usuario; el $state "a secas" (como string
+                                        // o el nombre temporal en disco) es algo tipo "phpXXXXXX", no sirve.
+                                        if (blank($state) || filled($get('titulo')) || ! is_object($state) || ! method_exists($state, 'getClientOriginalName')) {
+                                            return;
+                                        }
+
+                                        $nombre = pathinfo($state->getClientOriginalName(), PATHINFO_FILENAME);
+                                        $set('titulo', Str::headline(str_replace(['-', '_'], ' ', $nombre)));
+                                    })
+                                    ->columnSpan(1),
+                                Forms\Components\TextInput::make('titulo')
+                                    ->label('Título')
+                                    ->required()
+                                    ->helperText('Se completa solo con el nombre del archivo -- lo podés cambiar.')
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(3)
+                            ->itemLabel(fn (array $state): ?string => $state['titulo'] ?? 'Documento nuevo')
+                            ->reorderableWithButtons()
+                            ->addActionLabel('Agregar Documento')
+                            ->collapsible()
+                            ->collapsed(),
+                    ]),
                 Forms\Components\Section::make('Estructura Organizacional (bloque superior de la página)')
                     ->description('Organigrama y documento PEI que se muestran arriba del Directorio/Plantel Ejecutivo. Solo aplica a esta página.')
                     ->visible(fn (?Content $record) => $record?->alias === 'estructura-organizacional')

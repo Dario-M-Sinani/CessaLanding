@@ -20,6 +20,12 @@ class Recibo extends Model
         'currency',
         'glosa',
         'descripcion_pago',
+        'debt_items',
+        'cobranzas_uuid',
+        'comprobante_path',
+        'facturado_at',
+        'facturacion_intentos',
+        'facturacion_error',
         'status',
         'expires_at',
         'qr_image_path',
@@ -42,6 +48,8 @@ class Recibo extends Model
         'expires_at' => 'datetime',
         'paid_at' => 'datetime',
         'callback_payload' => 'array',
+        'debt_items' => 'array',
+        'facturado_at' => 'datetime',
     ];
 
     public function creator(): BelongsTo

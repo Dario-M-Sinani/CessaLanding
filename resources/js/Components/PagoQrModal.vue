@@ -41,6 +41,20 @@
             </div>
             <p class="text-base font-bold text-emerald-800">¡Pago recibido!</p>
             <p class="text-xs text-gray-500">Bs. {{ monto }}</p>
+
+            <a
+              v-if="comprobanteUrl"
+              :href="comprobanteUrl"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-lg text-xs transition-colors"
+            >
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+              Descargar comprobante
+            </a>
+            <p v-else class="text-[11px] text-gray-400">
+              Tu comprobante se está generando, va a estar disponible en unos minutos.
+            </p>
           </div>
 
           <!-- QR listo -->
@@ -99,8 +113,14 @@ const mensajeError = ref('');
 const qrImageUrl = ref('');
 const monto = ref('');
 const periodo = ref('');
+const comprobanteUrl = ref('');
 let alias = null;
 let pollTimer = null;
+let intentosComprobante = 0;
+// Cuántos sondeos de comprobante hacer después de "pagado" antes de dejar de insistir en
+// silencio (3s * 60 = 3min) -- la factura real se genera en background (ver
+// RegistrarFacturacionCobranzas, corre cada minuto), no bloquea el "¡Pago recibido!" de arriba.
+const MAX_INTENTOS_COMPROBANTE = 60;
 
 // Cuenta regresiva propia (el vencimiento real de 5 min lo hace cumplir el backend, ver
 // PagoQrController -- esto es solo la UI para que el cliente vea cuánto tiempo le queda).
@@ -183,10 +203,21 @@ const startPolling = () => {
       });
       const json = await response.json();
 
-      if (json.status === 'pagado') {
+      // "pagado", "facturado" y "error_facturacion" son las 3 caras del mismo hecho para el
+      // cliente: el dinero ya entró. La diferencia entre ellos es solo si el comprobante ya
+      // está listo para descargar o no -- nunca se le muestra un error por algo que va a
+      // resolverse en background (ver RegistrarFacturacionCobranzas).
+      if (['pagado', 'facturado', 'error_facturacion'].includes(json.status)) {
         monto.value = json.amount;
         estado.value = 'pagado';
-        clearInterval(pollTimer);
+
+        if (json.comprobante_url) {
+          comprobanteUrl.value = json.comprobante_url;
+          clearInterval(pollTimer);
+        } else if (++intentosComprobante >= MAX_INTENTOS_COMPROBANTE) {
+          // Se deja de insistir, pero el pago ya quedó confirmado igual -- no es un error.
+          clearInterval(pollTimer);
+        }
       } else if (['expirado', 'inhabilitado', 'error'].includes(json.status)) {
         mensajeError.value = 'El código QR ya no está disponible. Generá uno nuevo.';
         estado.value = 'error';

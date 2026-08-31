@@ -14,6 +14,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 
 class ReciboResource extends Resource
 {
@@ -55,9 +56,9 @@ class ReciboResource extends Resource
                         ->formatStateUsing(fn (PaymentStatus $state): string => $state->label())
                         ->color(fn (PaymentStatus $state): string => match ($state) {
                             PaymentStatus::Pendiente => 'warning',
-                            PaymentStatus::Pagado => 'success',
+                            PaymentStatus::Pagado, PaymentStatus::Facturado => 'success',
                             PaymentStatus::Inhabilitado => 'secondary',
-                            PaymentStatus::Expirado, PaymentStatus::Error => 'danger',
+                            PaymentStatus::Expirado, PaymentStatus::Error, PaymentStatus::ErrorFacturacion => 'danger',
                         }),
                     TextEntry::make('provider')
                         ->label('Proveedor'),
@@ -116,7 +117,41 @@ class ReciboResource extends Resource
                         ->label('Cuenta del Pagador')
                         ->placeholder('—'),
                 ])
-                ->visible(fn (Recibo $record): bool => $record->status === PaymentStatus::Pagado),
+                ->visible(fn (Recibo $record): bool => in_array($record->status, [
+                    PaymentStatus::Pagado, PaymentStatus::Facturado, PaymentStatus::ErrorFacturacion,
+                ], true)),
+
+            Section::make('Facturación (api-cobranzas-bancos)')
+                ->columns(2)
+                ->schema([
+                    TextEntry::make('cobranzas_uuid')
+                        ->label('UUID de Transacción')
+                        ->placeholder('—')
+                        ->copyable(),
+                    TextEntry::make('facturado_at')
+                        ->label('Facturado el')
+                        ->dateTime('d/m/Y H:i')
+                        ->placeholder('—'),
+                    TextEntry::make('comprobante_path')
+                        ->label('Comprobante')
+                        ->placeholder('—')
+                        ->formatStateUsing(fn (): string => 'Descargar factura (PDF)')
+                        ->url(fn (Recibo $record): ?string => $record->comprobante_path
+                            ? Storage::disk('public')->url($record->comprobante_path)
+                            : null)
+                        ->openUrlInNewTab()
+                        ->color('primary')
+                        ->visible(fn (Recibo $record): bool => filled($record->comprobante_path)),
+                    TextEntry::make('facturacion_error')
+                        ->label('Motivo del error')
+                        ->placeholder('—')
+                        ->color('danger')
+                        ->columnSpanFull()
+                        ->visible(fn (Recibo $record): bool => $record->status === PaymentStatus::ErrorFacturacion),
+                ])
+                ->visible(fn (Recibo $record): bool => in_array($record->status, [
+                    PaymentStatus::Pagado, PaymentStatus::Facturado, PaymentStatus::ErrorFacturacion,
+                ], true)),
         ]);
     }
 
@@ -142,9 +177,9 @@ class ReciboResource extends Resource
                     ->formatStateUsing(fn (PaymentStatus $state): string => $state->label())
                     ->color(fn (PaymentStatus $state): string => match ($state) {
                         PaymentStatus::Pendiente => 'warning',
-                        PaymentStatus::Pagado => 'success',
+                        PaymentStatus::Pagado, PaymentStatus::Facturado => 'success',
                         PaymentStatus::Inhabilitado => 'secondary',
-                        PaymentStatus::Expirado, PaymentStatus::Error => 'danger',
+                        PaymentStatus::Expirado, PaymentStatus::Error, PaymentStatus::ErrorFacturacion => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('destination_bank')
                     ->label('Banco Destino')
@@ -190,6 +225,13 @@ class ReciboResource extends Resource
                     ->options(['BOB' => 'Bolivianos', 'USD' => 'Dólares']),
             ])
             ->actions([
+                Tables\Actions\Action::make('ticket')
+                    ->label('Ticket')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->url(fn (Recibo $record): string => route('comprobante.ticket', ['alias' => $record->alias]))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Recibo $record): bool => in_array($record->status, [PaymentStatus::Pagado, PaymentStatus::Facturado], true)),
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([]);

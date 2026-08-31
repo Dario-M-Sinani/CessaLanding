@@ -17,11 +17,13 @@ return new class extends Migration
 
     public function up(): void
     {
-        Schema::connection('demo_registros')->create('configuraciones', function (Blueprint $table) {
-            $table->string('clave')->primary();
-            $table->text('valor')->nullable();
-            $table->timestamp('actualizado_en')->nullable();
-        });
+        if (!Schema::connection('demo_registros')->hasTable('configuraciones')) {
+            Schema::connection('demo_registros')->create('configuraciones', function (Blueprint $table) {
+                $table->string('clave')->primary();
+                $table->text('valor')->nullable();
+                $table->timestamp('actualizado_en')->nullable();
+            });
+        }
     }
 
     public function down(): void
