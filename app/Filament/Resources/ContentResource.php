@@ -176,22 +176,27 @@ class ContentResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('year')
                                     ->label('Año')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('clients')
                                     ->label('Clientes')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('employees')
                                     ->label('Total Trabajadores')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('permanentes')
                                     ->label('Trabajadores Fijos (opcional)')
-                                    ->numeric(),
+                                    ->integer()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('eventuales')
                                     ->label('Trabajadores Eventuales (opcional)')
-                                    ->numeric(),
+                                    ->integer()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                             ])
                             ->columns(3)
                             ->reorderable()
@@ -202,16 +207,19 @@ class ContentResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('year')
                                     ->label('Año')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('male')
                                     ->label('Personal Masculino')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                                 Forms\Components\TextInput::make('female')
                                     ->label('Personal Femenino')
-                                    ->numeric()
-                                    ->required(),
+                                    ->integer()
+                                    ->required()
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? (int) $state : null),
                             ])
                             ->columns(3)
                             ->reorderable()

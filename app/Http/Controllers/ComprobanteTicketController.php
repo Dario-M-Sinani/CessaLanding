@@ -85,7 +85,8 @@ class ComprobanteTicketController extends Controller
 
         // 2. Fallback: Construir a partir de los datos guardados en el Recibo
         $primerItem = $recibo->debt_items[0] ?? [];
-        $periodo = $primerItem['detalle'] ?? ($primerItem['mes'] ? "Mes {$primerItem['mes']}/{$primerItem['anio']}" : 'Servicio');
+        $periodo = $primerItem['detalle']
+            ?? (isset($primerItem['mes'], $primerItem['anio']) ? "Mes {$primerItem['mes']}/{$primerItem['anio']}" : 'Servicio');
 
         $detalleItems = collect($recibo->debt_items ?? [])->map(function ($item) {
             return [

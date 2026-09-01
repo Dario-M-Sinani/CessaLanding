@@ -43,33 +43,6 @@
             :slices="latestGenderSlices"
             aria-label="Gráfico de composición de personal por género"
           />
-          <details class="text-xs text-gray-600">
-            <summary class="cursor-pointer font-semibold text-blue-900 hover:underline">Ver datos en tabla</summary>
-            <div class="overflow-x-auto mt-3">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="border-b border-gray-300 text-gray-500 uppercase text-[11px] tracking-wider">
-                    <th class="py-2 pr-4">Gestión</th>
-                    <th class="py-2 pr-4">Masculino</th>
-                    <th class="py-2 pr-4">% Masculino</th>
-                    <th class="py-2 pr-4">Femenino</th>
-                    <th class="py-2 pr-4">% Femenino</th>
-                    <th class="py-2">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="row in genderTableRows" :key="row.year" class="border-b border-gray-200">
-                    <td class="py-2 pr-4">{{ row.year }}</td>
-                    <td class="py-2 pr-4">{{ formatNumber(row.male) }}</td>
-                    <td class="py-2 pr-4">{{ row.malePct.toFixed(2) }}%</td>
-                    <td class="py-2 pr-4">{{ formatNumber(row.female) }}</td>
-                    <td class="py-2 pr-4">{{ row.femalePct.toFixed(2) }}%</td>
-                    <td class="py-2">{{ formatNumber(row.total) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </details>
         </div>
       </div>
     </div>
@@ -86,8 +59,6 @@ import PieChart from '../../Components/Charts/PieChart.vue';
 const props = defineProps({
   content: Object,
 });
-
-const formatNumber = (v) => new Intl.NumberFormat('es-BO').format(v);
 
 const staffStats = computed(() => props.content?.staff_yearly_stats || []);
 const genderStats = computed(() => props.content?.gender_yearly_stats || []);
@@ -122,17 +93,4 @@ const latestGenderSlices = computed(() => {
   ];
 });
 
-const genderTableRows = computed(() =>
-  genderStats.value.map((g) => {
-    const total = g.male + g.female;
-    return {
-      year: g.year,
-      male: g.male,
-      female: g.female,
-      total,
-      malePct: total ? (g.male / total) * 100 : 0,
-      femalePct: total ? (g.female / total) * 100 : 0,
-    };
-  })
-);
 </script>
