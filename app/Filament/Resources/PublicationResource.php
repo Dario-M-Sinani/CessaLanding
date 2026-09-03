@@ -6,9 +6,12 @@ use App\Filament\Resources\PublicationResource\Pages;
 use App\Models\Publication;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class PublicationResource extends Resource
 {
@@ -54,6 +57,56 @@ class PublicationResource extends Resource
                         'N' => 'Borrador / Oculto',
                     ])
                     ->default('S'),
+                Forms\Components\Section::make('Documentos Adjuntos')
+                    ->description('Pliegos, bases, formularios, etc. Aparecen como botones de descarga debajo del proceso en /procesos.')
+                    ->columnSpanFull()
+                    ->schema([
+                        Forms\Components\Repeater::make('documents')
+                            ->relationship()
+                            ->label('')
+                            ->schema([
+                                Forms\Components\FileUpload::make('url')
+                                    ->label('Archivo')
+                                    ->required()
+                                    ->directory('documentos/procesos')
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                        'application/vnd.ms-excel',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        'application/msword',
+                                        'application/zip', 'application/x-zip-compressed',
+                                    ])
+                                    ->helperText('PDF, Excel, Word o ZIP.')
+                                    ->preserveFilenames()
+                                    // Mismo patrón que ContentResource: autocompleta el Título con el
+                                    // nombre del archivo (getClientOriginalName(), $state acá es el
+                                    // TemporaryUploadedFile, no un string), sin pisar un título ya escrito.
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                        if (blank($state) || filled($get('title')) || ! is_object($state) || ! method_exists($state, 'getClientOriginalName')) {
+                                            return;
+                                        }
+
+                                        $nombre = pathinfo($state->getClientOriginalName(), PATHINFO_FILENAME);
+                                        $set('title', Str::headline(str_replace(['-', '_'], ' ', $nombre)));
+                                    })
+                                    ->columnSpan(1),
+                                Forms\Components\TextInput::make('title')
+                                    ->label('Título')
+                                    ->required()
+                                    ->maxLength(240)
+                                    ->helperText('Se completa solo con el nombre del archivo -- lo podés cambiar.')
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(3)
+                            ->itemLabel(fn (array $state): ?string => $state['title'] ?? 'Documento nuevo')
+                            ->reorderableWithButtons()
+                            ->orderColumn('position')
+                            ->collapsed()
+                            ->collapsible()
+                            ->addActionLabel('Agregar Documento'),
+                    ]),
             ]);
     }
 
