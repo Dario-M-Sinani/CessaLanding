@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ActualizarDatosController;
 use App\Http\Controllers\BuscarTramiteController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
@@ -75,14 +74,6 @@ Route::post('/api/pagos/generar-qr', [PagoQrController::class, 'generar'])
     ->middleware('throttle:10,1');
 Route::get('/api/pagos/estado-qr/{alias}', [PagoQrController::class, 'estado'])
     ->middleware('throttle:60,1');
-
-Route::get('/actualizar-datos', [ActualizarDatosController::class, 'index'])->name('actualizar-datos');
-Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class, 'verificarCuenta'])
-    ->middleware('throttle:10,1');
-Route::post('/api/actualizar-datos/enviar-codigos', [ActualizarDatosController::class, 'enviarCodigos'])
-    ->middleware('throttle:5,1');
-Route::post('/api/actualizar-datos/confirmar-codigos', [ActualizarDatosController::class, 'confirmarCodigos'])
-    ->middleware('throttle:10,1');
 
 // Versión "demo": misma verificación real (SIIC + doble código), pero pensada para ser
 // llamada desde un sitio estático completamente aparte (ver DemoActualizarDatosController)
