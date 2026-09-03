@@ -3,6 +3,8 @@
 namespace App\Filament\Support;
 
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Illuminate\Support\Facades\Storage;
 
 class FileManagerAction
@@ -62,20 +64,30 @@ class FileManagerAction
             // se hacía en dos pasos desde JS ($wire.set() + cerrar el modal a mano) y la respuesta
             // del primer paso podía llegar a mitad de la transición de cierre del segundo,
             // remorfeando el modal a medio cerrar -- se veía "colgado" (ver ESTADO_SEGURIDAD_MIGRACION.md).
-            ->action(function (array $arguments, $livewire) use ($targetField, $valueType, $multiple) {
+            //
+            // $set/$get (en vez de armar "data.{$targetField}" a mano con data_set($livewire, ...))
+            // resuelven la ruta RELATIVA al contenedor real del campo al que está atada esta acción
+            // (Action::resolveDefaultClosureDependencyForEvaluationByName() los liga a
+            // $this->getComponent()->getSetCallback()/getGetCallback()) -- así funciona igual si el
+            // campo vive en la raíz del formulario o anidado dentro de un item de Repeater (antes
+            // "data.{$targetField}" siempre apuntaba a la raíz y fallaba en silencio dentro de un
+            // Repeater, por eso no se usaba ahí -- ver ESTADO_SEGURIDAD_MIGRACION.md §-1octies).
+            ->action(function (array $arguments, Set $set, Get $get) use ($targetField, $valueType, $multiple) {
                 $value = $valueType === 'path' ? ($arguments['path'] ?? null) : ($arguments['url'] ?? null);
 
                 if (blank($value)) {
                     return;
                 }
 
-                $statePath = "data.{$targetField}";
-
                 if ($valueType === 'path') {
-                    $current = $multiple ? array_values((array) data_get($livewire, $statePath, [])) : [];
-                    data_set($livewire, $statePath, [...$current, $value]);
+                    // FileUpload guarda su estado en vivo como array incluso sin multiple()
+                    // -- un string suelto rompe su propia validación interna (BaseFileUpload
+                    // registra una regla que exige array $value). $multiple decide si se
+                    // agrega a lo que ya había o se reemplaza, nunca si se envuelve o no.
+                    $current = $multiple ? array_values((array) ($get($targetField) ?? [])) : [];
+                    $set($targetField, [...$current, $value]);
                 } else {
-                    data_set($livewire, $statePath, $value);
+                    $set($targetField, $value);
                 }
             });
     }

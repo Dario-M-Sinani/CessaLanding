@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PublicationResource\Pages;
+use App\Filament\Support\FileManagerAction;
 use App\Models\Publication;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -79,6 +80,7 @@ class PublicationResource extends Resource
                                     ])
                                     ->helperText('PDF, Excel, Word o ZIP.')
                                     ->preserveFilenames()
+                                    ->hintAction(FileManagerAction::make('url', 'documentos/procesos', 'path'))
                                     // Mismo patrón que ContentResource: autocompleta el Título con el
                                     // nombre del archivo (getClientOriginalName(), $state acá es el
                                     // TemporaryUploadedFile, no un string), sin pisar un título ya escrito.

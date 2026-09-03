@@ -27,9 +27,15 @@ class InformacionController extends Controller
     {
         $search = $request->string('q')->trim()->toString();
 
+        // 'position' es el orden manual dentro de cada Publicación/proceso (la mayoría de
+        // filas empatan en 1) -- sin desempate, MySQL no garantiza qué fila empatada gana,
+        // así que un documento recién subido no aparecía primero de forma confiable. Mismo
+        // fix que la Galería de Videos (ver ESTADO_SEGURIDAD_MIGRACION.md §-1quinquies):
+        // el orden manual sigue mandando, y entre empates gana el más reciente (id más alto).
         $documents = Document::where('published', 'S')
             ->when($search !== '', fn ($query) => $query->where('title', 'like', '%'.$search.'%'))
             ->orderBy('position', 'asc')
+            ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
 
