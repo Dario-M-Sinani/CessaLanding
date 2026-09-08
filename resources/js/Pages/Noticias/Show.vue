@@ -8,7 +8,7 @@
         </Link>
 
         <div class="space-y-4">
-          <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
+          <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-1">
             Prensa y Comunicados
           </span>
           <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-950 tracking-tight leading-tight">{{ news.title }}</h1>
@@ -39,7 +39,7 @@
           <Link
             v-if="previous"
             :href="`/noticias/${previous.id}`"
-            class="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+            class="flex-1 min-w-0 flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
           >
             <span class="text-blue-900">←</span>
             <span class="min-w-0">
@@ -52,7 +52,7 @@
           <Link
             v-if="next"
             :href="`/noticias/${next.id}`"
-            class="flex-1 flex items-center justify-end gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-right"
+            class="flex-1 min-w-0 flex items-center justify-end gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-right"
           >
             <span class="min-w-0">
               <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Siguiente</span>
