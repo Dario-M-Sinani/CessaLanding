@@ -53,6 +53,7 @@ Route::prefix('informacion')->name('informacion.')->group(function () {
     Route::get('/documentos', [InformacionController::class, 'documentos'])->name('documentos');
     Route::get('/faqs', [InformacionController::class, 'faqs'])->name('faqs');
     Route::get('/consejos-de-seguridad', [InformacionController::class, 'consejosSeguridad'])->name('consejos-de-seguridad');
+    Route::get('/puntos-de-cobranza', [InformacionController::class, 'puntosCobranza'])->name('puntos-de-cobranza');
 });
 
 // Servicios Virtuales (Dropdown)
