@@ -121,11 +121,6 @@
             <li><Link href="/calculadora" class="hover:text-amber-400 transition-colors">Cálculo de Consumo</Link></li>
             <li><Link href="/procesos" class="hover:text-amber-400 transition-colors">Licitaciones y Convocatorias</Link></li>
             <li><Link href="/informacion/documentos" class="hover:text-amber-400 transition-colors">Documentos Institucionales</Link></li>
-            <li>
-              <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" class="hover:text-amber-400 transition-colors">
-                Pago de Factura Digital (QR)
-              </a>
-            </li>
           </ul>
         </div>
 
@@ -164,25 +159,13 @@
 
       <!-- Copyright Bottom Bar -->
       <div class="border-t border-neutral-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500">
-          <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3 text-center sm:text-left">
-            <span>Copyright &copy; {{ new Date().getFullYear() }} CESSA.</span>
-            <span class="hidden sm:inline text-neutral-700">•</span>
-            <span class="inline-flex items-center gap-1.5 text-neutral-400">
-              <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-              Desarrollado por <span class="text-neutral-300 font-semibold">DTIC CESSA</span>
-            </span>
-          </div>
-
-          <a
-            href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA"
-            target="_blank"
-            class="flex items-center gap-1.5 text-neutral-600 hover:text-neutral-400 transition-colors"
-            title="Pago de factura digital mediante QR (Síntesis)"
-          >
-            <img src="/img/footer/pago-qr.png" alt="Síntesis" class="h-4 w-auto opacity-70" />
-            <span class="text-[10px]">Pago QR vía Síntesis</span>
-          </a>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs text-neutral-500 text-center sm:text-left">
+          <span>Copyright &copy; {{ new Date().getFullYear() }} CESSA.</span>
+          <span class="hidden sm:inline text-neutral-700">•</span>
+          <span class="inline-flex items-center gap-1.5 text-neutral-400">
+            <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            Desarrollado por <span class="text-neutral-300 font-semibold">DTIC CESSA</span>
+          </span>
         </div>
       </div>
     </footer>

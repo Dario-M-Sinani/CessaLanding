@@ -199,6 +199,9 @@
               <Link href="/informacion/faqs" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Preguntas Frecuentes
               </Link>
+              <Link href="/informacion/puntos-de-cobranza" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Puntos de Cobranza
+              </Link>
               <Link href="/contenido/tramites-derechos-y-requisitos" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Trámites, Derechos y Requisitos
               </Link>
@@ -308,6 +311,9 @@
               <Link href="/buscar-tramite" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Buscar Trámite
               </Link>
+              <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Pago con Síntesis
+              </a>
             </div>
           </div>
         </div>
@@ -361,18 +367,16 @@
     </div>
 
     <!-- Mobile Drawer -->
-    <!-- Solo en el Home el header es fixed (queda fuera del flujo del documento), así que ahí
-         el drawer necesita su propio scroll interno acotado a la altura real de nav (si no, el
-         gesto de scroll se le escapa a la página de atrás). En el resto de las páginas el header
-         es sticky (sigue en el flujo normal), así que el drawer simplemente empuja el contenido
-         y la página entera scrollea -- no hace falta (ni conviene) recortarlo ahí. -->
+    <!-- Scroll interno acotado a la altura real de nav en todas las páginas -- el body queda
+         bloqueado (overflow:hidden) mientras el drawer está abierto (ver watch(mobileOpen)),
+         así que el drawer es lo único que puede scrollear. Antes esto solo aplicaba en Home
+         (el único header fixed) y en el resto se dejaba que la página entera scrolleara con el
+         drawer -- en iOS Safari (confirmado iPhone 17 Pro Max) el scroll se le "escapaba" al
+         body igual, con o sin header fixed, así que ahora es igual en todas las páginas. -->
     <div
       v-if="mobileOpen"
-      :class="[
-        'lg:hidden bg-white border-b border-gray-200 px-4 py-4 space-y-3',
-        isHomePage ? 'overflow-y-auto overscroll-contain' : '',
-      ]"
-      :style="isHomePage ? { maxHeight: 'calc(100vh - var(--nav-height, 120px))' } : null"
+      class="lg:hidden bg-white border-b border-gray-200 px-4 py-4 space-y-3 overflow-y-auto overscroll-contain"
+      :style="{ maxHeight: 'calc(100vh - var(--nav-height, 120px))' }"
     >
       <div class="space-y-1">
         <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">La Compañía</span>
@@ -396,6 +400,7 @@
         <Link href="/informacion/cortes-programados" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Cortes Programados</Link>
         <Link href="/informacion/documentos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Documentos Institucionales</Link>
         <Link href="/informacion/faqs" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Preguntas Frecuentes</Link>
+        <Link href="/informacion/puntos-de-cobranza" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Puntos de Cobranza</Link>
         <Link href="/contenido/tramites-derechos-y-requisitos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Trámites, Derechos y Requisitos</Link>
       </div>
 
@@ -432,6 +437,7 @@
         <Link href="/suspension-servicio" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Suspensión Temporal o Definitiva</Link>
         <Link href="/otras-solicitudes" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Otras Solicitudes</Link>
         <Link href="/buscar-tramite" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Buscar Trámite</Link>
+        <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Pago con Síntesis</a>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
@@ -449,11 +455,19 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 
 const openDropdown = ref(null);
 const mobileOpen = ref(false);
+
+// iOS Safari (confirmado en iPhone 17 Pro Max) deja "escapar" el gesto de scroll del
+// drawer hacia la página de atrás aunque el drawer tenga su propio overflow-y-auto --
+// el fix real es bloquear el scroll del body mientras el drawer está abierto, no solo
+// darle overflow al drawer.
+watch(mobileOpen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+});
 const mobileSearchOpen = ref(false);
 const searchQuery = ref('');
 const imageError = ref(false);
@@ -531,6 +545,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', updateAtTop);
   clearTimeout(idleTimer);
   if (resizeObserver) resizeObserver.disconnect();
+  document.body.style.overflow = '';
 });
 </script>
 
