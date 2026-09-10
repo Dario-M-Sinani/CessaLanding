@@ -186,10 +186,13 @@
         </div>
       </div>
     </footer>
+
+    <MiniAsistente />
   </div>
 </template>
 
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import Navbar from '../Components/Navbar.vue';
+import MiniAsistente from '../Components/MiniAsistente.vue';
 </script>

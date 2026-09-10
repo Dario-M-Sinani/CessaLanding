@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActualizarDatosController;
+use App\Http\Controllers\AsistenteController;
 use App\Http\Controllers\BuscarTramiteController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
@@ -28,6 +29,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/buscar', [BusquedaController::class, 'index'])
     ->middleware('throttle:30,1')
     ->name('buscar');
+
+// Mini asistente del footer (widget flotante, ver MiniAsistente.vue) --
+// solo expone las FAQs publicadas, el resto (accesos rápidos) vive
+// hardcodeado en el propio componente.
+Route::get('/api/asistente/faqs', [AsistenteController::class, 'faqs'])
+    ->middleware('throttle:30,1');
 
 // La Compañía (Dropdown)
 Route::prefix('la-compania')->name('la-compania.')->group(function () {
