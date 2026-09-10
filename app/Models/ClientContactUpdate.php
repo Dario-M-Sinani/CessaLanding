@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Model;
  * Datos", ya verificado con un código de un solo uso enviado por correo. SIIC no expone un
  * endpoint de escritura, así que esta tabla es la lista que Atención al Cliente revisa para
  * aplicar el cambio ahí manualmente (ver App\Http\Controllers\ActualizarDatosController y
- * App\Filament\Resources\ClientContactUpdateResource). `phone` es nullable y queda vacío en
- * los registros nuevos -- el flujo actual no pide celular.
+ * App\Filament\Resources\ClientContactUpdateResource). `phone` se pide y se guarda, pero NO
+ * se verifica por SMS -- solo el correo lleva código de un solo uso (columna nullable por si
+ * en algún momento se reintroduce un flujo que no lo pida).
  */
 class ClientContactUpdate extends Model
 {

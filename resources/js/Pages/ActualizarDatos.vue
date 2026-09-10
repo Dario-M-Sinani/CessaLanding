@@ -120,6 +120,21 @@
               <p class="text-[11px] text-gray-500 mt-1.5">Aquí llegará tu aviso de cobranza a partir de ahora.</p>
             </div>
 
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">N° de Celular</label>
+              <input
+                :value="contacto.phone"
+                @input="onPhoneInput"
+                type="text"
+                inputmode="numeric"
+                placeholder="Ejemplo: 71234567"
+                maxlength="8"
+                required
+                class="w-full sm:w-56 px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm font-mono"
+              />
+              <p class="text-[11px] text-gray-500 mt-1.5">Solo se guarda como dato de contacto -- no te enviamos ningún código por SMS.</p>
+            </div>
+
             <button
               type="submit"
               :disabled="loading"
@@ -201,7 +216,7 @@ const formatError = ref('');
 const nombreAbonado = ref('');
 
 const verificacion = reactive({ nro_cliente: '', nro_cuenta: '' });
-const contacto = reactive({ email: '' });
+const contacto = reactive({ email: '', phone: '' });
 const codigos = reactive({ codigo_email: '' });
 
 const getCookie = (name) => {
@@ -222,6 +237,12 @@ const postJson = async (url, body) => {
   });
 
   return response.json();
+};
+
+const onPhoneInput = (e) => {
+  const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+  contacto.phone = digits;
+  e.target.value = digits;
 };
 
 const onNroCuentaInput = (e) => {
@@ -276,6 +297,7 @@ const enviarCodigo = async () => {
   try {
     const json = await postJson('/api/actualizar-datos/enviar-codigo', {
       email: contacto.email,
+      phone: contacto.phone,
     });
 
     if (json.success) {

@@ -19,10 +19,11 @@ use Inertia\Response;
  * Flujo público de "Actualizar Datos": el abonado se verifica con nro_cliente + N° de Cuenta
  * (mismo doble factor que Consulta de Deuda, contra SIIC) y después confirma su correo con un
  * código de un solo uso. A diferencia de la primera versión (agosto 2026, ver commit
- * 748dee3 que la sacó del sitio), esta NO pide ni verifica celular/SMS -- solo correo, a
- * pedido explícito del usuario. SIIC no tiene un endpoint de escritura conocido hoy, así que
- * el resultado se guarda en ClientContactUpdate (columna `phone` ahora nullable, queda vacía
- * en los registros que nazcan de este flujo).
+ * 748dee3 que la sacó del sitio), esta NO verifica celular por SMS -- el celular se pide y se
+ * guarda (validado, 7-8 dígitos), pero solo el correo lleva código de un solo uso. SIIC no
+ * tiene un endpoint de escritura conocido hoy, así que el resultado se guarda en
+ * ClientContactUpdate (columna `phone` nullable -- queda vacía solo si en algún momento se
+ * reintroduce un flujo que no la pida).
  *
  * La identidad de la sesión (session()->getId()) es la que ata cada paso al siguiente: el
  * frontend nunca vuelve a mandar nro_cliente/cuenta después de verificar, así que no puede
@@ -127,6 +128,7 @@ class ActualizarDatosController extends Controller
 
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:150'],
+            'phone' => ['required', 'digits_between:7,8'],
         ]);
 
         $throttleKey = 'actualizar-datos-otp:'.$request->session()->getId();
@@ -144,6 +146,7 @@ class ActualizarDatosController extends Controller
 
         Cache::put('actualizar_datos:otp:'.$request->session()->getId(), [
             'email' => $validated['email'],
+            'phone' => $validated['phone'],
             'email_code_hash' => Hash::make($codigoEmail),
             'intentos' => 0,
         ], now()->addMinutes(self::OTP_TTL_MINUTES));
@@ -211,6 +214,7 @@ class ActualizarDatosController extends Controller
             [
                 'client_name' => $cuenta['nombre'],
                 'email' => $otp['email'],
+                'phone' => $otp['phone'],
                 'email_verified_at' => now(),
             ],
         );
