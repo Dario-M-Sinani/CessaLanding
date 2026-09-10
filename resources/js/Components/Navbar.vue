@@ -274,7 +274,7 @@
         <div class="relative group" @mouseenter="openDropdown = 'servicios'" @mouseleave="openDropdown = null">
           <button
             class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-900 hover:bg-gray-50 flex items-center space-x-1 transition-all"
-            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': ['/consulta-deuda', '/calculadora', '/nueva-conexion', '/suspension-servicio', '/otras-solicitudes', '/buscar-tramite', '/importante/estructura-tarifaria', '/actualizar-datos'].includes($page.url) }"
+            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': ['/consulta-deuda', '/calculadora', '/importante/estructura-tarifaria', '/actualizar-datos'].includes($page.url) }"
           >
             <span>Servicios</span>
             <svg class="w-3.5 h-3.5 text-amber-500 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,6 +299,30 @@
               <Link href="/importante/estructura-tarifaria" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Estructura Tarifaria
               </Link>
+              <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Pago con Síntesis
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dropdown 3bis: Trámites -->
+        <div class="relative group" @mouseenter="openDropdown = 'tramites'" @mouseleave="openDropdown = null">
+          <button
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-900 hover:bg-gray-50 flex items-center space-x-1 transition-all"
+            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': ['/nueva-conexion', '/suspension-servicio', '/otras-solicitudes', '/buscar-tramite'].includes($page.url) }"
+          >
+            <span>Trámites</span>
+            <svg class="w-3.5 h-3.5 text-amber-500 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <div
+            v-show="openDropdown === 'tramites'"
+            class="absolute top-full left-0 w-60 pt-1 shadow-xl z-50 transition-all duration-200"
+          >
+            <div class="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-2xl">
               <Link href="/nueva-conexion" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Nueva Conexión
               </Link>
@@ -311,9 +335,6 @@
               <Link href="/buscar-tramite" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Buscar Trámite
               </Link>
-              <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
-                Pago con Síntesis
-              </a>
             </div>
           </div>
         </div>
@@ -433,11 +454,15 @@
         <Link href="/actualizar-datos" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Actualizar Datos de Contacto</Link>
         <Link href="/calculadora" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Calculadora de Consumo</Link>
         <Link href="/importante/estructura-tarifaria" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Estructura Tarifaria</Link>
+        <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Pago con Síntesis</a>
+      </div>
+
+      <div class="space-y-1 border-t border-gray-100 pt-2">
+        <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider block px-3 py-1">Trámites</span>
         <Link href="/nueva-conexion" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Nueva Conexión</Link>
         <Link href="/suspension-servicio" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Suspensión Temporal o Definitiva</Link>
         <Link href="/otras-solicitudes" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Otras Solicitudes</Link>
         <Link href="/buscar-tramite" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Buscar Trámite</Link>
-        <a href="https://recaudodigital.sintesis.com.bo/suitepagos-ui/company/CESSA" target="_blank" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Pago con Síntesis</a>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">
