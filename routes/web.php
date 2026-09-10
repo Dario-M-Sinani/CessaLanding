@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActualizarDatosController;
 use App\Http\Controllers\BuscarTramiteController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\CalculadoraConsumoController;
@@ -67,6 +68,16 @@ Route::get('/buscar-tramite', [BuscarTramiteController::class, 'index'])->name('
 Route::post('/buscar-tramite', [BuscarTramiteController::class, 'buscar'])
     ->middleware('throttle:10,1')
     ->name('buscar-tramite.buscar');
+
+// Actualizar Datos de Contacto: verificación por N° de Cliente + N° de Cuenta contra SIIC,
+// luego confirmación de correo por código de un solo uso (ver ActualizarDatosController).
+Route::get('/actualizar-datos', [ActualizarDatosController::class, 'index'])->name('actualizar-datos');
+Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class, 'verificarCuenta'])
+    ->middleware('throttle:10,1');
+Route::post('/api/actualizar-datos/enviar-codigo', [ActualizarDatosController::class, 'enviarCodigo'])
+    ->middleware('throttle:5,1');
+Route::post('/api/actualizar-datos/confirmar-codigo', [ActualizarDatosController::class, 'confirmarCodigo'])
+    ->middleware('throttle:10,1');
 
 // Pago por QR propio (BISA/SIP), disparado por el cliente desde Consulta de Deuda -- junto a
 // la opción existente de Síntesis. Ver PagoQrController.

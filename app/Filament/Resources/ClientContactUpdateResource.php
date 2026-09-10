@@ -56,6 +56,7 @@ class ClientContactUpdateResource extends Resource
                     ->copyable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Celular')
+                    ->placeholder('—')
                     ->searchable()
                     ->copyable(),
                 Tables\Columns\TextColumn::make('created_at')
