@@ -61,7 +61,7 @@
 
           <!-- App Móvil -->
           <div class="space-y-2 pt-1">
-            <p class="text-xs font-bold text-amber-400 uppercase tracking-wide">Descargá Nuestra App</p>
+            <p class="text-xs font-bold text-amber-400 uppercase tracking-wide">Descarga Nuestra App</p>
             <div class="flex flex-col space-y-2">
               <a
                 href="https://apps.apple.com/bo/app/cessa/id6453522570"

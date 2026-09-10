@@ -4,7 +4,7 @@
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">Número de Teléfono (fijo)</label>
         <input v-model="form.phone" type="text" maxlength="15" placeholder="Opcional" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 text-sm focus:border-blue-900 focus:outline-none" />
-        <p class="mt-1 text-[11px] text-gray-500">Si no tenés teléfono fijo, poné tu número de celular también en este campo.</p>
+        <p class="mt-1 text-[11px] text-gray-500">Si no tienes teléfono fijo, pon tu número de celular también en este campo.</p>
       </div>
 
       <div>
