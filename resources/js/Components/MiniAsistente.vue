@@ -1,13 +1,33 @@
 <template>
   <Teleport to="body">
+    <!-- Globito "¿Te ayudo?", solo antes de la primera vez que se abre -->
+    <Transition
+      enter-active-class="transition-all duration-300"
+      enter-from-class="opacity-0 translate-y-1"
+      leave-active-class="transition-all duration-200"
+      leave-to-class="opacity-0 translate-y-1"
+    >
+      <div
+        v-if="mostrarGlobito"
+        class="fixed bottom-[4.7rem] right-5 z-[90] max-w-[11rem] bg-white text-blue-950 text-xs font-semibold px-3.5 py-2.5 rounded-2xl rounded-br-sm shadow-xl border border-gray-100"
+      >
+        ¿Te puedo ayudar?
+      </div>
+    </Transition>
+
     <!-- Botón flotante -->
+    <span
+      v-if="!open && !yaInteractuo"
+      class="fixed bottom-5 right-5 z-[89] w-14 h-14 rounded-full bg-amber-400 opacity-75 animate-ping pointer-events-none"
+      aria-hidden="true"
+    ></span>
     <button
       type="button"
       :aria-label="open ? 'Cerrar asistente' : 'Abrir asistente'"
-      class="fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-blue-950 hover:bg-blue-900 text-white shadow-xl flex items-center justify-center transition-all hover:scale-105"
+      class="fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-blue-950 hover:bg-blue-900 text-white shadow-xl flex items-center justify-center transition-all hover:scale-105 p-2"
       @click="toggle"
     >
-      <svg v-if="!open" class="w-6 h-6 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" /></svg>
+      <img v-if="!open" src="/img/Logo_CESSA_240x240.png" alt="" class="w-full h-full object-contain" />
       <svg v-else class="w-6 h-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
     </button>
 
@@ -27,10 +47,9 @@
           v-for="accion in accesos"
           :key="accion.href"
           :href="accion.href"
-          class="flex flex-col items-center text-center gap-1 px-2 py-3 rounded-xl bg-gray-50 hover:bg-amber-50 border border-gray-200 hover:border-amber-300 transition-colors"
+          class="flex items-center justify-center text-center px-2 py-3 rounded-xl bg-gray-50 hover:bg-amber-50 border border-gray-200 hover:border-amber-300 transition-colors"
           @click="open = false"
         >
-          <span class="text-lg" aria-hidden="true">{{ accion.icono }}</span>
           <span class="text-[11px] font-semibold text-gray-700 leading-tight">{{ accion.label }}</span>
         </Link>
       </div>
@@ -90,24 +109,28 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 const open = ref(false);
+const yaInteractuo = ref(false);
+const mostrarGlobito = ref(false);
 const busqueda = ref('');
 const expandidoId = ref(null);
 const cargando = ref(false);
 const error = ref(false);
+let globitoTimer = null;
+let globitoOcultarTimer = null;
 const faqs = ref([]);
 let cargadas = false;
 
 const accesos = [
-  { label: 'Consultar Deuda', href: '/consulta-deuda', icono: '💡' },
-  { label: 'Cortes Programados', href: '/informacion/cortes-programados', icono: '🛠️' },
-  { label: 'Nueva Conexión', href: '/nueva-conexion', icono: '🔌' },
-  { label: 'Actualizar Datos', href: '/actualizar-datos', icono: '✉️' },
-  { label: 'Calculadora', href: '/calculadora', icono: '🧮' },
-  { label: 'Contáctenos', href: '/la-compania/contacto', icono: '📞' },
+  { label: 'Consultar Deuda', href: '/consulta-deuda' },
+  { label: 'Cortes Programados', href: '/informacion/cortes-programados' },
+  { label: 'Nueva Conexión', href: '/nueva-conexion' },
+  { label: 'Actualizar Datos', href: '/actualizar-datos' },
+  { label: 'Calculadora', href: '/calculadora' },
+  { label: 'Contáctenos', href: '/la-compania/contacto' },
 ];
 
 // ̀-ͯ son las marcas diacríticas combinantes que separa NFD --
@@ -148,6 +171,27 @@ const cargarFaqs = async () => {
 
 const toggle = () => {
   open.value = !open.value;
+  yaInteractuo.value = true;
+  mostrarGlobito.value = false;
   if (open.value) cargarFaqs();
 };
+
+// Globito "¿Te puedo ayudar?": aparece solo una vez, a los 2.5s de cargar la
+// página, y se esconde solo a los 8s -- nunca si el usuario ya abrió el
+// asistente (yaInteractuo corta ambos timers).
+onMounted(() => {
+  globitoTimer = setTimeout(() => {
+    if (!yaInteractuo.value) {
+      mostrarGlobito.value = true;
+      globitoOcultarTimer = setTimeout(() => {
+        mostrarGlobito.value = false;
+      }, 8000);
+    }
+  }, 2500);
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(globitoTimer);
+  clearTimeout(globitoOcultarTimer);
+});
 </script>
