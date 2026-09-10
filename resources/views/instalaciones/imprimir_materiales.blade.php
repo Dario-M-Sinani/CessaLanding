@@ -196,7 +196,16 @@
             margin: 2px 0;
         }
 
+        /* Etiqueta chica (4.10" x 1.70") -- oculta en pantalla, es lo único que se imprime */
+        .print-label {
+            display: none;
+        }
+
         @media print {
+            @page {
+                size: 4.10in 1.70in;
+                margin: 0;
+            }
             body {
                 background: #fff;
                 padding: 0;
@@ -206,15 +215,84 @@
                 display: none !important;
             }
             .sheet {
-                border: none;
-                padding: 0;
-                max-width: 100%;
-                width: 100%;
+                display: none !important;
+            }
+            /* Tabla en vez de div: <thead> se repite solo en cada página impresa cuando el
+               contenido no entra en una sola etiqueta de 1.70" de alto -- así el encabezado
+               (título del tipo de instalación) aparece en todas las etiquetas de la tirada,
+               no solo en la primera. */
+            .print-label {
+                display: table;
+                width: 4.10in;
+                border-collapse: collapse;
+                padding: 0.08in 0.16in;
+                color: #000000;
+                font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+            }
+            .print-label thead {
+                display: table-header-group;
+            }
+            .print-label .cabecera td {
+                padding: 0.08in 0.16in 0.05in 0.16in;
+                border-bottom: 1px solid #000;
+            }
+            .print-label .marca {
+                font-size: 7px;
+                font-weight: 900;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+            .print-label .titulo {
+                font-size: 11px;
+                font-weight: 900;
+                line-height: 1.15;
+                margin-top: 2px;
+            }
+            .print-label .meta {
+                font-size: 7px;
+                color: #333;
+                margin-top: 1px;
+            }
+            .print-label tbody tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .print-label td.item {
+                font-size: 8px;
+                line-height: 1.3;
+                padding: 2px 0.16in;
+                border-bottom: 1px dashed #999;
+            }
+            .print-label td.item .cant {
+                font-weight: bold;
+                display: inline-block;
+                min-width: 0.5in;
             }
         }
     </style>
 </head>
 <body>
+
+<!-- Etiqueta chica (4.10" x 1.70"): solo esto se imprime, ver @media print. Es una <table>
+     para que el <thead> se repita solo en cada página cuando el listado no entra en una sola. -->
+<table class="print-label">
+    <thead>
+        <tr class="cabecera">
+            <td>
+                <div class="marca">CESSA - Nueva Instalación</div>
+                <div class="titulo">{{ $instalacion['titulo'] }}</div>
+                <div class="meta">{{ count($instalacion['materiales']) }} materiales requeridos</div>
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($instalacion['materiales'] as $m)
+        <tr>
+            <td class="item"><span class="cant">{{ $m['cantidad'] }}</span>{{ $m['item'] }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
 
 <!-- Barra superior de acciones (No se imprime) -->
 <div class="no-print-bar">
@@ -229,7 +307,7 @@
 
     <div style="display: flex; gap: 8px;">
         <button onclick="window.print()" class="btn">
-            IMPRIMIR GUÍA DE MATERIALES
+            IMPRIMIR ETIQUETA (4.10" x 1.70")
         </button>
         <button onclick="window.close()" class="btn btn-secondary">
             CERRAR
