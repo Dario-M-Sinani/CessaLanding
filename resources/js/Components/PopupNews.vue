@@ -16,7 +16,7 @@
         </button>
 
         <div class="p-6 space-y-3 overflow-y-auto">
-          <span class="inline-block px-3 py-1 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider">
+          <span class="inline-block px-3 py-1 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider mb-1">
             Comunicado Institucional
           </span>
           <h2 class="text-xl font-extrabold text-blue-950 leading-snug">{{ news.title }}</h2>

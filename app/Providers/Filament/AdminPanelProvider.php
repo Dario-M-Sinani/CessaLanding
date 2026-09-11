@@ -25,6 +25,16 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('rcadmin')
+            // Sin esto, cada clic dentro del panel (ir a un listado, abrir un
+            // registro, "Atrás") hacía una recarga completa del navegador --
+            // se volvía a descargar y ejecutar todo el JS/CSS de Filament +
+            // Livewire + Alpine en cada página, aunque el panel casi no
+            // cambie entre una vista y otra. Con spa() Livewire navega por
+            // AJAX (wire:navigate) y solo reemplaza el contenido; no hay
+            // componentes propios con <script> que dependan de un reload
+            // completo (ver ESTADO_SEGURIDAD_MIGRACION.md, diagnóstico de
+            // lentitud del panel).
+            ->spa()
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName('CESSA Admin')
             ->brandLogo(asset('img/cessa_logo.jpg'))

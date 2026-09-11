@@ -8,6 +8,8 @@
     <section
       class="relative overflow-hidden min-h-screen flex items-center pb-16 lg:pb-24"
       style="padding-top: calc(var(--nav-height, 120px) + 2.5rem);"
+      @mousemove="onHeroMouseMove"
+      @mouseleave="resetMagnet"
     >
       <HeroBackgroundCarousel
         v-if="galleryHighlights && galleryHighlights.length"
@@ -32,24 +34,18 @@
           Consulta tus avisos de cobranza en segundos, simula tus costos tarifarios mensuales y gestiona tus nuevos suministros eléctricos sin filas.
         </p>
 
-        <!-- Search Card -->
-        <div class="max-w-2xl mx-auto pt-2">
-          <div class="p-3 bg-white border-2 border-blue-900 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2.5">
-            <input
-              v-model="nroCliente"
-              type="text"
-              placeholder="Ingresa tu Número de Cuenta / Abonado (ej. 123456)..."
-              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm font-medium"
-              @keyup.enter="buscarDeuda"
-            />
-            <button
-              @click="buscarDeuda"
-              class="px-7 py-3 bg-amber-500 hover:bg-amber-400 text-blue-950 font-extrabold rounded-xl transition-all shadow-md text-sm whitespace-nowrap"
-            >
-              Consultar Deuda
-            </button>
-          </div>
-          <div class="mt-3 flex items-center justify-center space-x-4 text-xs text-blue-100 font-medium">
+        <!-- CTA: sin campo de texto -- un foco/halo sutil se enciende alrededor del
+             botón cuando el cursor se acerca, sin moverlo del lugar. -->
+        <div class="pt-4 flex flex-col items-center gap-4">
+          <button
+            ref="consultarBtn"
+            @click="buscarDeuda"
+            :style="focusStyle"
+            class="px-10 py-4 bg-amber-500 hover:bg-amber-400 text-blue-950 font-extrabold rounded-2xl shadow-xl text-base sm:text-lg tracking-wide transition-shadow duration-200 ease-out"
+          >
+            Consultar Deuda
+          </button>
+          <div class="flex items-center justify-center space-x-4 text-xs text-blue-100 font-medium">
             <span>✓ Consulta gratuita 24/7</span>
             <span>•</span>
             <span>✓ Detalle de avisos</span>
@@ -142,7 +138,7 @@
     <section class="py-16 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
-        <div class="text-center space-y-3">
+        <div class="text-center space-y-5">
           <h2 class="text-3xl font-extrabold text-blue-950 tracking-tight">Servicios Virtuales Disponibles</h2>
           <p class="text-gray-600 text-base max-w-xl mx-auto">
             Accede a todas las operaciones comerciales directamente desde tu dispositivo.
@@ -202,7 +198,7 @@
     <section class="py-16 bg-gray-50 border-y border-gray-100">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-          <div class="space-y-2">
+          <div class="space-y-3">
             <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
               Información de Servicio
             </span>
@@ -247,7 +243,7 @@
     <!-- Documentos Quick Links -->
     <section class="py-16 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div class="text-center space-y-2">
+        <div class="text-center space-y-4">
           <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
             Transparencia
           </span>
@@ -337,7 +333,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '../Layouts/AppLayout.vue';
 import PopupNews from '../Components/PopupNews.vue';
@@ -356,14 +352,35 @@ defineProps({
   googleMapsApiKey: { type: String, default: '' },
 });
 
-const nroCliente = ref('');
+// Foco sutil: si el cursor pasa dentro de FOCUS_RADIUS del centro del botón, se
+// enciende un halo (box-shadow) proporcional a qué tan cerca está, sin mover el
+// botón de su lugar -- versión más discreta que el efecto "magnético" anterior.
+const consultarBtn = ref(null);
+const focusIntensity = ref(0);
+const FOCUS_RADIUS = 110;
+
+const onHeroMouseMove = (e) => {
+  const el = consultarBtn.value;
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const dx = e.clientX - (rect.left + rect.width / 2);
+  const dy = e.clientY - (rect.top + rect.height / 2);
+  const dist = Math.hypot(dx, dy);
+
+  focusIntensity.value = Math.max(0, 1 - dist / FOCUS_RADIUS);
+};
+
+const resetMagnet = () => {
+  focusIntensity.value = 0;
+};
+
+const focusStyle = computed(() => ({
+  boxShadow: `0 0 0 ${4 + focusIntensity.value * 8}px rgba(245, 158, 11, ${(focusIntensity.value * 0.3).toFixed(3)})`,
+}));
 
 const buscarDeuda = () => {
-  if (nroCliente.value.trim()) {
-    router.get('/consulta-deuda', { nro_cliente: nroCliente.value.trim() });
-  } else {
-    router.get('/consulta-deuda');
-  }
+  router.get('/consulta-deuda');
 };
 
 const embedUrl = (url) => {

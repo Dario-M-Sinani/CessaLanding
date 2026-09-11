@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { buildCessaLogoMarkerIcon } from '../utils/mapMarkerIcon';
 
 const props = defineProps({
@@ -24,6 +24,7 @@ const props = defineProps({
 
 const mapContainer = ref(null);
 const status = ref(props.googleMapsApiKey ? 'loading' : 'unavailable');
+let observer = null;
 
 const statusMessage = computed(() => {
   if (status.value === 'unavailable') return 'El mapa no está disponible en este momento.';
@@ -48,9 +49,7 @@ const loadGoogleMaps = (apiKey) => {
   return window.__cessaGoogleMapsPromise;
 };
 
-onMounted(async () => {
-  if (!props.googleMapsApiKey || !mapContainer.value) return;
-
+const initMap = async () => {
   try {
     await loadGoogleMaps(props.googleMapsApiKey);
   } catch {
@@ -76,5 +75,32 @@ onMounted(async () => {
   new window.google.maps.Marker({ position: center, map, icon: buildCessaLogoMarkerIcon(0.85) });
 
   status.value = 'ready';
+};
+
+onMounted(() => {
+  if (!props.googleMapsApiKey || !mapContainer.value) return;
+
+  // El mapa suele quedar bien abajo en la página (ver Home.vue) -- sin esto, el
+  // script de Google Maps (y sus tiles/fuentes) se descargaba en cada carga de
+  // página aunque el usuario nunca llegara a ver el mapa. Se pide recién cuando
+  // el contenedor está a 300px de entrar en pantalla, no cuando se monta el
+  // componente.
+  if (!('IntersectionObserver' in window)) {
+    initMap();
+    return;
+  }
+
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      observer.disconnect();
+      initMap();
+    }
+  }, { rootMargin: '300px' });
+
+  observer.observe(mapContainer.value);
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
 });
 </script>

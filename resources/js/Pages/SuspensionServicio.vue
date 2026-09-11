@@ -4,7 +4,7 @@
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
         <!-- Header -->
-        <div class="text-center space-y-3">
+        <div class="text-center space-y-5">
           <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider">
             {{ pageBadge }}
           </span>

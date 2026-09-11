@@ -17,10 +17,17 @@ class ConsultaDeudaController extends Controller
         $this->apiService = $apiService;
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        // El buscador rápido del Home solo pide el N° de Cliente/Abonado y llega
+        // acá como ?nro_cliente=... -- se precarga ese campo, pero el N° de
+        // Cuenta (segundo factor obligatorio, ver consultar()) siempre queda
+        // vacío: el Home no lo pide, así que no hay forma de traerlo también.
+        $nroCliente = $request->query('nro_cliente', '');
+        $nroCliente = ctype_digit((string) $nroCliente) ? $nroCliente : '';
+
         return Inertia::render('ConsultaDeuda', [
-            'filters' => ['nro_cliente' => '', 'zona' => '', 'manzano' => '', 'correlativo' => ''],
+            'filters' => ['nro_cliente' => $nroCliente, 'zona' => '', 'manzano' => '', 'correlativo' => ''],
             'resultado' => null,
             'error' => null,
         ]);

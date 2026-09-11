@@ -4,7 +4,7 @@
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
         <!-- Header -->
-        <div class="text-center space-y-4">
+        <div class="text-center space-y-5">
           <span class="px-4 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-full text-xs font-bold uppercase tracking-wider">
             Filosofía Institucional
           </span>

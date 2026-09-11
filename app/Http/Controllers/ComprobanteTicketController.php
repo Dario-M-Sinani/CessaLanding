@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Recibo;
-use App\Services\Cobranzas\CobranzasBancoService;
+use App\Services\Cobranzas\CobranzasGatewayClient;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class ComprobanteTicketController extends Controller
 {
-    public function __construct(private readonly CobranzasBancoService $cobranzasService)
+    public function __construct(private readonly CobranzasGatewayClient $gateway)
     {
     }
 
@@ -43,10 +43,11 @@ class ComprobanteTicketController extends Controller
      */
     private function obtenerDatosFactura(Recibo $recibo): array
     {
-        // 1. Si ya se facturó en el SIIC, intentamos consultar el JSON oficial
+        // 1. Si ya se facturó en el SIIC, intentamos consultar el JSON oficial (vía el gateway
+        // de cobranza_cessa -- cessa-laravel no tiene ruta directa hacia api-cobranzas-bancos).
         if ($recibo->cobranzas_uuid && config('services.cobranzas.enabled')) {
             try {
-                $doc = $this->cobranzasService->obtenerComprobanteJson($recibo->cobranzas_uuid);
+                $doc = $this->gateway->obtenerComprobanteJson($recibo->alias);
 
                 if (!empty($doc) && isset($doc['nro_factura'])) {
                     $detalle = collect($doc['detalle'] ?? [])->map(function ($item) {
