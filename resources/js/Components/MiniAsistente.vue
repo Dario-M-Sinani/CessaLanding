@@ -9,7 +9,7 @@
     >
       <div
         v-if="mostrarGlobito"
-        class="fixed bottom-[4.7rem] right-5 z-[90] max-w-[11rem] bg-white text-blue-950 text-xs font-semibold px-3.5 py-2.5 rounded-2xl rounded-br-sm shadow-xl border border-gray-100"
+        class="fixed bottom-[4.4rem] right-5 z-[95] max-w-[8rem] sm:max-w-[11rem] bg-white/90 text-blue-900 text-[10px] sm:text-xs font-medium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl rounded-br-sm shadow-md border border-gray-200/70"
       >
         ¿Te puedo ayudar?
       </div>
@@ -18,17 +18,22 @@
     <!-- Botón flotante -->
     <span
       v-if="!open && !yaInteractuo"
-      class="fixed bottom-5 right-5 z-[89] w-14 h-14 rounded-full bg-amber-400 opacity-75 animate-ping pointer-events-none"
+      class="fixed bottom-5 right-5 z-[89] w-14 h-14 md:w-20 md:h-20 rounded-full bg-amber-400 blur-md md:blur-lg opacity-60 md:opacity-80 animate-pulse pointer-events-none"
+      aria-hidden="true"
+    ></span>
+    <span
+      v-if="!open && !yaInteractuo"
+      class="hidden md:block fixed bottom-5 right-5 z-[89] w-16 h-16 rounded-full border-2 border-amber-300 opacity-70 animate-ping pointer-events-none"
       aria-hidden="true"
     ></span>
     <button
       type="button"
       :aria-label="open ? 'Cerrar asistente' : 'Abrir asistente'"
-      class="fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-blue-950 hover:bg-blue-900 text-white shadow-xl flex items-center justify-center transition-all hover:scale-105 p-2"
+      class="fixed bottom-5 right-5 z-[90] w-14 h-14 md:w-16 md:h-16 rounded-full bg-blue-950 hover:bg-blue-900 text-white shadow-xl flex items-center justify-center transition-all hover:scale-105"
       @click="toggle"
     >
-      <img v-if="!open" src="/img/Logo_CESSA_240x240.png" alt="" class="w-full h-full object-contain" />
-      <svg v-else class="w-6 h-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      <svg v-if="!open" class="w-6 h-6 md:w-7 md:h-7 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .75a8.25 8.25 0 0 0-4.135 15.39c.686.398 1.115 1.008 1.291 1.664l.319 1.192a.75.75 0 0 0 .724.554h3.602a.75.75 0 0 0 .724-.554l.319-1.192c.176-.656.605-1.266 1.29-1.664A8.25 8.25 0 0 0 12 .75Z" /><path fill-rule="evenodd" d="M9.013 19.9a.75.75 0 0 1 .877-.597 11.319 11.319 0 0 0 4.22 0 .75.75 0 1 1 .28 1.473 12.819 12.819 0 0 1-4.78 0 .75.75 0 0 1-.597-.876ZM9.754 22.344a.75.75 0 0 1 .824-.668 13.682 13.682 0 0 0 2.844 0 .75.75 0 1 1 .156 1.492 15.156 15.156 0 0 1-3.156 0 .75.75 0 0 1-.668-.824Z" clip-rule="evenodd" /></svg>
+      <svg v-else class="w-6 h-6 md:w-7 md:h-7" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
     </button>
 
     <!-- Panel -->
@@ -177,14 +182,21 @@ const toggle = () => {
 };
 
 // Globito "¿Te puedo ayudar?": aparece solo una vez, a los 2.5s de cargar la
-// página, y se esconde solo a los 8s -- nunca si el usuario ya abrió el
-// asistente (yaInteractuo corta ambos timers).
+// página. En desktop se esconde solo a los 8s; en móvil (pantalla angosta)
+// se queda hasta que el usuario interactúe, porque ahí no hay mouse que
+// "descubra" el botón por accidente como sí puede pasar en desktop.
+// yaInteractuo corta ambos timers en cualquier caso.
+const esMobile = () => window.matchMedia('(max-width: 767px)').matches;
+
 onMounted(() => {
   globitoTimer = setTimeout(() => {
     if (!yaInteractuo.value) {
       mostrarGlobito.value = true;
       globitoOcultarTimer = setTimeout(() => {
-        mostrarGlobito.value = false;
+        // Se re-evalúa recién ahora (no al programar el timer) para no
+        // depender de que el ancho de pantalla no haya cambiado en los
+        // últimos 8s -- en desktop se esconde solo, en móvil se queda.
+        if (!esMobile()) mostrarGlobito.value = false;
       }, 8000);
     }
   }, 2500);

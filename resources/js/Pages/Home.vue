@@ -295,6 +295,7 @@
               :src="embedUrl(video.url)"
               class="w-full h-full"
               frameborder="0"
+              loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
             ></iframe>
