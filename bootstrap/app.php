@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -54,3 +54,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->setStatusCode($status);
         });
     })->create();
+
+// En los deploys de Hostinger, el código de Laravel vive fuera de public_html
+// (ver PLAN_MIGRACION_LARAVEL.md) -- public_path() por defecto apuntaría a una
+// carpeta "public/" hermana de este archivo, que ahí NO es la que sirve el
+// navegador. PUBLIC_PATH_OVERRIDE en el .env del servidor la corrige para que
+// Laravel (manifest de Vite, storage:link, etc.) lea del mismo lugar que
+// realmente pisa el usuario. En local no se define, así que no cambia nada.
+//
+// Tiene que ir en booting() y no suelto acá arriba: en este punto del archivo
+// el kernel todavía no cargó el .env (eso pasa recién durante el bootstrap
+// del kernel), así que un env() llamado directo acá siempre da null.
+$app->booting(function () use ($app) {
+    if ($publicPathOverride = env('PUBLIC_PATH_OVERRIDE')) {
+        $app->usePublicPath($publicPathOverride);
+    }
+});
+
+return $app;
