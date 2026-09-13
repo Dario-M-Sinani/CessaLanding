@@ -32,8 +32,20 @@ class ScheduledOutageResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Textarea::make('reason')
+                Forms\Components\TextInput::make('reason')
                     ->label('Motivo del Mantenimiento / Interrupción')
+                    ->datalist([
+                        'CAMBIO DE POSTES DE MEDIA TENSIÓN EN ',
+                        'MANTENIMIENTO PREVENTIVO EN LA RED DE BAJA TENSIÓN ',
+                        'MANTENIMIENTO PREVENTIVO EN LA RED DE MEDIA TENSIÓN ',
+                        'MANTENIMIENTO PREVENTIVO CON REEMPLAZO DE POSTES Y ESTRUCTURAS EN ',
+                        'MANTENIMIENTO PREVENTIVO DEL PUESTO DE TRANSFORMACIÓN EN ',
+                        'REEMPLAZO DE POSTES Y ESTRUCTURAS DE MEDIA TENSIÓN EN ',
+                        'RETIRO DE POSTES Y MEJORAS EN LÍNEA DE BAJA TENSIÓN EN ',
+                        'CONVERSIÓN DE MONOFÁSICO A TRIFÁSICO DE LÍNEA DE BAJA TENSIÓN EN ',
+                        'MODIFICACIÓN DE LÍNEA DE MEDIA TENSIÓN EN ',
+                        'AMPLIACIÓN Y MODIFICACIÓN DE LÍNEAS DE BAJA TENSIÓN EN ',
+                    ])
                     ->required()
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('location')
@@ -42,12 +54,18 @@ class ScheduledOutageResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\DatePicker::make('execution_date')
                     ->label('Fecha del Corte')
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
                     ->required(),
                 Forms\Components\TimePicker::make('start_time')
                     ->label('Hora de Inicio')
+                    ->native(false)
+                    ->seconds(false)
                     ->required(),
                 Forms\Components\TimePicker::make('finish_time')
                     ->label('Hora de Finalización')
+                    ->native(false)
+                    ->seconds(false)
                     ->required(),
                 Forms\Components\Select::make('published')
                     ->label('Estado')
