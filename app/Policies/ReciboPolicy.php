@@ -5,28 +5,28 @@ namespace App\Policies;
 use App\Models\Recibo;
 use App\Models\User;
 
-// Cobros por QR (dinero real) -- exclusivo de ADMIN/SYSTEM, mismo criterio que Bancos/Reportes.
-// Nadie puede borrar un Recibo (se inhabilita, no se elimina -- hay que conservar el historial).
 class ReciboPolicy
 {
+    // Cobros QR maneja dinero real (genera QR, ve datos del pagador, exporta a Excel) --
+    // exclusivo del rol SYSTEM, igual que UserPolicy. ADMIN ya no debe verlo.
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(User::ROLE_ADMIN, User::ROLE_SYSTEM);
+        return $user->hasRole(User::ROLE_SYSTEM);
     }
 
     public function view(User $user, Recibo $recibo): bool
     {
-        return $user->hasRole(User::ROLE_ADMIN, User::ROLE_SYSTEM);
+        return $user->hasRole(User::ROLE_SYSTEM);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole(User::ROLE_ADMIN, User::ROLE_SYSTEM);
+        return $user->hasRole(User::ROLE_SYSTEM);
     }
 
     public function update(User $user, Recibo $recibo): bool
     {
-        return $user->hasRole(User::ROLE_ADMIN, User::ROLE_SYSTEM);
+        return $user->hasRole(User::ROLE_SYSTEM);
     }
 
     public function delete(User $user, Recibo $recibo): bool
