@@ -59,33 +59,19 @@ return [
     ],
 
     'cobranzas' => [
-        // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Recién prender
-        // esto (COBRANZAS_FACTURACION_ENABLED=true) después de probar la integración de forma
-        // aislada contra api-cobranzas-bancos (crear/pagar una transacción de prueba, bajar un
-        // comprobante) desde la red donde sí es alcanzable -- ver
-        // documentacion/PLAN_PAGO_Y_FACTURACION.md, "Orden recomendado para implementar". Con
-        // esto apagado, los pagos por QR se siguen cobrando igual, solo no se registran como
+        // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Con esto
+        // apagado, los pagos por QR se siguen cobrando igual, solo no se registran como
         // factura real todavía (quedan en estado "Pagado (generando factura)").
         'enabled' => env('COBRANZAS_FACTURACION_ENABLED', false),
-        'base_url' => env('COBRANZAS_BASE_URL', 'http://localhost:6001'),
-        'client_id' => env('COBRANZAS_CLIENT_ID'),
-        'client_secret' => env('COBRANZAS_CLIENT_SECRET'),
-        // Usuario tipo Cajero con Caja habilitada para que el sitio web cobre "como si fuera
-        // una entidad financiera más" -- hay que conseguirlo de quien administra el SIIC, ver
-        // NECESIDADES_SIIC_FACTURACION.md §1.
-        'username' => env('COBRANZAS_USERNAME'),
-        'password' => env('COBRANZAS_PASSWORD'),
-        // Sigla de agencia a usar al aperturar la Caja del día (ver CajaController@aperturar
-        // del lado de api-cobranzas-bancos, exige 'agencia_sigla'). Confirmar el valor correcto
-        // con quien administra el SIIC -- no hay uno obvio para "sitio web" en el código fuente.
-        'agencia_sigla' => env('COBRANZAS_AGENCIA_SIGLA'),
-        // IDs de catálogo para el "Documento" que va en /pagar-otro-documento -- identifican
-        // con qué banco/canal entró el dinero (ver FacturacionRecibo::construirDocumento()).
-        // Salen de GET /v1/entes y GET /v1/bancos de api-cobranzas-bancos (catálogos reales,
-        // no inventados acá) -- confirmar cuál "ente" corresponde a pago electrónico/QR y cuál
-        // "banco" a Banco BISA antes de prender COBRANZAS_FACTURACION_ENABLED.
-        'documento_ente_id' => env('COBRANZAS_DOCUMENTO_ENTE_ID'),
-        'documento_banco_id' => env('COBRANZAS_DOCUMENTO_BANCO_ID'),
+        // Ya no hablamos directo con api-cobranzas-bancos (nunca hubo ruta desde Hostinger a
+        // la red interna de CESSA) -- se le pide a cobranza-cessa (repo hermano, sí tiene red
+        // hacia esa API, corre en 10.1.1.88) que liquide el Recibo. Ver
+        // CobranzasGatewayClient y README.md de cobranza-cessa, sección "Gateway para
+        // cessa-laravel". En local: cobranza-cessa con `manage.py runserver 8001`. En
+        // producción: la URL pública que exponga ese gateway (hoy test01.cessa.com.bo).
+        'gateway_base_url' => env('COBRANZAS_GATEWAY_BASE_URL', 'http://127.0.0.1:8001'),
+        // Tiene que coincidir con API_KEY_CESSA_LARAVEL del .env de cobranza-cessa.
+        'gateway_api_key' => env('COBRANZAS_GATEWAY_API_KEY'),
     ],
 
     'sms' => [

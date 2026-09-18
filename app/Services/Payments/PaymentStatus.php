@@ -13,7 +13,7 @@ enum PaymentStatus: string
     case Expirado = 'expirado';
     case Error = 'error';
     // El dinero ya se cobró (Pagado) y además quedó registrado como factura real en el sistema
-    // comercial de CESSA (api-cobranzas-bancos/SIIC, ver CobranzasBancoService) -- recién acá
+    // comercial de CESSA (api-cobranzas-bancos/SIIC, ver CobranzasGatewayClient) -- recién acá
     // existe un comprobante con valor fiscal descargable/imprimible.
     case Facturado = 'facturado';
     // El dinero ya se cobró pero registrar la factura contra api-cobranzas-bancos falló (después
