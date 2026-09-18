@@ -4,19 +4,16 @@ namespace App\Services\Cobranzas;
 
 use App\Services\Cobranzas\Exceptions\CobranzasException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Cliente hacia el gateway de facturación de `cobranza_cessa` (apps/facturacion_externa) --
- * ese backend corre en la red interna de CESSA (10.1.1.88, junto a api-cobranzas-bancos) y hace
- * ahí la parte que cessa-laravel nunca pudo hacer directo desde Hostinger (sin ruta hacia
- * 10.1.1.x): autenticar contra api-cobranzas-bancos, abrir Caja, crear/pagar la Transacción y
- * bajar el comprobante. Acá solo se manda "esto ya se cobró, liquidalo" con el detalle crudo de
- * deuda -- la transformación de formato (fechas, importe) y el armado del "documento" los hace
- * el gateway (ver services/cobranzas_banco_client.py de ese repo).
- *
- * Reemplaza a la vieja CobranzasBancoService (llamaba directo a api-cobranzas-bancos, retirada
- * porque esa ruta nunca fue alcanzable desde este hosting).
+ * Cliente del gateway propio (cobranza-cessa, Django en 10.1.1.88 / test01.cessa.com.bo) que
+ * factura contra api-cobranzas-bancos por nosotros -- este sitio (Hostinger) no tiene ruta
+ * directa a esa API (red interna de CESSA), ver README.md de cobranza-cessa, sección "Gateway
+ * para cessa-laravel". Auth servidor-a-servidor con header X-Api-Key, no OAuth: las
+ * credenciales de Cajero/Caja y el client_id/secret de api-cobranzas-bancos viven solo del
+ * lado del gateway (nunca acá).
  */
 class CobranzasGatewayClient
 {
@@ -27,43 +24,70 @@ class CobranzasGatewayClient
     }
 
     /**
-     * Pide al gateway que liquide un Recibo ya pagado. Idempotente del lado del gateway por
-     * `alias`: reenviar el mismo aviso (reintento de red, botón "Reintentar Facturación") nunca
-     * paga dos veces.
+     * Envía el snapshot de un Recibo ya Pagado para que el gateway lo liquide contra
+     * api-cobranzas-bancos. Idempotente por `alias` del lado del gateway: reenviar el mismo
+     * alias no lo vuelve a pagar si ya quedó FACTURADO.
      *
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed> cuerpo decodificado (estado, cobranzas_uuid, error, ...)
+     * @param  array<int, array<string, mixed>>  $detalle  snapshot crudo de SIIC (Recibo::debt_items) -- el gateway arma el "documento" (ente/banco) él mismo.
+     * @return array<string, mixed> {alias, estado, cobranzas_uuid, error, intentos, comprobante_disponible, ...}
      */
-    public function liquidar(array $payload): array
-    {
-        $response = $this->http()->post("{$this->baseUrl}/api/externo/recibos-web/liquidar/", $payload);
+    public function liquidar(
+        string $alias,
+        string $nroCliente,
+        float $monto,
+        string $moneda,
+        array $detalle,
+        string $fechaPago,
+        string $numeroOrdenOriginante = '',
+    ): array {
+        $response = $this->http()->post("{$this->baseUrl}/api/externo/recibos-web/liquidar/", [
+            'alias' => $alias,
+            'nro_cliente' => $nroCliente,
+            'monto' => $monto,
+            'moneda' => $moneda,
+            'detalle' => $detalle,
+            'fecha_pago' => $fechaPago,
+            'numero_orden_originante' => $numeroOrdenOriginante,
+        ]);
 
-        // 200 = quedó Facturado; 502 = el gateway sí procesó el aviso pero api-cobranzas-bancos
-        // rechazó el pago -- en ambos casos el cuerpo trae el estado real, hay que leerlo. Otro
-        // código (403 api key mal puesta, 400 payload inválido, 500 inesperado) es un error de
-        // nuestro lado, no de negocio.
+        // 200 = FACTURADO; 502 = el gateway sí procesó pero SIIC rechazó el pago (rechazo de
+        // negocio, no falla de nuestra integración) -- en ambos casos el body ya trae
+        // {estado, error, ...} y quien llama decide qué hacer. Cualquier otro código (400
+        // payload inválido, 403 API key mal configurada, 500/504 del lado del gateway) sí es
+        // un problema de integración nuestro.
         if (! in_array($response->status(), [200, 502], true)) {
-            throw CobranzasException::requestFailed('liquidar recibo', "HTTP {$response->status()}: {$response->body()}");
+            throw CobranzasException::requestFailed('liquidar recibo (gateway)', "HTTP {$response->status()}: ".$this->extractErrorMessage($response));
         }
 
-        $data = $response->json();
+        return $response->json();
+    }
 
-        if (! is_array($data)) {
-            throw CobranzasException::requestFailed('liquidar recibo', "respuesta no-JSON: {$response->body()}");
+    /**
+     * Vuelve a preguntar el estado de una liquidación ya enviada -- útil si el POST de
+     * liquidar() se cayó en la respuesta pero sí llegó a procesarse del lado del gateway.
+     *
+     * @return array<string, mixed>
+     */
+    public function consultar(string $alias): array
+    {
+        $response = $this->http()->get("{$this->baseUrl}/api/externo/recibos-web/{$alias}/");
+
+        if ($response->failed()) {
+            throw CobranzasException::requestFailed('consultar liquidación (gateway)', $this->extractErrorMessage($response));
         }
 
-        return $data;
+        return $response->json();
     }
 
     /**
      * @return string bytes crudos del PDF
      */
-    public function obtenerComprobantePdf(string $alias): string
+    public function comprobantePdf(string $alias): string
     {
         $response = $this->http()->get("{$this->baseUrl}/api/externo/recibos-web/{$alias}/comprobante/");
 
         if ($response->failed()) {
-            throw CobranzasException::requestFailed('obtener comprobante', "HTTP {$response->status()}: {$response->body()}");
+            throw CobranzasException::requestFailed('obtener comprobante (gateway)', $this->extractErrorMessage($response));
         }
 
         return $response->body();
@@ -72,19 +96,32 @@ class CobranzasGatewayClient
     /**
      * @return array<string, mixed>
      */
-    public function obtenerComprobanteJson(string $alias): array
+    public function comprobanteJson(string $alias): array
     {
         $response = $this->http()->get("{$this->baseUrl}/api/externo/recibos-web/{$alias}/comprobante-json/");
 
         if ($response->failed()) {
-            throw CobranzasException::requestFailed('obtener comprobante JSON', "HTTP {$response->status()}: {$response->body()}");
+            throw CobranzasException::requestFailed('obtener comprobante JSON (gateway)', $this->extractErrorMessage($response));
         }
 
-        return (array) $response->json();
+        return $response->json();
+    }
+
+    private function extractErrorMessage(Response $response): string
+    {
+        $error = $response->json('error') ?? $response->json('detail');
+
+        if (is_array($error)) {
+            return json_encode($error, JSON_UNESCAPED_UNICODE);
+        }
+
+        return (string) ($error ?? $response->body());
     }
 
     private function http(): PendingRequest
     {
-        return Http::withHeaders(['X-Api-Key' => $this->apiKey])->acceptJson()->timeout(30);
+        return Http::asJson()->acceptJson()->timeout(30)->withHeaders([
+            'X-Api-Key' => $this->apiKey,
+        ]);
     }
 }

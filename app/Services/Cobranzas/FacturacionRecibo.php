@@ -9,15 +9,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Registra un Recibo ya Pagado como factura real en api-cobranzas-bancos y guarda el
- * comprobante en PDF -- usado tanto por el comando programado (RegistrarFacturacionCobranzas)
+ * Registra un Recibo ya Pagado como factura real -- vía el gateway propio (cobranza-cessa,
+ * ver CobranzasGatewayClient), porque este sitio (Hostinger) no tiene ruta directa a
+ * api-cobranzas-bancos. Usado tanto por el comando programado (RegistrarFacturacionCobranzas)
  * como por la acción manual "Reintentar Facturación" del panel (ver ReciboResource).
- *
- * cessa-laravel (Hostinger) no tiene ruta hacia la red interna de CESSA, así que no arma ni manda
- * el pago directo a api-cobranzas-bancos -- le avisa al gateway de `cobranza_cessa`
- * (CobranzasGatewayClient, corre en 10.1.1.88, dentro de esa red) con el detalle crudo de deuda,
- * y es ese backend el que arma el "detalle"/"documento" reales y paga (ver
- * apps/facturacion_externa de ese repo).
  *
  * El dinero ya se cobró antes de llegar acá (status Pagado) -- este paso nunca debe hacer que
  * ese hecho se pierda de vista: si falla, el Recibo queda en ErrorFacturacion con el motivo
@@ -43,29 +38,32 @@ class FacturacionRecibo
         }
 
         try {
-            $respuesta = $this->gateway->liquidar([
-                'alias' => $recibo->alias,
-                'nro_cliente' => $recibo->nro_cliente,
-                'monto' => (float) $recibo->amount,
-                'moneda' => $recibo->currency ?: 'BOB',
-                'detalle' => $recibo->debt_items,
-                'fecha_pago' => ($recibo->paid_at ?? now())->toIso8601String(),
-                'numero_orden_originante' => $recibo->provider_order_number ?: '',
-            ]);
+            $resultado = $this->gateway->liquidar(
+                alias: $recibo->alias,
+                nroCliente: $recibo->nro_cliente,
+                monto: (float) $recibo->amount,
+                moneda: strtoupper((string) $recibo->currency) === 'USD' ? 'USD' : 'BOB',
+                detalle: $recibo->debt_items,
+                fechaPago: ($recibo->paid_at ?? now())->toIso8601String(),
+                numeroOrdenOriginante: $recibo->provider_order_number ?: '',
+            );
 
-            if (($respuesta['estado'] ?? null) !== 'facturado') {
-                $this->marcarError($recibo, $respuesta['error'] ?: 'El gateway de facturación no confirmó el pago (respuesta sin estado "facturado").');
+            if (! empty($resultado['cobranzas_uuid']) && ! $recibo->cobranzas_uuid) {
+                $recibo->update(['cobranzas_uuid' => $resultado['cobranzas_uuid']]);
+            }
+
+            if (($resultado['estado'] ?? null) !== 'FACTURADO') {
+                $this->marcarError($recibo, $resultado['error'] ?: 'El gateway no pudo facturar el recibo (sin detalle de error).');
 
                 return;
             }
 
-            $pdf = $this->gateway->obtenerComprobantePdf($recibo->alias);
+            $pdf = $this->gateway->comprobantePdf($recibo->alias);
             $path = "recibos/comprobantes/{$recibo->alias}.pdf";
             Storage::disk('public')->put($path, $pdf);
 
             $recibo->update([
                 'status' => PaymentStatus::Facturado,
-                'cobranzas_uuid' => $respuesta['cobranzas_uuid'] ?: $recibo->cobranzas_uuid,
                 'comprobante_path' => $path,
                 'facturado_at' => now(),
                 'facturacion_error' => null,
@@ -74,17 +72,15 @@ class FacturacionRecibo
             Log::info('cobranzas.facturado', [
                 'recibo_id' => $recibo->id,
                 'alias' => $recibo->alias,
-                'cobranzas_uuid' => $respuesta['cobranzas_uuid'] ?? null,
+                'cobranzas_uuid' => $resultado['cobranzas_uuid'] ?? $recibo->cobranzas_uuid,
             ]);
         } catch (CobranzasException $e) {
             report($e);
             $this->marcarError($recibo, $e->getMessage());
         } catch (\Throwable $e) {
-            // El dinero ya se cobró -- una excepción inesperada acá (red caída, config mal
-            // puesta, un cambio de contrato del lado del gateway que no contemplamos, etc.)
-            // nunca debe tumbar el comando/la acción sin dejar rastro. Caso real encontrado
-            // probando la integración vieja: un ConnectionException genérico de Guzzle (URL
-            // base mal armada) no es un CobranzasException y se colaba sin capturar.
+            // El dinero ya se cobró -- una excepción inesperada acá (red caída hacia el
+            // gateway, config mal puesta, un cambio de contrato que no contemplamos, etc.)
+            // nunca debe tumbar el comando/la acción sin dejar rastro.
             report($e);
             $this->marcarError($recibo, 'Error inesperado: '.$e->getMessage());
         }

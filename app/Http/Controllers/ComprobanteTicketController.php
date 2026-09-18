@@ -43,11 +43,12 @@ class ComprobanteTicketController extends Controller
      */
     private function obtenerDatosFactura(Recibo $recibo): array
     {
-        // 1. Si ya se facturó en el SIIC, intentamos consultar el JSON oficial (vía el gateway
-        // de cobranza_cessa -- cessa-laravel no tiene ruta directa hacia api-cobranzas-bancos).
+        // 1. Si ya se facturó en el SIIC, intentamos consultar el JSON oficial (vía el
+        // gateway propio -- ver CobranzasGatewayClient, se busca por alias del Recibo, no
+        // por cobranzas_uuid, el gateway ya lo tiene asociado internamente).
         if ($recibo->cobranzas_uuid && config('services.cobranzas.enabled')) {
             try {
-                $doc = $this->gateway->obtenerComprobanteJson($recibo->alias);
+                $doc = $this->gateway->comprobanteJson($recibo->alias);
 
                 if (!empty($doc) && isset($doc['nro_factura'])) {
                     $detalle = collect($doc['detalle'] ?? [])->map(function ($item) {

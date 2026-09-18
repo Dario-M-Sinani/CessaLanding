@@ -59,20 +59,18 @@ return [
     ],
 
     'cobranzas' => [
-        // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Recién prender
-        // esto (COBRANZAS_FACTURACION_ENABLED=true) después de probar la integración de forma
-        // aislada (crear/pagar una transacción de prueba, bajar un comprobante) contra el
-        // gateway de abajo. Con esto apagado, los pagos por QR se siguen cobrando igual, solo no
-        // se registran como factura real todavía (quedan en estado "Pagado (generando factura)").
+        // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Con esto
+        // apagado, los pagos por QR se siguen cobrando igual, solo no se registran como
+        // factura real todavía (quedan en estado "Pagado (generando factura)").
         'enabled' => env('COBRANZAS_FACTURACION_ENABLED', false),
-        // cessa-laravel (Hostinger) nunca pudo hablar directo con api-cobranzas-bancos -- no hay
-        // ruta hacia la red interna de CESSA (10.1.1.x) desde este hosting. En su lugar se le
-        // pide a `cobranza_cessa` (repo hermano, corre en 10.1.1.88 -- dentro de esa red) que
-        // haga la parte real (autenticar, abrir Caja, pagar, bajar comprobante) -- ver
-        // App\Services\Cobranzas\CobranzasGatewayClient y, del otro lado,
-        // apps/facturacion_externa de cobranza_cessa. `gateway_api_key` tiene que coincidir con
-        // API_KEY_CESSA_LARAVEL del .env de ese proyecto.
-        'gateway_base_url' => env('COBRANZAS_GATEWAY_BASE_URL', 'http://10.1.1.88:8000'),
+        // Ya no hablamos directo con api-cobranzas-bancos (nunca hubo ruta desde Hostinger a
+        // la red interna de CESSA) -- se le pide a cobranza-cessa (repo hermano, sí tiene red
+        // hacia esa API, corre en 10.1.1.88) que liquide el Recibo. Ver
+        // CobranzasGatewayClient y README.md de cobranza-cessa, sección "Gateway para
+        // cessa-laravel". En local: cobranza-cessa con `manage.py runserver 8001`. En
+        // producción: la URL pública que exponga ese gateway (hoy test01.cessa.com.bo).
+        'gateway_base_url' => env('COBRANZAS_GATEWAY_BASE_URL', 'http://127.0.0.1:8001'),
+        // Tiene que coincidir con API_KEY_CESSA_LARAVEL del .env de cobranza-cessa.
         'gateway_api_key' => env('COBRANZAS_GATEWAY_API_KEY'),
     ],
 

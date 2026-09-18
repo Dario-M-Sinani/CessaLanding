@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('debt_items')->nullable()->after('descripcion_pago');
 
             // Datos de la Transacción registrada en api-cobranzas-bancos (SIIC) -- ver
-            // CobranzasBancoService y RegistrarFacturacionCobranzas.
+            // CobranzasGatewayClient y RegistrarFacturacionCobranzas.
             $table->uuid('cobranzas_uuid')->nullable()->after('debt_items');
             $table->string('comprobante_path')->nullable()->after('cobranzas_uuid');
             $table->timestamp('facturado_at')->nullable()->after('comprobante_path');
