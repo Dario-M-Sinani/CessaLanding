@@ -40,11 +40,11 @@ class ClientContactUpdateResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nro_cliente')
-                    ->label('N° Cliente')
+                    ->label('Número de Cliente')
                     ->searchable()
                     ->copyable(),
                 Tables\Columns\TextColumn::make('cuenta')
-                    ->label('N° Cuenta')
+                    ->label('Número de Cuenta')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client_name')
                     ->label('Nombre')

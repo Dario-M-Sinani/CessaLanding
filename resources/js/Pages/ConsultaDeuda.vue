@@ -10,7 +10,7 @@
           </span>
           <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-950">Consulta Deuda</h1>
           <p class="text-gray-600 text-sm max-w-xl mx-auto">
-            Verifica el estado de tus facturas ingresando tu número de abonado y tu N° de Cuenta.
+            Verifica el estado de tus facturas ingresando tu Número de Cliente y tu Número de Cuenta.
           </p>
         </div>
 
@@ -30,7 +30,7 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">N° de Cuenta</label>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Número de Cuenta</label>
               <input
                 :value="form.nro_cuenta"
                 @input="onNroCuentaInput"
@@ -70,7 +70,7 @@
           <!-- Help Panel -->
           <div v-if="mostrarAyuda" class="p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
             <p class="text-sm text-blue-950">
-              Encuentras tu <span class="font-bold">N° de Cliente</span> y tu <span class="font-bold">N° de Cuenta</span> en la parte superior de tu factura o aviso de cobro, como se muestra a continuación:
+              Encuentras tu <span class="font-bold">Número de Cliente</span> y tu <span class="font-bold">Número de Cuenta</span> en la parte superior de tu factura o aviso de cobro, como se muestra a continuación:
             </p>
             <img
               src="/img/ayuda/consulta-deuda.png"
@@ -92,7 +92,7 @@
             <div>
               <span class="text-xs font-semibold text-blue-900 uppercase tracking-wider block">Cliente Registrado</span>
               <h2 class="text-2xl font-black text-gray-900 mt-1">{{ resultado.nombre }}</h2>
-              <p class="text-sm sm:text-base text-gray-700 mt-1.5">N° Cuenta: <span class="text-gray-900 font-mono font-bold">{{ resultado.nro_cuenta }}</span></p>
+              <p class="text-sm sm:text-base text-gray-700 mt-1.5">Número de Cliente: <span class="text-gray-900 font-mono font-bold">{{ resultado.nro_cliente }}</span></p>
               <p class="text-sm sm:text-base text-gray-700 mt-1">{{ resultado.direccion }}</p>
               <p class="text-sm text-gray-700 mt-1">Categoría: <span class="text-gray-900 font-semibold">{{ resultado.categoria_descripcion }}</span></p>
             </div>
@@ -240,8 +240,9 @@
               </p>
             </div>
 
-            <!-- Banco BISA vía QR CESSA (propio) -- opción principal. Deshabilitado cerca de
-                 medianoche (corte diario del sistema de cobros), si la selección actual de
+            <!-- Pago rápido por QR CESSA. El usuario genera un solo QR; el sistema alterna el
+                 banco (BISA/BNB) por detrás en cada generación (ver PagoQrController). Deshabilitado
+                 cerca de medianoche (corte diario del sistema de cobros), si la selección actual de
                  meses todavía no suma un monto positivo, o si supera el límite de QR. -->
             <button
               type="button"
@@ -250,10 +251,13 @@
               class="group w-full p-4 sm:p-5 bg-amber-500 hover:bg-amber-400 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-left transition-all flex items-center justify-between gap-3 shadow-md"
             >
               <span class="space-y-0.5">
-                <span class="block text-[10px] font-bold uppercase tracking-wider" :class="qrDeshabilitado ? 'text-blue-200' : 'text-blue-950/70'">Pago Rápido · Banco BISA</span>
+                <span class="block text-[10px] font-bold uppercase tracking-wider" :class="qrDeshabilitado ? 'text-blue-200' : 'text-blue-950/70'">Pago Rápido · QR CESSA</span>
                 <span class="block text-base font-black" :class="qrDeshabilitado ? 'text-blue-100' : 'text-blue-950'">Pagar con QR CESSA</span>
               </span>
-              <svg class="w-8 h-8 shrink-0" :class="qrDeshabilitado ? 'text-blue-200' : 'text-blue-950/70'" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v2h2V5H5zm7-2a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V3zm2 1v2h2V4h-2zM3 12a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4zm2 1v2h2v-2H5zm7 0a1 1 0 011-1h1a1 1 0 011 1 1 1 0 001 1 1 1 0 011 1v1a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1h-1a1 1 0 01-1-1v-1zm5 4a1 1 0 01-1 1h-1a1 1 0 01-1-1 1 1 0 011-1h1a1 1 0 011 1z" clip-rule="evenodd" /></svg>
+              <svg class="w-8 h-8 shrink-0" :class="qrDeshabilitado ? 'text-blue-200' : 'text-blue-950/70'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+              </svg>
             </button>
             <p v-if="horaRestringida" class="text-[11px] text-amber-300">
               El pago por QR no está disponible entre las 23:59 y las 00:00 por el corte diario del sistema. Volvé a intentar en unos minutos.
@@ -298,7 +302,7 @@
 
             <p class="text-[11px] text-blue-300 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-              Más bancos con QR propio de CESSA, disponibles próximamente.
+              El pago se acredita al instante en tu factura.
             </p>
           </div>
 
@@ -434,7 +438,7 @@ const submitSearch = () => {
 
   const partes = form.nro_cuenta.split('-').map((p) => p.trim()).filter(Boolean);
   if (partes.length !== 3) {
-    formatError.value = 'El N° de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
+    formatError.value = 'El Número de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
     return;
   }
   const [zona, manzano, correlativo] = partes;

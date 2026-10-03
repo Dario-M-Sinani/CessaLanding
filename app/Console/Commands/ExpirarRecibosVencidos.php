@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Recibo;
-use App\Services\Payments\Contracts\QrPaymentProviderInterface;
 use App\Services\Payments\Exceptions\QrPaymentException;
+use App\Services\Payments\PaymentProviderRegistry;
 use App\Services\Payments\PaymentStatus;
 use Illuminate\Console\Command;
 
@@ -21,7 +21,7 @@ class ExpirarRecibosVencidos extends Command
 
     protected $description = 'Inhabilita en el proveedor y marca como Expirado los recibos QR pendientes que ya vencieron.';
 
-    public function handle(QrPaymentProviderInterface $provider): int
+    public function handle(PaymentProviderRegistry $providers): int
     {
         $vencidos = Recibo::where('status', PaymentStatus::Pendiente)
             ->where('expires_at', '<=', now())
@@ -29,7 +29,8 @@ class ExpirarRecibosVencidos extends Command
 
         foreach ($vencidos as $recibo) {
             try {
-                $provider->disable($recibo->alias);
+                // Cada recibo se inhabilita con el banco con el que se generó (SIP o BNB).
+                $providers->forRecibo($recibo)->disable($recibo->alias);
             } catch (QrPaymentException $e) {
                 report($e);
             }

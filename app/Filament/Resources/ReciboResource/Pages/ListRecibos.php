@@ -42,11 +42,11 @@ class ListRecibos extends ListRecords
             Actions\Action::make('generarCobroQr')
                 ->label('Generar Cobro QR')
                 ->icon('heroicon-o-qr-code')
-                ->modalHeading('Generar Cobro QR desde N° de Cliente')
+                ->modalHeading('Generar Cobro QR desde Número de Cliente')
                 ->modalDescription('Se consulta la deuda real en SIIC y el monto/glosa se arman solos -- no se escriben a mano.')
                 ->form([
                     Forms\Components\TextInput::make('nro_cliente')
-                        ->label('N° de Cliente')
+                        ->label('Número de Cliente')
                         ->numeric()
                         ->required()
                         ->rule('digits_between:1,10'),
@@ -94,7 +94,7 @@ class ListRecibos extends ListRecords
         }
 
         if (isset($siic['error']) || empty($siic['nro_cliente'])) {
-            Notification::make()->title('No se encontró ningún abonado con ese N° de Cliente')->danger()->send();
+            Notification::make()->title('No se encontró ningún abonado con ese Número de Cliente')->danger()->send();
 
             return;
         }
@@ -248,7 +248,7 @@ class ListRecibos extends ListRecords
             // primero (lo que identifica el pago de un vistazo), Banco Destino después de esos
             // 4 -- el resto de columnas (auditoría/trazabilidad) va al final, sin quitarlas.
             fputcsv($handle, [
-                'Monto', 'Moneda', 'Glosa', 'Descripción de Pago', 'N° Cliente', 'Banco Destino',
+                'Monto', 'Moneda', 'Glosa', 'Descripción de Pago', 'Número de Cliente', 'Banco Destino',
                 'Alias', 'Fecha de Creación', 'Estado', 'Cuenta Destino',
                 'N° de Orden', 'Pagador', 'Documento Pagador', 'Fecha de Pago', 'Generado Por',
             ]);

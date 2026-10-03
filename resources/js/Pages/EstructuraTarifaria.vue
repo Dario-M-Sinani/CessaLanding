@@ -85,7 +85,7 @@ const getCookie = (name) => {
 
 const toCurrency = (value) => {
   const n = parseFloat(value);
-  return Number.isNaN(n) ? '0.00' : n.toFixed(2);
+  return Number.isNaN(n) ? '0.000' : n.toFixed(3);
 };
 
 const cargarDetalle = async () => {

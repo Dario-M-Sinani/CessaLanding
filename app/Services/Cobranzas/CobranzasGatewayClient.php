@@ -59,7 +59,19 @@ class CobranzasGatewayClient
             throw CobranzasException::requestFailed('liquidar recibo (gateway)', "HTTP {$response->status()}: ".$this->extractErrorMessage($response));
         }
 
-        return $response->json();
+        $body = $response->json();
+
+        // Un 200/502 "de negocio" siempre debería traer JSON -- pero si el gateway devuelve
+        // algo raro (proxy intermedio, timeout parcial, etc.) no hay que romper con un
+        // TypeError; se sintetiza un array de error con lo que sí se pudo leer del body.
+        if (! is_array($body)) {
+            return [
+                'estado' => 'error',
+                'error' => $this->extractErrorMessage($response) ?: "Respuesta no-JSON del gateway (HTTP {$response->status()})",
+            ];
+        }
+
+        return $body;
     }
 
     /**

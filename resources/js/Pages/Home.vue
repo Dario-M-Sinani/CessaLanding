@@ -27,7 +27,7 @@
 
         <!-- Headline -->
         <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-          Energía eficiente y <span class="text-amber-400">servicios en línea</span>
+          Compañía Eléctrica Sucre <span class="text-amber-400">todo tu servicio, un solo lugar</span>
         </h1>
 
         <p class="text-blue-100 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
@@ -209,17 +209,75 @@
           </Link>
         </div>
 
+        <!-- Cortes de emergencia: imprevistos (choque de poste, falla, clima). En rojo mientras
+             están en atención, en verde unas horas después de restablecido el servicio. -->
+        <div v-if="emergencies && emergencies.length" class="space-y-4">
+          <div
+            v-for="emergency in emergencies"
+            :key="emergency.id"
+            :class="[
+              'rounded-2xl shadow-sm overflow-hidden border-2',
+              emergency.restored_at ? 'bg-emerald-50 border-emerald-600' : 'bg-red-50 border-red-600',
+            ]"
+            role="alert"
+          >
+            <div
+              :class="[
+                'flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3.5 text-white',
+                emergency.restored_at ? 'bg-emerald-700' : 'bg-red-700',
+              ]"
+            >
+              <div class="flex items-center gap-3">
+                <span v-if="!emergency.restored_at" class="relative flex h-3 w-3 shrink-0">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                </span>
+                <svg v-else class="w-6 h-6 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
+                <span class="text-lg font-extrabold uppercase tracking-wide">
+                  {{ emergency.restored_at ? 'Servicio restablecido' : 'Corte de emergencia' }}
+                </span>
+              </div>
+              <span class="sm:ml-auto text-sm font-semibold">
+                {{ formatFechaLarga(emergency.execution_date) }} · desde las {{ formatHora(emergency.start_time) }}
+              </span>
+            </div>
+            <div class="p-5 space-y-3">
+              <h3 :class="['text-lg font-bold', emergency.restored_at ? 'text-emerald-900' : 'text-red-900']">
+                Causa: {{ emergency.reason }}
+              </h3>
+              <p class="text-base text-gray-700 leading-relaxed">
+                <span class="font-semibold">Zonas afectadas:</span> {{ emergency.location }}
+              </p>
+              <p v-if="emergency.affected_institutions" class="text-base text-gray-700 leading-relaxed">
+                <span class="font-semibold">Instituciones afectadas:</span> {{ emergency.affected_institutions }}
+              </p>
+              <p v-if="emergency.restored_at" class="text-sm font-semibold text-emerald-800">
+                El suministro fue restablecido a las {{ formatHoraTimestamp(emergency.restored_at) }}. Gracias por su comprensión.
+              </p>
+              <p v-else class="text-sm font-semibold text-red-800">
+                CESSA ya tiene conocimiento de este corte y nuestro personal técnico está trabajando para restablecer el servicio<template v-if="emergency.finish_time"> (reposición estimada: {{ formatHora(emergency.finish_time) }})</template>.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div v-if="outages && outages.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div v-for="outage in outages" :key="outage.id" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <button
+            v-for="outage in outages"
+            :key="outage.id"
+            type="button"
+            @click="selectedOutage = outage"
+            class="text-left bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:border-blue-900 hover:shadow-md transition-all cursor-pointer"
+          >
             <div class="bg-blue-950 text-white px-5 py-3.5 space-y-2">
-              <span class="block text-sm font-extrabold leading-snug">{{ formatFechaLarga(outage.execution_date) }}</span>
-              <span class="inline-flex items-center gap-1.5 bg-amber-400 text-blue-950 px-3 py-1 rounded-full font-mono font-extrabold text-xs">
-                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+              <span class="block text-lg font-extrabold leading-snug">{{ formatFechaLarga(outage.execution_date) }}</span>
+              <span class="inline-flex items-center gap-2 bg-amber-400 text-blue-950 px-3.5 py-1.5 rounded-full font-mono font-extrabold text-base">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
                 {{ formatHora(outage.start_time) }} - {{ formatHora(outage.finish_time) }}
               </span>
             </div>
             <p class="p-5 text-sm text-gray-600 leading-relaxed line-clamp-3">{{ outage.location }}</p>
-          </div>
+          </button>
         </div>
         <div v-else class="p-8 bg-white border border-gray-200 rounded-2xl text-center text-base text-emerald-800 font-semibold flex items-center justify-center gap-2">
           <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
@@ -227,6 +285,54 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal de Corte Programado (detalle completo, sin navegar a "todos los cortes") -->
+    <Teleport to="body">
+      <div
+        v-if="selectedOutage"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/70 backdrop-blur-sm"
+        @click.self="selectedOutage = null"
+      >
+        <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          <button
+            type="button"
+            aria-label="Cerrar"
+            class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-blue-950 flex items-center justify-center shadow-md transition-colors"
+            @click="selectedOutage = null"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+          </button>
+
+          <div class="bg-blue-950 text-white px-6 py-5 space-y-3">
+            <div class="flex items-center gap-3">
+              <svg class="w-6 h-6 text-amber-400 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
+              <span class="text-lg font-extrabold leading-snug">{{ formatFechaLarga(selectedOutage.execution_date) }}</span>
+            </div>
+            <span class="inline-flex items-center gap-2 bg-amber-400 text-blue-950 px-3.5 py-1.5 rounded-full font-mono font-extrabold text-base">
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+              {{ formatHora(selectedOutage.start_time) }} a {{ formatHora(selectedOutage.finish_time) }}
+            </span>
+          </div>
+
+          <div class="p-6 space-y-3 overflow-y-auto">
+            <h3 class="text-lg font-bold text-blue-950">Motivo: {{ selectedOutage.reason }}</h3>
+            <p class="text-base text-gray-600 leading-relaxed flex items-start gap-2">
+              <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
+              <span><span class="font-semibold">Zonas afectadas:</span> <span class="text-gray-800">{{ selectedOutage.location }}</span></span>
+            </p>
+          </div>
+
+          <div class="px-6 pb-6">
+            <Link
+              href="/informacion/cortes-programados"
+              class="text-xs font-bold text-blue-900 hover:text-blue-700"
+            >
+              Ver todos los cortes →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Parallax Sucre Panel -->
     <section
@@ -340,10 +446,11 @@ import AppLayout from '../Layouts/AppLayout.vue';
 import PopupNews from '../Components/PopupNews.vue';
 import StaticLocationMap from '../Components/StaticLocationMap.vue';
 import HeroBackgroundCarousel from '../Components/HeroBackgroundCarousel.vue';
-import { formatFechaLarga, formatHora } from '../utils/formatFecha';
+import { formatFechaLarga, formatHora, formatHoraTimestamp } from '../utils/formatFecha';
 
 defineProps({
   outages: Array,
+  emergencies: { type: Array, default: () => [] },
   documentGroups: Array,
   consejos: Object,
   video: Object,
@@ -383,6 +490,8 @@ const focusStyle = computed(() => ({
 const buscarDeuda = () => {
   router.get('/consulta-deuda');
 };
+
+const selectedOutage = ref(null);
 
 const embedUrl = (url) => {
   if (!url) return null;

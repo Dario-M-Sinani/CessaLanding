@@ -44,14 +44,15 @@ class HandleInertiaRequests extends Middleware
             // Menú "Consumidor" del Navbar: se arma solo, en vivo, desde lo publicado en esa
             // categoría -- antes eran 7 links escritos a mano en Navbar.vue, así que un Content
             // nuevo (o uno que se despublicaba) nunca cambiaba el menú sin tocar código.
-            // "Consejos de seguridad" (alias consejos-de-seguridad) se excluye a propósito: ese
-            // Content sigue en la BD para no perder el texto legacy, pero la página real que se
-            // muestra al público es una rediseñada a mano en /informacion/consejos-de-seguridad,
-            // no /contenido/{alias} -- Navbar.vue agrega ese link aparte, fijo.
+            // "Consejos de seguridad" (alias consejos-de-seguridad) y "Comunicados AETN" (alias
+            // comunicados-aetn) se excluyen a propósito: esos Content siguen en la BD para no
+            // perder el texto legacy, pero la página real que se muestra al público es una
+            // rediseñada a mano en /informacion/{consejos-de-seguridad,comunicados-aetn}, no
+            // /contenido/{alias} -- Navbar.vue agrega esos links aparte, fijos.
             'consumidorLinks' => fn () => \App\Models\Content::query()
                 ->whereHas('category', fn ($query) => $query->where('title', 'Consumidor'))
                 ->where('published', 'S')
-                ->where('alias', '!=', 'consejos-de-seguridad')
+                ->whereNotIn('alias', ['consejos-de-seguridad', 'comunicados-aetn'])
                 ->orderBy('id')
                 ->get(['title', 'alias'])
                 ->map(fn ($content) => [

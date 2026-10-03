@@ -54,15 +54,16 @@ class Publication extends Model
     }
 
     // Agrupación pública de los tipos de proceso, usada en Inicio y en el filtro
-    // de /procesos. Convocatoria y Remate de Activos se muestran juntos como
-    // "Convocatorias y Pujas" porque para el usuario final son la misma idea.
+    // de /procesos -- un filtro por tipo, salvo "Otros" que agrupa lo que no
+    // encaja en las categorías anteriores.
     public static function getGroups(): array
     {
         return [
             'invitaciones' => ['INVITATION'],
             'licitaciones' => ['BIDDING'],
-            'convocatorias_pujas' => ['ANNOUNCEMENT', 'ASSETS_SALES'],
-            'documentos' => ['OTHERS'],
+            'convocatorias' => ['ANNOUNCEMENT'],
+            'pujas_remates' => ['ASSETS_SALES'],
+            'otros' => ['OTHERS'],
         ];
     }
 
@@ -71,8 +72,9 @@ class Publication extends Model
         return [
             'invitaciones' => 'Invitaciones',
             'licitaciones' => 'Licitaciones',
-            'convocatorias_pujas' => 'Convocatorias y Pujas',
-            'documentos' => 'Documentos',
+            'convocatorias' => 'Convocatorias',
+            'pujas_remates' => 'Pujas y Remates',
+            'otros' => 'Otros',
         ];
     }
 

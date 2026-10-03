@@ -19,10 +19,17 @@ class AsistenteController extends Controller
 {
     public function faqs(): JsonResponse
     {
+        // Cachea un array plano, no la Collection de Eloquent -- con el driver de
+        // cache 'file' de este entorno, cachear el objeto Collection directo a
+        // veces vuelve corrupto al leerlo (unserialize da un stdClass con
+        // __PHP_Incomplete_Class_Name en vez de la Collection real), lo que
+        // rompe el .filter() del lado del cliente y el widget se queda en
+        // blanco. Un array no tiene ese problema de identidad de clase.
         $faqs = Cache::remember('asistente.faqs', 300, function () {
             return Faq::where('published', 'S')
                 ->orderBy('position', 'asc')
-                ->get(['id', 'question', 'answer']);
+                ->get(['id', 'question', 'answer'])
+                ->toArray();
         });
 
         return response()->json(['faqs' => $faqs]);

@@ -4,8 +4,8 @@ namespace App\Filament\Resources\ReciboResource\Pages;
 
 use App\Filament\Resources\ReciboResource;
 use App\Services\Cobranzas\FacturacionRecibo;
-use App\Services\Payments\Contracts\QrPaymentProviderInterface;
 use App\Services\Payments\Exceptions\QrPaymentException;
+use App\Services\Payments\PaymentProviderRegistry;
 use App\Services\Payments\PaymentStatus;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -46,7 +46,7 @@ class ViewRecibo extends ViewRecord
                 ->visible(fn (): bool => $this->record->status === PaymentStatus::Pendiente)
                 ->action(function (): void {
                     try {
-                        app(QrPaymentProviderInterface::class)->disable($this->record->alias);
+                        app(PaymentProviderRegistry::class)->forRecibo($this->record)->disable($this->record->alias);
                     } catch (QrPaymentException $e) {
                         Notification::make()
                             ->title('No se pudo inhabilitar el cobro')
@@ -93,7 +93,7 @@ class ViewRecibo extends ViewRecord
     public function sincronizarEstado(): void
     {
         try {
-            $result = app(QrPaymentProviderInterface::class)->status($this->record->alias);
+            $result = app(PaymentProviderRegistry::class)->forRecibo($this->record)->status($this->record->alias);
         } catch (QrPaymentException $e) {
             Notification::make()
                 ->title('No se pudo consultar el estado')

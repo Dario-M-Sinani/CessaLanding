@@ -1,11 +1,13 @@
 <template>
   <AppLayout>
-    <div class="py-12 bg-white min-h-screen">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div class="relative py-12 bg-white min-h-screen overflow-hidden">
+      <FallingLeavesBackground />
+
+      <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
         <!-- Header / Marketing -->
         <div class="text-center space-y-3">
-          <span class="px-4 py-1.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">
+          <span class="px-4 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">
             Menos Papel, Más Rapidez
           </span>
           <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-950">Actualiza tus Datos de Contacto</h1>
@@ -19,7 +21,10 @@
         <!-- Incentive Banner -->
         <div class="bg-blue-900 text-white rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <svg class="w-9 h-9 text-amber-400 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 16.82A7.462 7.462 0 0015.5 15h-.75a2.5 2.5 0 100-5h-4.5a1.5 1.5 0 010-3H14V5.5h-2.5V4h-1.5v1.55c-1.978.243-3.5 1.928-3.5 3.95a3.5 3.5 0 003.5 3.5h1.25a1 1 0 010 2H6.5V17h2.5v1.5h1.5v-1.55c.088-.01.174-.021.25-.033z" /></svg>
+            <svg class="w-9 h-9 text-amber-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M14 6a2.5 2.5 0 0 0-4-3 2.5 2.5 0 0 0-4 3H3.25C2.56 6 2 6.56 2 7.25v.5C2 8.44 2.56 9 3.25 9h6V6h1.5v3h6C17.44 9 18 8.44 18 7.75v-.5C18 6.56 17.44 6 16.75 6H14Zm-1-1.5a1 1 0 0 1-1 1h-1v-1a1 1 0 1 1 2 0Zm-6 0a1 1 0 0 0 1 1h1v-1a1 1 0 0 0-2 0Z" clip-rule="evenodd" />
+              <path d="M9.25 10.5H3v4.75A2.75 2.75 0 0 0 5.75 18h3.5v-7.5ZM10.75 18v-7.5H17v4.75A2.75 2.75 0 0 1 14.25 18h-3.5Z" />
+            </svg>
             <div class="text-xs sm:text-sm">
               <span class="font-bold block">Beneficios exclusivos para quienes actualicen sus datos</span>
               <span class="text-blue-100">Estamos preparando sorpresas e incentivos para los abonados que se sumen primero a la facturación digital. ¡Sé de los primeros!</span>
@@ -73,7 +78,7 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">N° de Cuenta</label>
+              <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Número de Cuenta</label>
               <input
                 :value="verificacion.nro_cuenta"
                 @input="onNroCuentaInput"
@@ -90,14 +95,37 @@
               </p>
             </div>
 
-            <button
-              type="submit"
-              :disabled="loading"
-              class="w-full sm:w-auto px-8 py-3 bg-amber-500 hover:bg-amber-400 text-blue-950 font-extrabold rounded-xl transition-all shadow-md text-sm disabled:opacity-50"
-            >
-              {{ loading ? 'Verificando...' : 'Verificar' }}
-            </button>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <button
+                type="submit"
+                :disabled="loading"
+                class="w-full sm:w-auto px-8 py-3 bg-amber-500 hover:bg-amber-400 text-blue-950 font-extrabold rounded-xl transition-all shadow-md text-sm disabled:opacity-50"
+              >
+                {{ loading ? 'Verificando...' : 'Verificar' }}
+              </button>
+
+              <button
+                type="button"
+                @click="mostrarAyuda = !mostrarAyuda"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2 text-blue-900 font-bold text-xs uppercase tracking-wider hover:underline"
+              >
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                ¿Dónde encuentro estos datos?
+              </button>
+            </div>
           </form>
+
+          <!-- Help Panel -->
+          <div v-if="mostrarAyuda" class="p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+            <p class="text-sm text-blue-950">
+              Encuentras tu <span class="font-bold">Número de Cliente</span> y tu <span class="font-bold">Número de Cuenta</span> en la parte superior de tu factura o aviso de cobro, como se muestra a continuación:
+            </p>
+            <img
+              src="/img/ayuda/consulta-deuda.png"
+              alt="Ejemplo de factura CESSA señalando la ubicación del número de cliente y del número de cuenta"
+              class="w-full max-w-xl mx-auto rounded-lg border border-blue-200 shadow-sm"
+            />
+          </div>
         </div>
 
         <!-- STEP 2: Correo electrónico -->
@@ -117,7 +145,7 @@
                 required
                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 text-sm"
               />
-              <p class="text-[11px] text-gray-500 mt-1.5">Aquí llegará tu aviso de cobranza a partir de ahora.</p>
+              <p class="text-[11px] text-gray-500 mt-1.5">Aquí llegará tu aviso de cobranza en una futura actualización.</p>
             </div>
 
             <div>
@@ -195,7 +223,7 @@
           <svg class="w-14 h-14 text-emerald-500 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
           <h2 class="text-2xl font-black text-emerald-900">¡Datos actualizados!</h2>
           <p class="text-sm text-emerald-800 max-w-md mx-auto">
-            Tu correo quedó confirmado. A partir de ahora tu aviso de cobranza llegará a tu
+            Tu correo quedó confirmado. En una futura actualización, tu aviso de cobranza llegará a tu
             correo electrónico -- ¡gracias por ayudarnos a reducir el papel impreso!
           </p>
         </div>
@@ -208,12 +236,14 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import AppLayout from '../Layouts/AppLayout.vue';
+import FallingLeavesBackground from '../Components/FallingLeavesBackground.vue';
 
 const paso = ref(1);
 const loading = ref(false);
 const error = ref('');
 const formatError = ref('');
 const nombreAbonado = ref('');
+const mostrarAyuda = ref(false);
 
 const verificacion = reactive({ nro_cliente: '', nro_cuenta: '' });
 const contacto = reactive({ email: '', phone: '' });
@@ -263,7 +293,7 @@ const verificarCuenta = async () => {
 
   const partes = verificacion.nro_cuenta.split('-').map((p) => p.trim()).filter(Boolean);
   if (partes.length !== 3) {
-    formatError.value = 'El N° de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
+    formatError.value = 'El Número de Cuenta debe tener el formato Zona-Manzano-Correlativo, ej. 9-35-4000.';
     return;
   }
   const [zona, manzano, correlativo] = partes;

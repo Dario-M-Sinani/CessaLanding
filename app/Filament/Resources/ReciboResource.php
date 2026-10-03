@@ -72,7 +72,7 @@ class ReciboResource extends Resource
                         ->placeholder('—')
                         ->columnSpanFull(),
                     TextEntry::make('nro_cliente')
-                        ->label('N° Cliente')
+                        ->label('Número de Cliente')
                         ->placeholder('— (generado desde el panel)'),
                     TextEntry::make('expires_at')
                         ->label('Vence')

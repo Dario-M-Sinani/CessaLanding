@@ -52,6 +52,19 @@ class SipCallbackController extends Controller
             ], 200);
         }
 
+        // Idempotencia: SIP reintenta la notificación. Si el Recibo ya quedó registrado como
+        // cobrado (Pagado/Facturado/ErrorFacturacion), no se reprocesa -- volver a marcarlo
+        // Pagado haría que el cron lo facture de nuevo o que un ya Facturado retroceda. Se
+        // responde 0000 igual (para SIP fue un éxito) sin tocar nada.
+        if ($recibo->status->dineroYaRegistrado()) {
+            Log::info('sip_callback.ya_procesado', ['alias' => $recibo->alias, 'estado' => $recibo->status->value]);
+
+            return response()->json([
+                'codigo' => '0000',
+                'mensaje' => 'Registro Exitoso',
+            ]);
+        }
+
         $recibo->update([
             'status' => PaymentStatus::Pagado,
             'paid_at' => now(),

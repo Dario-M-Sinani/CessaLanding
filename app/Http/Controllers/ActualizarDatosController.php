@@ -122,7 +122,7 @@ class ActualizarDatosController extends Controller
         if (! $cuenta) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tu verificación expiró. Vuelve a ingresar tu N° de Cliente y N° de Cuenta.',
+                'message' => 'Tu verificación expiró. Vuelve a ingresar tu Número de Cliente y Número de Cuenta.',
             ], 419);
         }
 
@@ -172,7 +172,7 @@ class ActualizarDatosController extends Controller
         if (! $cuenta) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tu verificación expiró. Vuelve a ingresar tu N° de Cliente y N° de Cuenta.',
+                'message' => 'Tu verificación expiró. Vuelve a ingresar tu Número de Cliente y Número de Cuenta.',
             ], 419);
         }
 

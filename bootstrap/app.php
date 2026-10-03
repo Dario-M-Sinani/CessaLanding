@@ -30,6 +30,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // en el body (ver DemoActualizarDatosController), no CSRF.
         $middleware->validateCsrfTokens(except: [
             'api/pagos/sip/confirmar-pago',
+            // Notificación de pago del BNB (POST servidor-a-servidor, sin cookie/CSRF de este
+            // sitio). No lleva Basic Auth como SIP: el pago se verifica contra el propio BNB
+            // (getQRStatusAsync) antes de marcar Pagado -- ver BnbCallbackController.
+            'api/pagos/bnb/receive-notification',
             'api/demo/actualizar-datos/*',
         ]);
     })

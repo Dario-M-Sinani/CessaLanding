@@ -58,6 +58,23 @@ return [
         'callback_password' => env('SIP_CALLBACK_PASSWORD'),
     ],
 
+    'bnb' => [
+        // Pasarela QR Simple del Banco Nacional de Bolivia (Api Market, ver
+        // documentacion/"Open Banking Medio de Pago QR - Notificación V2.pdf"). Segundo banco
+        // elegible junto a SIP/BISA -- ver BnbQrProvider. En test: http://test.bnb.com.bo; en
+        // prod: https://marketapi.bnb.com.bo.
+        'base_url' => env('BNB_QR_SIMPLE_BASE_URL', 'http://test.bnb.com.bo'),
+        // Prefijo opcional de ruta si el banco lo expone detrás de un subfolder (normalmente vacío).
+        'uri_subfolder' => env('BNB_QR_SIMPLE_URI_SUBFOLDER', ''),
+        // accountId/authorizationId que entrega el BNB (van como username/password al generar token).
+        'account_id' => env('BNB_QR_SIMPLE_ACCOUNT_ID'),
+        'authorization_id' => env('BNB_QR_SIMPLE_AUTHORIZATION_ID'),
+        'currency' => env('BNB_QR_SIMPLE_CURRENCY', 'BOB'),
+        'single_use' => env('BNB_QR_SIMPLE_SINGLE_USE', true),
+        // Posición de la cuenta de abono: 1 = moneda nacional (BOB), 2 = moneda extranjera (USD).
+        'destination_account_id' => env('BNB_QR_SIMPLE_DESTINATION_ACCOUNT_ID', 1),
+    ],
+
     'cobranzas' => [
         // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Con esto
         // apagado, los pagos por QR se siguen cobrando igual, solo no se registran como

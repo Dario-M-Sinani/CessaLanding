@@ -247,11 +247,7 @@
         <span class="val">{{ $factura['cliente_nombre'] ?? 'N/A' }}</span>
     </div>
     <div class="data-row">
-        <span class="label">N° CUENTA:</span>
-        <span class="val">{{ $factura['cliente_cuenta'] ?? 'N/A' }}</span>
-    </div>
-    <div class="data-row">
-        <span class="label">N° CLIENTE:</span>
+        <span class="label">NÚMERO DE CLIENTE:</span>
         <span class="val">{{ $factura['cliente_codigo'] ?? $factura['nro_cliente'] ?? 'N/A' }}</span>
     </div>
     <div class="data-row">

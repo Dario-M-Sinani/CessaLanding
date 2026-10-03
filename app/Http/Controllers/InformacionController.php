@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Filament\Support\FileManagerAction;
+use App\Models\AetnCommunication;
 use App\Models\Bank;
 use App\Models\Document;
 use App\Models\Faq;
@@ -15,7 +16,8 @@ class InformacionController extends Controller
 {
     public function cortesProgramados(): Response
     {
-        $outages = ScheduledOutage::where('published', 'S')
+        $outages = ScheduledOutage::programados()
+            ->where('published', 'S')
             ->orderBy('execution_date', 'desc')
             ->paginate(6)
             ->withQueryString();
@@ -84,6 +86,25 @@ class InformacionController extends Controller
 
         return Inertia::render('Informacion/PuntosCobranza', [
             'banks' => $banks,
+        ]);
+    }
+
+    public function comunicadosAetn(): Response
+    {
+        $communications = AetnCommunication::where('published', 'S')
+            ->orderBy('published_date', 'desc')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(function (AetnCommunication $communication) {
+                $communication->image_url = FileManagerAction::resolveUrl($communication->image_url);
+                $communication->document_url = FileManagerAction::resolveUrl($communication->document_url);
+
+                return $communication;
+            });
+
+        return Inertia::render('Informacion/ComunicadosAetn', [
+            'communications' => $communications,
         ]);
     }
 }

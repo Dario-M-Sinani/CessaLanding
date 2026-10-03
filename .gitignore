@@ -28,3 +28,11 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Scripts temporales de despliegue/diagnóstico para el hosting (se suben por FTP con token y se
+# borran después) -- nunca al repo, que es público.
+/public/*.php
+!/public/index.php
+/public/Nueva carpeta/
+/public/.htaccess_test
+/public/DO_NOT_UPLOAD_HERE
+/public/error.log.*

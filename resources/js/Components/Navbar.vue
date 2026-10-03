@@ -242,7 +242,7 @@
         <div class="relative group" @mouseenter="openDropdown = 'consumidor'" @mouseleave="openDropdown = null">
           <button
             class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-900 hover:bg-gray-50 flex items-center space-x-1 transition-all"
-            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': $page.url.startsWith('/informacion/consejos-de-seguridad') }"
+            :class="{ 'text-blue-900 font-bold border-b-2 border-amber-500': $page.url.startsWith('/informacion/consejos-de-seguridad') || $page.url.startsWith('/informacion/comunicados-aetn') }"
           >
             <span>Consumidor</span>
             <svg class="w-3.5 h-3.5 text-amber-500 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,6 +265,9 @@
               </Link>
               <Link href="/informacion/consejos-de-seguridad" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
                 Consejos de Seguridad
+              </Link>
+              <Link href="/informacion/comunicados-aetn" class="block px-3.5 py-2 rounded-lg text-xs font-medium text-gray-700 hover:text-blue-900 hover:bg-blue-50 border-l-2 border-transparent hover:border-amber-500 transition-all">
+                Comunicados AETN
               </Link>
             </div>
           </div>
@@ -446,6 +449,7 @@
           class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50"
         >{{ item.label }}</Link>
         <Link href="/informacion/consejos-de-seguridad" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Consejos de Seguridad</Link>
+        <Link href="/informacion/comunicados-aetn" @click="mobileOpen = false" class="block px-4 py-2 rounded-lg text-xs text-gray-700 hover:bg-blue-50">Comunicados AETN</Link>
       </div>
 
       <div class="space-y-1 border-t border-gray-100 pt-2">

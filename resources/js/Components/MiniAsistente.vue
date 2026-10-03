@@ -8,7 +8,7 @@
       leave-to-class="opacity-0 translate-y-1"
     >
       <div
-        v-if="mostrarGlobito"
+        v-if="mostrarGlobito && !open"
         class="fixed bottom-[4.4rem] right-5 z-[95] max-w-[8rem] sm:max-w-[11rem] bg-white/90 text-blue-900 text-[10px] sm:text-xs font-medium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl rounded-br-sm shadow-md border border-gray-200/70"
       >
         ¿Te puedo ayudar?
@@ -17,12 +17,12 @@
 
     <!-- Botón flotante -->
     <span
-      v-if="!open && !yaInteractuo"
+      v-if="!open"
       class="fixed bottom-5 right-5 z-[89] w-14 h-14 md:w-20 md:h-20 rounded-full bg-amber-400 blur-md md:blur-lg opacity-60 md:opacity-80 animate-pulse pointer-events-none"
       aria-hidden="true"
     ></span>
     <span
-      v-if="!open && !yaInteractuo"
+      v-if="!open"
       class="hidden md:block fixed bottom-5 right-5 z-[89] w-16 h-16 rounded-full border-2 border-amber-300 opacity-70 animate-ping pointer-events-none"
       aria-hidden="true"
     ></span>
@@ -65,8 +65,28 @@
           v-model="busqueda"
           type="text"
           placeholder="Buscar en preguntas frecuentes..."
-          class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-blue-900 mb-3"
+          class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-900 mb-3"
         />
+
+        <!-- Agente estático: respuesta directa por intención detectada en lo que
+             se escribió, antes de la lista de FAQs (ver `intenciones` más abajo) -->
+        <div
+          v-if="intencionDetectada"
+          class="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200"
+        >
+          <p class="text-xs text-blue-950 leading-relaxed">{{ intencionDetectada.respuesta }}</p>
+          <div v-if="intencionDetectada.acciones.length" class="flex flex-wrap gap-2 mt-2">
+            <Link
+              v-for="accion in intencionDetectada.acciones"
+              :key="accion.href"
+              :href="accion.href"
+              class="text-[11px] font-bold text-blue-900 bg-white border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50 transition-colors"
+              @click="open = false"
+            >
+              {{ accion.label }}
+            </Link>
+          </div>
+        </div>
 
         <div v-if="cargando" class="text-xs text-gray-500 text-center py-6">Cargando preguntas frecuentes...</div>
 
@@ -118,14 +138,12 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 const open = ref(false);
-const yaInteractuo = ref(false);
 const mostrarGlobito = ref(false);
 const busqueda = ref('');
 const expandidoId = ref(null);
 const cargando = ref(false);
 const error = ref(false);
 let globitoTimer = null;
-let globitoOcultarTimer = null;
 const faqs = ref([]);
 let cargadas = false;
 
@@ -138,22 +156,202 @@ const accesos = [
   { label: 'Contáctenos', href: '/la-compania/contacto' },
 ];
 
+// "Agente" estático: nada de IA/LLM, solo intención por palabras clave
+// resuelta 100% en el navegador (ver intencionDetectada más abajo). Cubre
+// preguntas frecuentes en lenguaje natural que no son búsqueda de FAQ sino
+// "llevame a la acción correcta", complementando los accesos rápidos de
+// arriba (que solo cubren un click directo, no una frase escrita).
+const intenciones = [
+  {
+    id: 'emergencia',
+    palabrasClave: 'no tengo luz sin luz se corto la luz se fue la luz corte no programado emergencia apagon urgente',
+    respuesta: 'Si es una emergencia o un corte no programado, comunicate al 176 o al (591-4) 64-51200 (Atención al Cliente 24/7).',
+    acciones: [],
+  },
+  {
+    id: 'pagar',
+    palabrasClave: 'pagar factura pago recibo como pago mi deuda planilla aviso de cobro con qr',
+    respuesta: 'Podés generar tu código QR para pagar tu factura desde Consultar Deuda.',
+    acciones: [{ label: 'Consultar Deuda', href: '/consulta-deuda' }],
+  },
+  {
+    id: 'reclamo',
+    palabrasClave: 'reclamo queja denuncia mal servicio problema con la atencion mala atencion',
+    respuesta: 'Podés dejarnos tu reclamo o consulta desde el formulario de Contáctenos.',
+    acciones: [{ label: 'Contáctenos', href: '/la-compania/contacto' }],
+  },
+  {
+    id: 'tarifas',
+    palabrasClave: 'tarifa tarifas precio del kwh cuanto cuesta la energia estructura tarifaria costo',
+    respuesta: 'La estructura de tarifas vigente está detallada acá.',
+    acciones: [{ label: 'Estructura Tarifaria', href: '/importante/estructura-tarifaria' }],
+  },
+  {
+    id: 'empleo',
+    palabrasClave: 'trabajo empleo vacante convocatoria postular recursos humanos',
+    respuesta: 'Las convocatorias y vacantes vigentes se publican en Recursos Humanos.',
+    acciones: [{ label: 'Recursos Humanos', href: '/la-compania/rrhh' }],
+  },
+  {
+    id: 'requisitos-conexion',
+    palabrasClave: 'requisitos documentos que necesito para una nueva conexion instalar medidor',
+    respuesta: 'Los requisitos y documentos para trámites están acá.',
+    acciones: [
+      { label: 'Documentos', href: '/informacion/documentos' },
+      { label: 'Nueva Conexión', href: '/nueva-conexion' },
+    ],
+  },
+  {
+    id: 'puntos-cobranza',
+    palabrasClave: 'donde pago en efectivo puntos de cobranza sucursales agencias',
+    respuesta: 'Estos son los puntos de cobranza habilitados para pagar en efectivo.',
+    acciones: [{ label: 'Puntos de Cobranza', href: '/informacion/puntos-de-cobranza' }],
+  },
+  {
+    id: 'suspension',
+    palabrasClave: 'dar de baja suspender mi servicio cortar el servicio ya no quiero el servicio',
+    respuesta: 'Para suspender tu servicio, hacé la solicitud acá.',
+    acciones: [{ label: 'Suspensión de Servicio', href: '/suspension-servicio' }],
+  },
+  {
+    id: 'sms-no-recibido',
+    palabrasClave: 'no recibi no me llego no llega el sms mensaje de texto codigo de verificacion',
+    respuesta: 'Si no te llegó el código por SMS: esperá un par de minutos y volvé a solicitarlo, y revisá que tu número de celular esté bien escrito. Si el problema sigue, escribinos.',
+    acciones: [
+      { label: 'Actualizar Datos', href: '/actualizar-datos' },
+      { label: 'Contáctenos', href: '/la-compania/contacto' },
+    ],
+  },
+];
+
+// Las respuestas son HTML guardado desde el editor del panel (muchas migradas
+// del legacy) y bastantes tienen los acentos como entidades ("categor&iacute;a"
+// en vez de "categoría") en lugar del caracter real -- decodificarlas por un
+// <div> temporal (innerHTML -> textContent) es lo único que también saca las
+// etiquetas de forma confiable, a diferencia de un regex que no entiende
+// entidades. Sin este paso, buscar "categoria" nunca encontraba nada aunque
+// la palabra estuviera ahí, porque quedaba comparando contra el texto crudo
+// con la entidad todavía adentro.
+const decodificarHtml = (html) => {
+  const contenedor = document.createElement('div');
+  contenedor.innerHTML = html || '';
+  return contenedor.textContent || '';
+};
+
 // ̀-ͯ son las marcas diacríticas combinantes que separa NFD --
 // sacándolas después de normalizar es el truco estándar para comparar texto
 // sin tildes ("útil" -> "util") sin depender de un mapa manual de acentos.
-const normalizar = (texto) => (texto || '')
+const normalizar = (texto) => decodificarHtml(texto)
   .toLowerCase()
   .normalize('NFD')
-  .replace(/[̀-ͯ]/g, '')
-  .replace(/<[^>]*>/g, ' ');
+  .replace(/[̀-ͯ]/g, '');
+
+// Distancia de Levenshtein clásica (DP de una fila) -- mide cuántas letras
+// hay que cambiar/agregar/quitar para pasar de una palabra a otra. Se usa
+// para tolerar errores de tipeo en la búsqueda de FAQs.
+const distanciaLevenshtein = (a, b) => {
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const fila = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let anterior = fila[0];
+    fila[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const temp = fila[j];
+      fila[j] = a[i - 1] === b[j - 1]
+        ? anterior
+        : 1 + Math.min(anterior, fila[j], fila[j - 1]);
+      anterior = temp;
+    }
+  }
+  return fila[b.length];
+};
+
+// Palabras muy cortas ("de", "el", "luz") no toleran typos -- con esas
+// pocas letras casi cualquier palabra del texto "se parece" y la búsqueda
+// dejaría de filtrar nada.
+const toleranciaTypo = (largo) => {
+  if (largo <= 3) return 0;
+  if (largo <= 6) return 1;
+  return 2;
+};
+
+// Puntúa una palabra de búsqueda contra un texto: coincidencia exacta
+// (substring) puntúa más que una palabra "parecida" tolerando 1-2 letras
+// de diferencia, así una errata de tipeo no hace desaparecer el resultado,
+// solo lo deja más abajo en el orden.
+const puntuarPalabra = (palabra, texto, palabrasTexto) => {
+  if (texto.includes(palabra)) return 3;
+
+  const tolerancia = toleranciaTypo(palabra.length);
+  if (!tolerancia) return 0;
+
+  const hayParecida = palabrasTexto.some((palabraTexto) => (
+    Math.abs(palabraTexto.length - palabra.length) <= tolerancia
+    && distanciaLevenshtein(palabra, palabraTexto) <= tolerancia
+  ));
+  return hayParecida ? 1.5 : 0;
+};
 
 const resultados = computed(() => {
-  const q = normalizar(busqueda.value).trim();
-  if (!q) return faqs.value;
+  const qNormalizada = normalizar(busqueda.value).trim();
+  if (!qNormalizada) return faqs.value;
 
-  return faqs.value.filter((faq) => (
-    normalizar(faq.question).includes(q) || normalizar(faq.answer).includes(q)
-  ));
+  const palabrasBusqueda = qNormalizada.split(/\s+/).filter(Boolean);
+
+  return faqs.value
+    .map((faq) => {
+      const pregunta = normalizar(faq.question);
+      const respuesta = normalizar(faq.answer);
+      const palabrasPregunta = pregunta.split(/\s+/);
+      const palabrasRespuesta = respuesta.split(/\s+/);
+
+      // Todas las palabras buscadas tienen que aparecer (en la pregunta o
+      // la respuesta, en cualquier orden) para que la FAQ cuente como
+      // resultado -- pero el puntaje de la pregunta pesa más, así una FAQ
+      // cuyo título coincide sube por encima de una que solo la menciona
+      // de paso en la respuesta.
+      let puntaje = 0;
+      for (const palabra of palabrasBusqueda) {
+        const puntajePregunta = puntuarPalabra(palabra, pregunta, palabrasPregunta);
+        const puntajeRespuesta = puntuarPalabra(palabra, respuesta, palabrasRespuesta);
+        const mejor = Math.max(puntajePregunta, puntajeRespuesta * 0.5);
+        if (!mejor) return { faq, puntaje: 0, coincide: false };
+        puntaje += mejor;
+      }
+      return { faq, puntaje, coincide: true };
+    })
+    .filter((resultado) => resultado.coincide)
+    .sort((a, b) => b.puntaje - a.puntaje)
+    .map((resultado) => resultado.faq);
+});
+
+// Reusa el mismo puntuarPalabra() de las FAQs contra las palabras clave de
+// cada intención. Umbral >= 3 porque puntuarPalabra da exactamente 3 a una
+// coincidencia exacta de una palabra real -- así una sola palabra de relleno
+// (que igual da 0) nunca alcanza para disparar una intención por error.
+const intencionDetectada = computed(() => {
+  const qNormalizada = normalizar(busqueda.value).trim();
+  if (!qNormalizada) return null;
+
+  const palabrasBusqueda = qNormalizada.split(/\s+/).filter(Boolean);
+
+  let mejor = null;
+  for (const intencion of intenciones) {
+    const textoClave = normalizar(intencion.palabrasClave);
+    const palabrasClave = textoClave.split(/\s+/);
+
+    let puntaje = 0;
+    for (const palabra of palabrasBusqueda) {
+      puntaje += puntuarPalabra(palabra, textoClave, palabrasClave);
+    }
+
+    if (puntaje >= 3 && (!mejor || puntaje > mejor.puntaje)) {
+      mejor = { ...intencion, puntaje };
+    }
+  }
+  return mejor;
 });
 
 const cargarFaqs = async () => {
@@ -176,34 +374,21 @@ const cargarFaqs = async () => {
 
 const toggle = () => {
   open.value = !open.value;
-  yaInteractuo.value = true;
-  mostrarGlobito.value = false;
   if (open.value) cargarFaqs();
 };
 
-// Globito "¿Te puedo ayudar?": aparece solo una vez, a los 2.5s de cargar la
-// página. En desktop se esconde solo a los 8s; en móvil (pantalla angosta)
-// se queda hasta que el usuario interactúe, porque ahí no hay mouse que
-// "descubra" el botón por accidente como sí puede pasar en desktop.
-// yaInteractuo corta ambos timers en cualquier caso.
-const esMobile = () => window.matchMedia('(max-width: 767px)').matches;
-
+// Globito "¿Te puedo ayudar?" y el efecto de luz del botón: se muestran de
+// forma permanente (no una sola vez) a partir de los 2.5s de cargar la
+// página. Solo se apagan mientras el usuario tiene el panel abierto
+// (usándolo) y vuelven a aparecer apenas lo cierra -- ver los "v-if=!open"
+// del template.
 onMounted(() => {
   globitoTimer = setTimeout(() => {
-    if (!yaInteractuo.value) {
-      mostrarGlobito.value = true;
-      globitoOcultarTimer = setTimeout(() => {
-        // Se re-evalúa recién ahora (no al programar el timer) para no
-        // depender de que el ancho de pantalla no haya cambiado en los
-        // últimos 8s -- en desktop se esconde solo, en móvil se queda.
-        if (!esMobile()) mostrarGlobito.value = false;
-      }, 8000);
-    }
+    mostrarGlobito.value = true;
   }, 2500);
 });
 
 onBeforeUnmount(() => {
   clearTimeout(globitoTimer);
-  clearTimeout(globitoOcultarTimer);
 });
 </script>

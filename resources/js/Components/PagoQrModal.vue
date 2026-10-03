@@ -27,7 +27,7 @@
             <p class="text-sm text-red-700">{{ mensajeError }}</p>
             <button
               type="button"
-              @click="generar"
+              @click="generar()"
               class="px-5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs transition-colors"
             >
               Reintentar
@@ -42,6 +42,21 @@
             <p class="text-base font-bold text-emerald-800">¡Pago recibido!</p>
             <p class="text-xs text-gray-500">Bs. {{ monto }}</p>
 
+            <ul class="inline-flex flex-col gap-1.5 text-left text-xs mx-auto">
+              <li class="flex items-center gap-2 text-emerald-800 font-semibold">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                Pago recibido
+              </li>
+              <li v-if="comprobanteUrl" class="flex items-center gap-2 text-emerald-800 font-semibold">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                Facturado
+              </li>
+              <li v-else-if="!facturaDemorada" class="flex items-center gap-2 text-gray-500">
+                <svg class="w-4 h-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-25" /><path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>
+                Emitiendo tu factura…
+              </li>
+            </ul>
+
             <a
               v-if="comprobanteUrl"
               :href="comprobanteUrl"
@@ -52,8 +67,12 @@
               <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
               Descargar comprobante
             </a>
+            <p v-else-if="facturaDemorada" class="text-[11px] text-gray-500 max-w-xs mx-auto">
+              Tu pago quedó registrado. La factura todavía se está procesando; si no la recibís,
+              acercate a oficinas de CESSA con tu número de cliente para regularizarla.
+            </p>
             <p v-else class="text-[11px] text-gray-400">
-              Tu comprobante se está generando, va a estar disponible en unos minutos.
+              Esto puede tardar un par de minutos, no cierres esta ventana.
             </p>
           </div>
 
@@ -104,23 +123,30 @@ const props = defineProps({
   manzano: [String, Number],
   correlativo: [String, Number],
   cantidadMeses: Number,
+  // Banco puntual opcional ('sip_bisa' | 'bnb'). Normalmente NO se pasa: el usuario genera un
+  // solo QR y el backend alterna el banco por detrás. Se deja por si el staff/panel alguna vez
+  // necesita forzar un banco.
+  banco: { type: String, default: null },
 });
 
 const emit = defineEmits(['close']);
 
 const estado = ref('cargando'); // cargando | qr | pagado | error
+const bancoElegido = ref(props.banco);
 const mensajeError = ref('');
 const qrImageUrl = ref('');
 const monto = ref('');
 const periodo = ref('');
 const comprobanteUrl = ref('');
+const facturaDemorada = ref(false);
 let alias = null;
 let pollTimer = null;
 let intentosComprobante = 0;
 // Cuántos sondeos de comprobante hacer después de "pagado" antes de dejar de insistir en
-// silencio (3s * 60 = 3min) -- la factura real se genera en background (ver
-// RegistrarFacturacionCobranzas, corre cada minuto), no bloquea el "¡Pago recibido!" de arriba.
-const MAX_INTENTOS_COMPROBANTE = 60;
+// silencio (3s * 100 = 5min) -- la factura real se genera en background (ver
+// RegistrarFacturacionCobranzas, corre cada minuto y reintenta si falla), no bloquea el
+// "¡Pago recibido!" de arriba.
+const MAX_INTENTOS_COMPROBANTE = 100;
 
 // Cuenta regresiva propia (el vencimiento real de 5 min lo hace cumplir el backend, ver
 // PagoQrController -- esto es solo la UI para que el cliente vea cuánto tiempo le queda).
@@ -151,7 +177,11 @@ const getCookie = (name) => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
-const generar = async () => {
+// Genera el QR. Normalmente sin banco: el backend alterna BISA/BNB por detrás. Si viene un banco
+// puntual (prop), se envía para forzarlo.
+const generar = async (bancoKey = null) => {
+  if (bancoKey) bancoElegido.value = bancoKey;
+
   estado.value = 'cargando';
 
   try {
@@ -169,13 +199,16 @@ const generar = async () => {
         manzano: props.manzano,
         correlativo: props.correlativo,
         cantidad_meses: props.cantidadMeses,
+        banco: bancoElegido.value,
       }),
     });
 
     const json = await response.json();
 
     if (!response.ok) {
-      mensajeError.value = json.message || 'No se pudo generar el QR de pago.';
+      mensajeError.value = response.status === 429
+        ? 'Hiciste demasiados intentos seguidos. Esperá un minuto y volvé a intentar.'
+        : json.message || 'No se pudo generar el QR de pago.';
       estado.value = 'error';
       return;
     }
@@ -216,6 +249,7 @@ const startPolling = () => {
           clearInterval(pollTimer);
         } else if (++intentosComprobante >= MAX_INTENTOS_COMPROBANTE) {
           // Se deja de insistir, pero el pago ya quedó confirmado igual -- no es un error.
+          facturaDemorada.value = true;
           clearInterval(pollTimer);
         }
       } else if (['expirado', 'inhabilitado', 'error'].includes(json.status)) {
@@ -233,7 +267,9 @@ const close = () => {
   emit('close');
 };
 
-onMounted(generar);
+// El QR se genera apenas abre el modal; el backend elige el banco (alternando) salvo que se
+// pase uno puntual por prop.
+onMounted(() => generar(props.banco));
 
 onBeforeUnmount(() => {
   if (pollTimer) clearInterval(pollTimer);

@@ -34,6 +34,16 @@ export function formatFechaPublicacion(value) {
 }
 
 /**
+ * Formats a real timestamp (restored_at) as local "HH:MM", e.g. "14:35".
+ */
+export function formatHoraTimestamp(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (isNaN(date)) return value;
+  return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/**
  * Strips seconds from a "HH:MM:SS" time string, e.g. "06:00:00" -> "06:00".
  */
 export function formatHora(value) {

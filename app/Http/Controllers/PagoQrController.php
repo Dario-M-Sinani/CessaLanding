@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Recibo;
 use App\Services\CessaApiService;
-use App\Services\Payments\Contracts\QrPaymentProviderInterface;
 use App\Services\Payments\DataTransferObjects\QrPaymentRequest;
 use App\Services\Payments\Exceptions\QrPaymentException;
+use App\Services\Payments\PaymentProviderRegistry;
 use App\Services\Payments\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -32,9 +32,12 @@ class PagoQrController extends Controller
 
     protected CessaApiService $apiService;
 
-    public function __construct(CessaApiService $apiService)
+    protected PaymentProviderRegistry $providers;
+
+    public function __construct(CessaApiService $apiService, PaymentProviderRegistry $providers)
     {
         $this->apiService = $apiService;
+        $this->providers = $providers;
     }
 
     public function generar(Request $request): JsonResponse
@@ -57,6 +60,9 @@ class PagoQrController extends Controller
             // Cuántos de los avisos pendientes (empezando siempre por el más antiguo) se
             // pagan con este QR. Si no se manda, se paga todo (comportamiento de siempre).
             'cantidad_meses' => ['nullable', 'integer', 'min:1'],
+            // Banco con el que se genera el QR (lo elige el cliente en el modal). Si no se
+            // manda, se usa el de siempre (SIP/BISA) para no romper clientes viejos.
+            'banco' => ['nullable', 'string', 'in:'.implode(',', $this->providers->selectableKeys())],
         ]);
 
         // Mismo doble factor y misma verificación contra SIIC que ConsultaDeudaController::consultar()
@@ -85,6 +91,24 @@ class PagoQrController extends Controller
             ]);
 
             return response()->json(['message' => 'Los datos ingresados no coinciden con ningún abonado registrado.'], 422);
+        }
+
+        // Un cliente no puede tener dos QR vivos a la vez. Si ya tiene uno Pendiente y todavía
+        // vigente (no vencido), se DEVUELVE ese mismo QR en vez de generar otro -- así, si cerró
+        // el modal por equivocación, al reabrir ve el mismo código y no se acumulan QR duplicados
+        // en el banco. Recién cuando ese venza (5 min) o se pague, la próxima genera uno nuevo.
+        // Se compara `expires_at` por fecha porque pagos:expirar-vencidos puede no haber corrido.
+        // Va después de verificar la cuenta contra SIIC, para no exponer el QR de un cliente a
+        // quien solo conoce su número sin el N° de cuenta.
+        $qrActivo = Recibo::where('nro_cliente', $validated['nro_cliente'])
+            ->where('status', PaymentStatus::Pendiente)
+            ->where('expires_at', '>', now())
+            ->whereNotNull('qr_image_path')
+            ->latest('expires_at')
+            ->first();
+
+        if ($qrActivo) {
+            return response()->json($this->reciboPayload($qrActivo));
         }
 
         // SIIC no permite pagar avisos recientes sin considerar los más antiguos primero
@@ -173,7 +197,13 @@ class PagoQrController extends Controller
         $descripcionPago = "Pago de {$mesesTexto} ({$comprobantesTexto}) por {$montoLegible} bolivianos"
             ." — Cliente {$validated['nro_cliente']} — Períodos: {$fechasExactas}";
 
-        $provider = app(QrPaymentProviderInterface::class);
+        // El usuario genera un solo QR sin elegir banco: el sistema alterna entre BISA y BNB en
+        // cada generación (ver PaymentProviderRegistry::rotateNext) para repartir las generaciones
+        // entre los dos bancos, según el banco del último Recibo creado. Si algún día se quisiera
+        // dejar elegir el banco, `banco` en el request tiene prioridad.
+        $bancoKey = $validated['banco'] ?? $this->providers->rotateNext(Recibo::latest('id')->value('provider'));
+
+        $provider = $this->providers->get($bancoKey);
         $alias = 'CESSA-WEB-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
         $expiresAt = now()->addMinutes(5);
 
@@ -182,7 +212,7 @@ class PagoQrController extends Controller
         // en SIP y localmente cualquier QR pendiente previo de este nro_cliente antes de
         // generar el nuevo. `lockForUpdate` evita que dos requests casi simultáneas del
         // mismo cliente dejen dos recibos "pendiente" en pie a la vez.
-        DB::transaction(function () use ($validated, $provider) {
+        DB::transaction(function () use ($validated) {
             $anteriores = Recibo::where('nro_cliente', $validated['nro_cliente'])
                 ->where('status', PaymentStatus::Pendiente)
                 ->lockForUpdate()
@@ -190,7 +220,10 @@ class PagoQrController extends Controller
 
             foreach ($anteriores as $anterior) {
                 try {
-                    $provider->disable($anterior->alias);
+                    // Un QR pendiente anterior pudo haberse generado con otro banco: se da de
+                    // baja con el proveedor con el que se creó (Recibo::provider), no con el
+                    // que se eligió ahora.
+                    $this->providers->forRecibo($anterior)->disable($anterior->alias);
                 } catch (QrPaymentException $e) {
                     // Si SIP ya lo dio de baja solo (p.ej. venció) esto puede fallar; no debe
                     // bloquear la generación del nuevo QR, solo se registra para revisar.
@@ -248,13 +281,46 @@ class PagoQrController extends Controller
             'created_by_user_id' => null,
         ]);
 
-        return response()->json([
+        return response()->json($this->reciboPayload($recibo));
+    }
+
+    /**
+     * Datos públicos de un Recibo para el modal de pago (sin PII del pagador): alias, imagen del
+     * QR, monto, periodo legible y vencimiento. Se usa tanto al crear un QR nuevo como al devolver
+     * uno que sigue vigente.
+     *
+     * @return array<string, mixed>
+     */
+    private function reciboPayload(Recibo $recibo): array
+    {
+        return [
             'alias' => $recibo->alias,
-            'qr_image_url' => Storage::disk('public')->url($qrImagePath),
-            'monto' => number_format($monto, 2, '.', ''),
-            'periodo' => $periodo,
+            'qr_image_url' => Storage::disk('public')->url($recibo->qr_image_path),
+            'monto' => number_format((float) $recibo->amount, 2, '.', ''),
+            'periodo' => $this->periodoDeItems($recibo->debt_items ?? []),
             'expires_at' => $recibo->expires_at,
-        ]);
+        ];
+    }
+
+    /**
+     * Periodo legible ("Enero/2026" o "Enero-Marzo/2026") a partir del snapshot de deuda del
+     * Recibo (debt_items, ya ordenado del más antiguo al más reciente).
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function periodoDeItems(array $items): string
+    {
+        if (empty($items)) {
+            return '';
+        }
+
+        $MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        $primero = $items[array_key_first($items)];
+        $ultimo = $items[array_key_last($items)];
+
+        return $primero === $ultimo
+            ? "{$MESES[(int) $primero['mes']]}/{$primero['anio']}"
+            : "{$MESES[(int) $primero['mes']]}-{$MESES[(int) $ultimo['mes']]}/{$ultimo['anio']}";
     }
 
     /**

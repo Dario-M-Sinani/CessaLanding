@@ -15,10 +15,17 @@ class HomeController extends Controller
 {
     public function index(): Response
     {
-        $outages = ScheduledOutage::where('published', 'S')
+        $outages = ScheduledOutage::programados()
+            ->where('published', 'S')
             ->whereDate('execution_date', '>=', now()->toDateString())
             ->orderBy('execution_date')
             ->limit(3)
+            ->get();
+
+        $emergencies = ScheduledOutage::emergenciasVisibles()
+            ->orderByRaw('restored_at IS NOT NULL')
+            ->orderByDesc('execution_date')
+            ->orderByDesc('start_time')
             ->get();
 
         $documentGroupCounts = Publication::countsByGroup();
@@ -34,7 +41,13 @@ class HomeController extends Controller
             ->where('published', 'S')
             ->first();
 
-        $video = Video::where('published', 'S')->orderBy('position')->first();
+        // El bloque "Video Consejo" del home solo sabe embeber YouTube: si el primer video
+        // publicado es de Facebook/Instagram/TikTok (pensados para la galería), el bloque
+        // quedaba vacío. Se toma el primer video publicado que sea de YouTube.
+        $video = Video::where('published', 'S')
+            ->where(fn ($q) => $q->where('url', 'like', '%youtube.com/%')->orWhere('url', 'like', '%youtu.be/%'))
+            ->orderBy('position')
+            ->first();
 
         $popupNews = News::where('published', 'S')
             ->where('popup', true)
@@ -53,6 +66,7 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'outages' => $outages,
+            'emergencies' => $emergencies,
             'documentGroups' => $documentGroups,
             'consejos' => $consejos,
             'video' => $video,

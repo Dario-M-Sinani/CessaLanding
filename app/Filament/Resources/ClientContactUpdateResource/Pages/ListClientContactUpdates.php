@@ -33,7 +33,7 @@ class ListClientContactUpdates extends ListRecords
             // BOM para que Excel en Windows detecte UTF-8 y no rompa tildes/ñ.
             fwrite($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ['N° Cliente', 'N° Cuenta', 'Nombre', 'Correo', 'Celular', 'Actualizado']);
+            fputcsv($handle, ['Número de Cliente', 'Número de Cuenta', 'Nombre', 'Correo', 'Celular', 'Actualizado']);
 
             ClientContactUpdate::query()
                 ->orderByDesc('created_at')

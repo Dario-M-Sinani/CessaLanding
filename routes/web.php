@@ -17,6 +17,7 @@ use App\Http\Controllers\LaCompaniaController;
 use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\NuevaConexionController;
 use App\Http\Controllers\PagoQrController;
+use App\Http\Controllers\Payments\BnbCallbackController;
 use App\Http\Controllers\Payments\SipCallbackController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ProcesosController;
@@ -27,14 +28,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Búsqueda del portal (header)
 Route::get('/buscar', [BusquedaController::class, 'index'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:30,1,get-buscar')
     ->name('buscar');
 
 // Mini asistente del footer (widget flotante, ver MiniAsistente.vue) --
 // solo expone las FAQs publicadas, el resto (accesos rápidos) vive
 // hardcodeado en el propio componente.
 Route::get('/api/asistente/faqs', [AsistenteController::class, 'faqs'])
-    ->middleware('throttle:30,1');
+    ->middleware('throttle:30,1,get-api-asistente-faqs');
 
 // La Compañía (Dropdown)
 Route::prefix('la-compania')->name('la-compania.')->group(function () {
@@ -54,19 +55,20 @@ Route::prefix('informacion')->name('informacion.')->group(function () {
     Route::get('/faqs', [InformacionController::class, 'faqs'])->name('faqs');
     Route::get('/consejos-de-seguridad', [InformacionController::class, 'consejosSeguridad'])->name('consejos-de-seguridad');
     Route::get('/puntos-de-cobranza', [InformacionController::class, 'puntosCobranza'])->name('puntos-de-cobranza');
+    Route::get('/comunicados-aetn', [InformacionController::class, 'comunicadosAetn'])->name('comunicados-aetn');
 });
 
 // Servicios Virtuales (Dropdown)
 Route::get('/consulta-deuda', [ConsultaDeudaController::class, 'index'])->name('consulta-deuda');
 Route::post('/consulta-deuda', [ConsultaDeudaController::class, 'consultar'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:10,1,post-consulta-deuda')
     ->name('consulta-deuda.consultar');
 Route::get('/calculadora', [CalculadoraConsumoController::class, 'index'])->name('calculadora');
 Route::post('/api/calculo-consumo', [CalculadoraConsumoController::class, 'calcular'])
-    ->middleware('throttle:20,1');
+    ->middleware('throttle:20,1,post-api-calculo-consumo');
 Route::get('/importante/estructura-tarifaria', [EstructuraTarifariaController::class, 'index'])->name('estructura-tarifaria');
 Route::get('/api/estructura-tarifaria/{id}', [EstructuraTarifariaController::class, 'detalle'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:30,1,get-api-estructura-tarifaria-id')
     ->name('estructura-tarifaria.detalle');
 Route::get('/nueva-conexion', [NuevaConexionController::class, 'index'])->name('nueva-conexion.index');
 Route::get('/suspension-servicio', [NuevaConexionController::class, 'suspension'])->name('suspension-servicio.index');
@@ -74,41 +76,45 @@ Route::get('/otras-solicitudes', [NuevaConexionController::class, 'otras'])->nam
 Route::post('/solicitudes', [NuevaConexionController::class, 'store'])->name('solicitudes.store');
 Route::get('/buscar-tramite', [BuscarTramiteController::class, 'index'])->name('buscar-tramite');
 Route::post('/buscar-tramite', [BuscarTramiteController::class, 'buscar'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:10,1,post-buscar-tramite')
     ->name('buscar-tramite.buscar');
 
 // Actualizar Datos de Contacto: verificación por N° de Cliente + N° de Cuenta contra SIIC,
 // luego confirmación de correo por código de un solo uso (ver ActualizarDatosController).
 Route::get('/actualizar-datos', [ActualizarDatosController::class, 'index'])->name('actualizar-datos');
 Route::post('/api/actualizar-datos/verificar', [ActualizarDatosController::class, 'verificarCuenta'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-actualizar-datos-verificar');
 Route::post('/api/actualizar-datos/enviar-codigo', [ActualizarDatosController::class, 'enviarCodigo'])
-    ->middleware('throttle:5,1');
+    ->middleware('throttle:5,1,post-api-actualizar-datos-enviar-codigo');
 Route::post('/api/actualizar-datos/confirmar-codigo', [ActualizarDatosController::class, 'confirmarCodigo'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-actualizar-datos-confirmar-codigo');
 
 // Pago por QR propio (BISA/SIP), disparado por el cliente desde Consulta de Deuda -- junto a
 // la opción existente de Síntesis. Ver PagoQrController.
+// Ojo: el tercer parámetro de throttle (prefijo) es obligatorio en todas las rutas de este
+// archivo -- sin él, Laravel usa UN solo contador por IP para todas las rutas con throttle, y
+// el sondeo de estado-qr (cada 3 s) agotaba el límite de generar-qr: al cerrar/recargar y
+// volver a "Pagar con QR" salía "Too Many Attempts" en vez del QR activo.
 Route::post('/api/pagos/generar-qr', [PagoQrController::class, 'generar'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-pagos-generar-qr');
 Route::get('/api/pagos/estado-qr/{alias}', [PagoQrController::class, 'estado'])
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:60,1,get-api-pagos-estado-qr-alias');
 
 // Versión "demo": misma verificación real (SIIC + doble código), pero pensada para ser
 // llamada desde un sitio estático completamente aparte (ver DemoActualizarDatosController)
 // -- sin sesión compartida, el estado entre pasos viaja en un token cifrado.
 Route::post('/api/demo/actualizar-datos/verificar', [DemoActualizarDatosController::class, 'verificarCuenta'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-demo-actualizar-datos-verificar');
 Route::post('/api/demo/actualizar-datos/enviar-codigos', [DemoActualizarDatosController::class, 'enviarCodigos'])
-    ->middleware('throttle:5,1');
+    ->middleware('throttle:5,1,post-api-demo-actualizar-datos-enviar-codigos');
 Route::post('/api/demo/actualizar-datos/confirmar-codigos', [DemoActualizarDatosController::class, 'confirmarCodigos'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-demo-actualizar-datos-confirmar-codigos');
 Route::post('/api/demo/actualizar-datos/login', [DemoActualizarDatosController::class, 'login'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-demo-actualizar-datos-login');
 Route::get('/api/demo/actualizar-datos/registros', [DemoActualizarDatosController::class, 'registros'])
-    ->middleware('throttle:20,1');
+    ->middleware('throttle:20,1,get-api-demo-actualizar-datos-registros');
 Route::post('/api/demo/actualizar-datos/actualizar-token-sms', [DemoActualizarDatosController::class, 'actualizarTokenSms'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:10,1,post-api-demo-actualizar-datos-actualizar-token-sms');
 
 // Noticias
 Route::get('/noticias', [NoticiasController::class, 'index'])->name('noticias.index');
@@ -144,6 +150,12 @@ Route::get('/rcadmin/qr-codes/{qrCode}/image', [\App\Http\Controllers\QrCodeImag
 Route::post('/api/pagos/sip/confirmar-pago', [SipCallbackController::class, 'confirmarPago'])
     ->middleware('sip.callback.auth')
     ->name('pagos.sip.callback');
+
+// Notificación de pago del BNB (formato propio del banco, ver BnbCallbackController). Sin Basic
+// Auth: el pago se verifica contra el propio BNB antes de marcar Pagado. La URL se registra una
+// vez en el portal del BNB (no viaja por QR).
+Route::post('/api/pagos/bnb/receive-notification', [BnbCallbackController::class, 'receiveNotification'])
+    ->name('pagos.bnb.callback');
 
 // Vista imprimible de comprobante / ticket simplificado para pagos por QR
 Route::get('/comprobante/ticket/{alias}', [ComprobanteTicketController::class, 'show'])
