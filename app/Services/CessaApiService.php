@@ -49,7 +49,42 @@ class CessaApiService
 
     public function consultaDeuda(array $params = []): array
     {
+        if (config('services.cobranzas.deuda_via_gateway')) {
+            return $this->consultaDeudaViaGateway($params);
+        }
+
         return $this->fixEncoding($this->client()->get('/v1/consulta/cliente', $params)->json());
+    }
+
+    /**
+     * Deuda leída por el gateway (cobranza-cessa), que la pide "como banco" a
+     * api-cobranzas-bancos -- el mismo SIIC donde después se paga el QR. Si se lee
+     * de un SIIC (ej. prod) y se paga en otro (test), el pago falla con "La deuda no
+     * existe con los datos proporcionados" (pasó el 2026-10-06 con el cliente 115997).
+     * Mismos parámetros y misma respuesta que /v1/consulta/cliente del SIIC.
+     */
+    protected function consultaDeudaViaGateway(array $params): array
+    {
+        $response = Http::baseUrl(rtrim((string) config('services.cobranzas.gateway_base_url'), '/'))
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Api-Key' => (string) config('services.cobranzas.gateway_api_key'),
+            ])
+            ->timeout(30)
+            ->retry(2, 200, throw: false)
+            ->get('/api/externo/consulta/cliente/', $params);
+
+        $data = $response->json();
+
+        // 404 con {"error": ...} es "no existe el abonado" (lo resuelven los controllers).
+        // 403 (API key), 503 (api-cobranzas/SIIC caídos) o una página HTML de Cloudflare
+        // son fallas de conexión: excepción, para que los controllers muestren "no se
+        // pudo conectar" en vez de "no se encontró ningún abonado".
+        if (!is_array($data) || $response->status() === 403 || $response->serverError()) {
+            throw new \RuntimeException('Gateway de cobranzas: HTTP ' . $response->status() . ' al consultar deuda');
+        }
+
+        return $this->fixEncoding($data);
     }
 
     public function calculoConsumo(array $params = []): array

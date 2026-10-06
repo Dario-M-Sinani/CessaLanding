@@ -97,6 +97,11 @@ return [
         'gateway_base_url' => env('COBRANZAS_GATEWAY_BASE_URL', 'http://127.0.0.1:8001'),
         // Tiene que coincidir con API_KEY_CESSA_LARAVEL del .env de cobranza-cessa.
         'gateway_api_key' => env('COBRANZAS_GATEWAY_API_KEY'),
+        // true: la deuda (consulta pública y pago QR) se lee por el gateway, que la pide a
+        // api-cobranzas-bancos como un banco más -- mismo SIIC donde se paga. false: directo
+        // a CESSA_API_URL como antes. El resto (catálogos, trámites, calculadora) sigue
+        // yendo a CESSA_API_URL.
+        'deuda_via_gateway' => env('COBRANZAS_DEUDA_VIA_GATEWAY', false),
     ],
 
     'sms' => [
