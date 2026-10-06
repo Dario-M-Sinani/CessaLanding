@@ -30,6 +30,7 @@ class ConsultaDeudaController extends Controller
             'filters' => ['nro_cliente' => $nroCliente, 'zona' => '', 'manzano' => '', 'correlativo' => ''],
             'resultado' => null,
             'error' => null,
+            'puedeSimularPago' => PagoQrController::simulacionPermitida(),
         ]);
     }
 
@@ -108,7 +109,10 @@ class ConsultaDeudaController extends Controller
                     })
                     ->all();
 
-                // nro_cliente + N° de Cuenta verificados contra SIIC -> detalle completo.
+                // nro_cliente + N° de Cuenta verificados contra SIIC -> detalle completo, y habilita
+                // "Tus últimas facturas" para esta cuenta (ver FacturasClienteController).
+                FacturasClienteController::marcarVerificado($request, (string) $data['nro_cliente']);
+
                 $resultado = [
                     'nivel' => 'completo',
                     'nro_cliente' => $data['nro_cliente'],
@@ -135,6 +139,7 @@ class ConsultaDeudaController extends Controller
             ],
             'resultado' => $resultado,
             'error' => $error,
+            'puedeSimularPago' => PagoQrController::simulacionPermitida(),
         ]);
     }
 }

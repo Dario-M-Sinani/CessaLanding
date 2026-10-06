@@ -19,7 +19,7 @@
           <!-- Cargando -->
           <div v-if="estado === 'cargando'" class="py-10 space-y-3">
             <svg class="w-8 h-8 mx-auto animate-spin text-blue-900" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
-            <p class="text-sm text-gray-600">Generando tu código QR...</p>
+            <p class="text-sm text-gray-600">{{ simular ? 'Simulando el pago...' : 'Generando tu código QR...' }}</p>
           </div>
 
           <!-- Error -->
@@ -68,11 +68,12 @@
               Descargar comprobante
             </a>
             <p v-else-if="facturaDemorada" class="text-[11px] text-gray-500 max-w-xs mx-auto">
-              Tu pago quedó registrado. La factura todavía se está procesando; si no la recibís,
-              acercate a oficinas de CESSA con tu número de cliente para regularizarla.
+              Tu pago quedó registrado. Tu factura va a aparecer en esta misma página, en
+              "Tus últimas facturas", apenas esté lista.
             </p>
-            <p v-else class="text-[11px] text-gray-400">
-              Esto puede tardar un par de minutos, no cierres esta ventana.
+            <p v-else class="text-[11px] text-gray-500 max-w-xs mx-auto">
+              Tu pago ya está registrado: podés cerrar esta ventana. La factura aparece en
+              segundos acá o, si cerrás, en "Tus últimas facturas" de esta página.
             </p>
           </div>
 
@@ -107,6 +108,19 @@
               <svg class="w-3.5 h-3.5 animate-pulse text-amber-500" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="6" /></svg>
               Esperando confirmación de pago...
             </p>
+
+            <!-- Solo pruebas: PAGOS_SIMULACION_HABILITADA + logueado en el panel como SYSTEM -->
+            <div v-if="puedeSimular" class="pt-2 border-t border-dashed border-gray-200 space-y-1">
+              <button
+                type="button"
+                :disabled="simulando"
+                @click="simularPago"
+                class="px-4 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition-colors"
+              >
+                {{ simulando ? 'Simulando…' : '🧪 Simular pago (prueba)' }}
+              </button>
+              <p v-if="errorSimulacion" class="text-[11px] text-red-600">{{ errorSimulacion }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -127,6 +141,11 @@ const props = defineProps({
   // solo QR y el backend alterna el banco por detrás. Se deja por si el staff/panel alguna vez
   // necesita forzar un banco.
   banco: { type: String, default: null },
+  // Solo pruebas: muestra el botón "Simular pago" (el backend vuelve a verificar el permiso).
+  puedeSimular: { type: Boolean, default: false },
+  // Solo pruebas: en vez de generar un QR, crea el pago ya simulado (sin banco) y muestra lo
+  // que viene después (¡Pago recibido! → factura → comprobante).
+  simular: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close']);
@@ -200,6 +219,7 @@ const generar = async (bancoKey = null) => {
         correlativo: props.correlativo,
         cantidad_meses: props.cantidadMeses,
         banco: bancoElegido.value,
+        simular: props.simular || undefined,
       }),
     });
 
@@ -214,15 +234,54 @@ const generar = async (bancoKey = null) => {
     }
 
     alias = json.alias;
-    qrImageUrl.value = json.qr_image_url;
     monto.value = json.monto;
     periodo.value = json.periodo || '';
+
+    // Pago simulado: ya viene Pagado, se salta el QR y el sondeo sigue con la factura.
+    if (json.status === 'pagado') {
+      estado.value = 'pagado';
+      startPolling();
+      return;
+    }
+
+    qrImageUrl.value = json.qr_image_url;
     estado.value = 'qr';
     iniciarCuentaRegresiva(json.expires_at);
     startPolling();
   } catch (e) {
     mensajeError.value = 'No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.';
     estado.value = 'error';
+  }
+};
+
+// Solo pruebas: marca el QR como pagado sin pagar. El sondeo de abajo detecta el cambio y sigue
+// el circuito real (¡Pago recibido! → factura → comprobante).
+const simulando = ref(false);
+const errorSimulacion = ref('');
+
+const simularPago = async () => {
+  if (!alias || simulando.value) return;
+  simulando.value = true;
+  errorSimulacion.value = '';
+
+  try {
+    const response = await fetch(`/api/pagos/simular-pago/${alias}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
+      },
+    });
+
+    if (!response.ok) {
+      const json = await response.json().catch(() => ({}));
+      errorSimulacion.value = json.message || `No se pudo simular (HTTP ${response.status}).`;
+    }
+  } catch (e) {
+    errorSimulacion.value = 'No se pudo conectar con el servidor.';
+  } finally {
+    simulando.value = false;
   }
 };
 
@@ -263,8 +322,9 @@ const startPolling = () => {
   }, 3000);
 };
 
+// Avisa si se pagó, para que la página recargue la deuda y la lista de últimos pagos.
 const close = () => {
-  emit('close');
+  emit('close', estado.value === 'pagado');
 };
 
 // El QR se genera apenas abre el modal; el backend elige el banco (alternando) salvo que se

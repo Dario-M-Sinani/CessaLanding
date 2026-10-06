@@ -10,6 +10,7 @@ use App\Http\Controllers\ConsultaDeudaController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DemoActualizarDatosController;
 use App\Http\Controllers\EstructuraTarifariaController;
+use App\Http\Controllers\FacturasClienteController;
 use App\Http\Controllers\GaleriaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InformacionController;
@@ -63,6 +64,12 @@ Route::get('/consulta-deuda', [ConsultaDeudaController::class, 'index'])->name('
 Route::post('/consulta-deuda', [ConsultaDeudaController::class, 'consultar'])
     ->middleware('throttle:10,1,post-consulta-deuda')
     ->name('consulta-deuda.consultar');
+// Últimas facturas pagadas de la cuenta recién verificada en Consulta de Deuda (sesión).
+Route::get('/consulta-deuda/facturas', [FacturasClienteController::class, 'listado'])
+    ->middleware('throttle:20,1,get-consulta-deuda-facturas');
+Route::get('/consulta-deuda/facturas/{indice}/pdf', [FacturasClienteController::class, 'pdf'])
+    ->whereNumber('indice')
+    ->middleware('throttle:30,1,get-consulta-deuda-facturas-pdf');
 Route::get('/calculadora', [CalculadoraConsumoController::class, 'index'])->name('calculadora');
 Route::post('/api/calculo-consumo', [CalculadoraConsumoController::class, 'calcular'])
     ->middleware('throttle:20,1,post-api-calculo-consumo');
@@ -99,6 +106,9 @@ Route::post('/api/pagos/generar-qr', [PagoQrController::class, 'generar'])
     ->middleware('throttle:10,1,post-api-pagos-generar-qr');
 Route::get('/api/pagos/estado-qr/{alias}', [PagoQrController::class, 'estado'])
     ->middleware('throttle:60,1,get-api-pagos-estado-qr-alias');
+// Solo pruebas: simular el pago de un QR (404 salvo PAGOS_SIMULACION_HABILITADA + rol SYSTEM).
+Route::post('/api/pagos/simular-pago/{alias}', [PagoQrController::class, 'simular'])
+    ->middleware('throttle:10,1,post-api-pagos-simular-pago-alias');
 
 // Versión "demo": misma verificación real (SIIC + doble código), pero pensada para ser
 // llamada desde un sitio estático completamente aparte (ver DemoActualizarDatosController)

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Recibo;
+use App\Models\User;
 use App\Services\CessaApiService;
+use App\Services\Cobranzas\FacturacionRecibo;
 use App\Services\Payments\DataTransferObjects\QrPaymentRequest;
 use App\Services\Payments\Exceptions\QrPaymentException;
 use App\Services\Payments\PaymentProviderRegistry;
@@ -63,7 +65,15 @@ class PagoQrController extends Controller
             // Banco con el que se genera el QR (lo elige el cliente en el modal). Si no se
             // manda, se usa el de siempre (SIP/BISA) para no romper clientes viejos.
             'banco' => ['nullable', 'string', 'in:'.implode(',', $this->providers->selectableKeys())],
+            // Solo pruebas: botón "Simular pago" de Consulta de Deuda (ver simulacionPermitida()).
+            'simular' => ['nullable', 'boolean'],
         ]);
+
+        $simular = (bool) ($validated['simular'] ?? false);
+
+        if ($simular && ! self::simulacionPermitida()) {
+            abort(404);
+        }
 
         // Mismo doble factor y misma verificación contra SIIC que ConsultaDeudaController::consultar()
         // (duplicado a propósito acá, no refactorizado, para no tocar ese controller ya auditado).
@@ -107,7 +117,7 @@ class PagoQrController extends Controller
             ->latest('expires_at')
             ->first();
 
-        if ($qrActivo) {
+        if ($qrActivo && ! $simular) {
             return response()->json($this->reciboPayload($qrActivo));
         }
 
@@ -207,6 +217,34 @@ class PagoQrController extends Controller
         $alias = 'CESSA-WEB-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
         $expiresAt = now()->addMinutes(5);
 
+        // Pago simulado (solo pruebas): no se toca ningún banco ni los QR pendientes del cliente.
+        // Se crea el Recibo ya Pagado con la deuda real de arriba, como si hubiera llegado el
+        // callback; de ahí sigue el circuito real (el cron factura, el modal muestra el resultado).
+        if ($simular) {
+            $email = auth()->user()->email;
+            $recibo = Recibo::create([
+                'provider' => $provider->key(),
+                'alias' => 'CESSA-SIM-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),
+                'nro_cliente' => $validated['nro_cliente'],
+                'amount' => $monto,
+                'currency' => 'BOB',
+                'glosa' => $glosa,
+                'descripcion_pago' => $descripcionPago,
+                'debt_items' => $aPagar->values()->all(),
+                'status' => PaymentStatus::Pagado,
+                'expires_at' => $expiresAt,
+                'paid_at' => now(),
+                'payer_name' => 'PAGO SIMULADO (prueba)',
+                'callback_payload' => ['simulado' => true, 'por' => $email, 'at' => now()->toIso8601String()],
+                'created_by_user_id' => null,
+            ]);
+
+            Log::warning('pago_qr.pago_simulado', ['alias' => $recibo->alias, 'user' => $email]);
+            FacturacionRecibo::facturarTrasRespuesta($recibo);
+
+            return response()->json($this->reciboPayload($recibo));
+        }
+
         // Evita que un mismo cliente termine con más de un QR válido a la vez (p.ej. si
         // vuelve a tocar "Pagar con QR" con uno anterior todavía sin pagar): se inhabilita
         // en SIP y localmente cualquier QR pendiente previo de este nro_cliente antes de
@@ -295,7 +333,8 @@ class PagoQrController extends Controller
     {
         return [
             'alias' => $recibo->alias,
-            'qr_image_url' => Storage::disk('public')->url($recibo->qr_image_path),
+            'status' => $recibo->status->value,
+            'qr_image_url' => $recibo->qr_image_path ? Storage::disk('public')->url($recibo->qr_image_path) : null,
             'monto' => number_format((float) $recibo->amount, 2, '.', ''),
             'periodo' => $this->periodoDeItems($recibo->debt_items ?? []),
             'expires_at' => $recibo->expires_at,
@@ -321,6 +360,70 @@ class PagoQrController extends Controller
         return $primero === $ultimo
             ? "{$MESES[(int) $primero['mes']]}/{$primero['anio']}"
             : "{$MESES[(int) $primero['mes']]}-{$MESES[(int) $ultimo['mes']]}/{$ultimo['anio']}";
+    }
+
+    /**
+     * Solo para pruebas: si la simulación está habilitada (PAGOS_SIMULACION_HABILITADA) y quien
+     * mira la página está logueado en el panel con rol SYSTEM, el modal del QR muestra el botón
+     * "Simular pago".
+     */
+    public static function simulacionPermitida(): bool
+    {
+        $user = auth()->user();
+
+        return (bool) config('services.pagos.simulacion_habilitada')
+            && $user instanceof User
+            && $user->hasRole(User::ROLE_SYSTEM);
+    }
+
+    /**
+     * Marca Pagado un QR Pendiente sin que pase plata, como si hubiera llegado el callback del
+     * banco: de ahí en adelante sigue el circuito real (pagos:registrar-facturacion factura,
+     * el modal muestra "¡Pago recibido!" y el comprobante). Antes se inhabilita el QR en el banco,
+     * así nadie puede pagarlo de verdad después: ese pago real se ignoraría por idempotencia y
+     * la plata quedaría sin registrar. Fuera de la simulación responde 404, como si no existiera.
+     */
+    public function simular(string $alias): JsonResponse
+    {
+        if (! self::simulacionPermitida()) {
+            abort(404);
+        }
+
+        $recibo = Recibo::where('alias', $alias)->first();
+
+        if (! $recibo) {
+            return response()->json(['message' => 'No encontrado.'], 404);
+        }
+
+        if ($recibo->status !== PaymentStatus::Pendiente) {
+            return response()->json(['message' => "El QR no está pendiente (estado: {$recibo->status->value})."], 422);
+        }
+
+        try {
+            $this->providers->forRecibo($recibo)->disable($recibo->alias);
+        } catch (QrPaymentException $e) {
+            report($e);
+
+            return response()->json(['message' => 'No se pudo inhabilitar el QR en el banco; no se simula el pago para que no quede pagable de verdad.'], 502);
+        }
+
+        $email = auth()->user()->email;
+
+        $recibo->update([
+            'status' => PaymentStatus::Pagado,
+            'paid_at' => now(),
+            'payer_name' => 'PAGO SIMULADO (prueba)',
+            'callback_payload' => [
+                'simulado' => true,
+                'por' => $email,
+                'at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        Log::warning('pago_qr.pago_simulado', ['alias' => $recibo->alias, 'user' => $email]);
+        FacturacionRecibo::facturarTrasRespuesta($recibo);
+
+        return response()->json(['status' => $recibo->status->value]);
     }
 
     /**

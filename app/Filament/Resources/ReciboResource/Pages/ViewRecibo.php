@@ -35,6 +35,9 @@ class ViewRecibo extends ViewRecord
                 ->label('Actualizar Estado')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
+                // Un pago simulado no tiene QR en el banco (o se inhabilitó al simular): consultarlo
+                // falla o, peor, pisaría el "Pagado" con "Inhabilitado".
+                ->visible(fn (): bool => ! $this->record->esSimulado())
                 ->action('sincronizarEstado'),
 
             Actions\Action::make('inhabilitar')

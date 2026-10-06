@@ -63,6 +63,44 @@ class CessaApiService
     }
 
     /**
+     * Últimos comprobantes ya pagados del cliente, por cualquier canal (GET /v1/clientes/{c}/pagos),
+     * del más reciente al más viejo. Cada ítem trae la clave del comprobante (la que pide
+     * comprobantePdf()) + detalle, importe y fecha/hora del pago.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function ultimosPagos(string $nroCliente, int $limit = 12): array
+    {
+        $response = $this->client()->timeout(30)->get("/v1/clientes/{$nroCliente}/pagos", ['limit' => $limit]);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException("SIIC /pagos respondió HTTP {$response->status()}");
+        }
+
+        return $this->fixEncoding($response->json('items') ?? []);
+    }
+
+    /**
+     * PDF real de la factura de un comprobante (POST /v1/comprobantes, formato pdf) -- el mismo
+     * que arma el SIIC para cajas. Devuelve null si el SIIC no lo pudo generar.
+     *
+     * @param  array<string, mixed>  $comprobante  clave del comprobante, tal cual vino de ultimosPagos()
+     */
+    public function comprobantePdf(array $comprobante): ?string
+    {
+        $response = $this->client()
+            ->timeout(60)
+            ->withHeaders(['Accept' => 'application/pdf'])
+            ->post('/v1/comprobantes', ['formato' => 'pdf', 'items' => [$comprobante]]);
+
+        if (! $response->successful() || ! str_starts_with($response->body(), '%PDF')) {
+            return null;
+        }
+
+        return $response->body();
+    }
+
+    /**
      * The SIIC API's own database has names/addresses stored as double-encoded UTF-8
      * (e.g. "SIÑANI" comes back as "SIÃ\x91ANI") for an unknown subset of records — this
      * is a data quality issue upstream in their system, not something we can fix at the

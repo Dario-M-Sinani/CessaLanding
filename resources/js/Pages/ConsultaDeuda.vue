@@ -246,7 +246,7 @@
                  meses todavía no suma un monto positivo, o si supera el límite de QR. -->
             <button
               type="button"
-              @click="mostrarPagoQr = true"
+              @click="simularPagoQr = false; mostrarPagoQr = true"
               :disabled="qrDeshabilitado"
               class="group w-full p-4 sm:p-5 bg-amber-500 hover:bg-amber-400 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-left transition-all flex items-center justify-between gap-3 shadow-md"
             >
@@ -258,6 +258,17 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
               </svg>
+            </button>
+            <!-- Solo pruebas (PAGOS_SIMULACION_HABILITADA + logueado en el panel como SYSTEM):
+                 crea el pago ya simulado, sin banco, para ver lo que pasa después. -->
+            <button
+              v-if="puedeSimularPago"
+              type="button"
+              @click="simularPagoQr = true; mostrarPagoQr = true"
+              :disabled="qrDeshabilitado"
+              class="w-full px-4 py-3 bg-fuchsia-600 hover:bg-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm transition-colors"
+            >
+              🧪 Simular pago (prueba)
             </button>
             <p v-if="horaRestringida" class="text-[11px] text-amber-300">
               El pago por QR no está disponible entre las 23:59 y las 00:00 por el corte diario del sistema. Volvé a intentar en unos minutos.
@@ -306,6 +317,35 @@
             </p>
           </div>
 
+          <!-- Últimas 12 facturas ya pagadas (cualquier canal), leídas del SIIC aparte para no
+               demorar la consulta. El PDF se baja por índice de la cuenta verificada en sesión. -->
+          <div class="space-y-2">
+            <h3 class="text-sm font-bold text-gray-900">Tus últimas facturas</h3>
+            <p v-if="facturas.estado === 'cargando'" class="text-xs text-gray-500">Cargando tus facturas…</p>
+            <p v-else-if="facturas.estado === 'error'" class="text-xs text-red-600">
+              {{ facturas.error }}
+              <button type="button" @click="cargarFacturas" class="font-semibold underline">Reintentar</button>
+            </p>
+            <p v-else-if="!facturas.items.length" class="text-xs text-gray-500">No hay facturas pagadas para mostrar.</p>
+            <ul v-else class="divide-y divide-gray-200 border border-gray-200 rounded-xl bg-white">
+              <li v-for="f in facturas.items" :key="f.indice" class="p-3 sm:p-4 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-gray-900 truncate">{{ f.detalle }}</p>
+                  <p class="text-[11px] text-gray-500">Bs. {{ f.importe }}<span v-if="f.pagado_el"> · pagada el {{ f.pagado_el }}</span></p>
+                </div>
+                <a
+                  :href="`/consulta-deuda/facturas/${f.indice}/pdf`"
+                  target="_blank"
+                  rel="noopener"
+                  class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold rounded-lg text-xs transition-colors"
+                >
+                  <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  Descargar
+                </a>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
       </div>
@@ -318,7 +358,9 @@
       :manzano="filters.manzano"
       :correlativo="filters.correlativo"
       :cantidad-meses="mesesAPagar"
-      @close="mostrarPagoQr = false"
+      :puede-simular="puedeSimularPago"
+      :simular="simularPagoQr"
+      @close="cerrarPagoQr"
     />
   </AppLayout>
 </template>
@@ -333,11 +375,14 @@ const props = defineProps({
   filters: Object,
   resultado: Object,
   error: String,
+  // Solo pruebas (PAGOS_SIMULACION_HABILITADA + rol SYSTEM): botón "Simular pago" en el modal.
+  puedeSimularPago: Boolean,
 });
 
 const loading = ref(false);
 const mostrarAyuda = ref(false);
 const mostrarPagoQr = ref(false);
+const simularPagoQr = ref(false);
 
 const totalDeudaNum = computed(() => parseFloat(props.resultado?.total_deuda ?? 0));
 
@@ -432,6 +477,48 @@ const onNroCuentaInput = (e) => {
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const mesLiteral = (mes) => MESES[parseInt(mes, 10) - 1] ?? mes;
+
+// "Tus últimas facturas": se piden aparte cada vez que hay un resultado nuevo (la cuenta ya
+// quedó verificada en la sesión al consultar).
+const facturas = reactive({ estado: 'cargando', items: [], error: '' });
+
+const cargarFacturas = async () => {
+  facturas.estado = 'cargando';
+  try {
+    const response = await fetch('/consulta-deuda/facturas', {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' },
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      facturas.error = json.message || 'No se pudieron cargar tus facturas.';
+      facturas.estado = 'error';
+      return;
+    }
+    facturas.items = json.facturas || [];
+    facturas.estado = 'listo';
+  } catch (e) {
+    facturas.error = 'No se pudieron cargar tus facturas.';
+    facturas.estado = 'error';
+  }
+};
+
+watch(() => props.resultado, (r) => { if (r) cargarFacturas(); }, { immediate: true });
+
+// Vuelve a consultar con la misma cuenta (después de pagar, o con "Actualizar" en la lista de
+// pagos): trae la deuda al día y la factura de los últimos pagos apenas esté lista.
+const refrescarConsulta = () => {
+  const { nro_cliente, zona, manzano, correlativo } = props.filters;
+  router.post('/consulta-deuda', { nro_cliente, zona, manzano, correlativo }, {
+    preserveState: true,
+    preserveScroll: true,
+  });
+};
+
+const cerrarPagoQr = (pagado) => {
+  mostrarPagoQr.value = false;
+  if (pagado) refrescarConsulta();
+};
 
 const submitSearch = () => {
   formatError.value = '';

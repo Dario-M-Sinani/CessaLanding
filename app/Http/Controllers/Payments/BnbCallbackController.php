@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Payments;
 
 use App\Http\Controllers\Controller;
 use App\Models\Recibo;
+use App\Services\Cobranzas\FacturacionRecibo;
 use App\Services\Payments\Exceptions\QrPaymentException;
 use App\Services\Payments\PaymentProviderRegistry;
 use App\Services\Payments\PaymentStatus;
@@ -107,6 +108,8 @@ class BnbCallbackController extends Controller
         ]);
 
         Log::info('bnb_callback.pago_confirmado', ['alias' => $recibo->alias, 'recibo_id' => $recibo->id]);
+
+        FacturacionRecibo::facturarTrasRespuesta($recibo);
 
         return $this->respuesta(true, 'OK');
     }

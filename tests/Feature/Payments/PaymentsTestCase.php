@@ -51,6 +51,9 @@ abstract class PaymentsTestCase extends TestCase
             'services.bnb.currency' => 'BOB',
             'services.bnb.single_use' => true,
             'services.bnb.destination_account_id' => 1,
+            // Apagada por defecto: estos tests son del cobro, no de la facturación (que ahora se
+            // dispara apenas se confirma el pago). Los que la prueban la prenden (FlujoPagoFacturacionTest).
+            'services.cobranzas.enabled' => false,
         ]);
 
         Http::preventStrayRequests();

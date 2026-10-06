@@ -75,6 +75,14 @@ return [
         'destination_account_id' => env('BNB_QR_SIMPLE_DESTINATION_ACCOUNT_ID', 1),
     ],
 
+    'pagos' => [
+        // Botón "Simular pago" en el modal del QR (Consulta de Deuda), para probar el circuito
+        // de después del pago (facturación, comprobante, pantallas) sin pagar de verdad. Solo
+        // aparece con esto en true Y logueado en el panel con rol SYSTEM. NUNCA dejarlo en true
+        // cuando la facturación apunte al SIIC de producción: factura sin que entre la plata.
+        'simulacion_habilitada' => env('PAGOS_SIMULACION_HABILITADA', false),
+    ],
+
     'cobranzas' => [
         // Apagado por defecto a propósito -- ver RegistrarFacturacionCobranzas. Con esto
         // apagado, los pagos por QR se siguen cobrando igual, solo no se registran como

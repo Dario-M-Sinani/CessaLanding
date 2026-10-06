@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Payments;
 
 use App\Http\Controllers\Controller;
 use App\Models\Recibo;
+use App\Services\Cobranzas\FacturacionRecibo;
 use App\Services\Payments\PaymentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,8 @@ class SipCallbackController extends Controller
         ]);
 
         Log::info('sip_callback.pago_confirmado', ['alias' => $recibo->alias, 'recibo_id' => $recibo->id]);
+
+        FacturacionRecibo::facturarTrasRespuesta($recibo);
 
         return response()->json([
             'codigo' => '0000',

@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Cadena COMPLETA de un pago real, de punta a punta con todo falseado (nunca toca bancos ni el
- * gateway reales): el cliente paga -> el banco notifica (callback) -> el Recibo queda Pagado ->
- * el cron pagos:registrar-facturacion lo factura por el gateway -> queda Facturado con su PDF.
+ * gateway reales): el cliente paga -> el banco notifica (callback) -> el Recibo queda Pagado y se
+ * factura apenas termina esa misma request (FacturacionRecibo::facturarTrasRespuesta) -> queda
+ * Facturado con su PDF. El cron pagos:registrar-facturacion queda de respaldo y no refactura.
  * Cubre SIP (Banco BISA) y BNB, y que reintentos de notificación / corridas del cron no
  * dupliquen la facturación. Es la prueba que da certeza de que un pago real no se rompe en el
  * camino.
@@ -74,11 +75,7 @@ class FlujoPagoFacturacionTest extends PaymentsTestCase
             'nombreCliente' => 'JUAN PEREZ',
         ], self::SIP_AUTH)->assertOk()->assertJson(['codigo' => '0000']);
 
-        $this->assertSame(PaymentStatus::Pagado, $recibo->fresh()->status);
-
-        // 2) El cron lo factura.
-        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
-
+        // 2) Se factura en el acto, sin esperar al cron.
         $recibo->refresh();
         $this->assertSame(PaymentStatus::Facturado, $recibo->status);
         $this->assertSame('11111111-2222-3333-4444-555555555555', $recibo->cobranzas_uuid);
@@ -102,12 +99,9 @@ class FlujoPagoFacturacionTest extends PaymentsTestCase
             'additionalData' => 'CESSA-WEB-FLUJO-BNB',
         ])->assertOk()->assertJson(['success' => true]);
 
-        $this->assertSame(PaymentStatus::Pagado, $recibo->fresh()->status);
-
-        // 2) El cron lo factura (la facturación es igual para cualquier banco).
-        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
-
+        // 2) Se factura en el acto (igual para cualquier banco); el cron después no lo toca.
         $this->assertSame(PaymentStatus::Facturado, $recibo->fresh()->status);
+        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
         Storage::disk('public')->assertExists($recibo->fresh()->comprobante_path);
     }
 
@@ -145,5 +139,44 @@ class FlujoPagoFacturacionTest extends PaymentsTestCase
         $this->assertSame(PaymentStatus::Facturado, $recibo->status);
         $this->assertEquals($facturadoAt, $recibo->facturado_at);
         Http::assertSentCount(2); // sigue siendo 1 liquidar + 1 comprobante
+    }
+
+    public function test_si_otro_proceso_ya_lo_esta_facturando_no_se_factura_dos_veces(): void
+    {
+        Http::fake($this->fakeGateway());
+        $recibo = $this->reciboPendiente(['provider' => 'sip_bisa', 'alias' => 'CESSA-WEB-FLUJO-4', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
+
+        // Mientras la facturación inmediata (otra request) tiene el lock, el cron no lo toca.
+        $lock = \Illuminate\Support\Facades\Cache::lock("facturar-recibo-{$recibo->id}", 120);
+        $lock->get();
+        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
+        $this->assertSame(PaymentStatus::Pagado, $recibo->fresh()->status);
+        Http::assertNothingSent();
+
+        $lock->release();
+        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
+        $this->assertSame(PaymentStatus::Facturado, $recibo->fresh()->status);
+    }
+
+    public function test_rechazo_definitivo_no_se_reintenta_solo_y_uno_pasajero_si(): void
+    {
+        Http::fake([self::GATEWAY.'/api/externo/recibos-web/liquidar/' => fn ($request) => Http::response([
+            'estado' => 'ERROR',
+            'cobranzas_uuid' => 'x',
+            'error' => $request['alias'] === 'CESSA-WEB-FLUJO-5'
+                ? 'El SIIC rechazó el pago: alguno de los comprobantes ya figura pagado por otro medio'
+                : 'El operador no puede aperturar caja fuera de horario',
+        ])]);
+        $definitivo = $this->reciboPendiente(['alias' => 'CESSA-WEB-FLUJO-5', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
+        $pasajero = $this->reciboPendiente(['alias' => 'CESSA-WEB-FLUJO-6', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
+
+        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
+        $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
+
+        // El definitivo queda fuera de los reintentos automáticos desde el primer rechazo; el
+        // pasajero se reintenta en cada corrida.
+        $max = \App\Services\Cobranzas\FacturacionRecibo::MAX_INTENTOS_AUTOMATICOS;
+        $this->assertSame($max, $definitivo->fresh()->facturacion_intentos);
+        $this->assertSame(2, $pasajero->fresh()->facturacion_intentos);
     }
 }

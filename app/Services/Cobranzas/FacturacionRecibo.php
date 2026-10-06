@@ -5,6 +5,7 @@ namespace App\Services\Cobranzas;
 use App\Models\Recibo;
 use App\Services\Cobranzas\Exceptions\CobranzasException;
 use App\Services\Payments\PaymentStatus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -25,11 +26,66 @@ class FacturacionRecibo
     // que sí se puede usar las veces que hagan falta).
     public const MAX_INTENTOS_AUTOMATICOS = 5;
 
+    // Rechazos del SIIC que no se arreglan reintentando: el cron no los vuelve a intentar solo
+    // (cada intento deja otra Transacción FALLIDA en api-cobranzas) y quedan para revisión manual
+    // desde el panel ("Reintentar Facturación"). "Ya figura pagado por otro medio" en producción
+    // significa que el cliente pagó esos meses por otro canal mientras pagaba el QR: el dinero
+    // entró dos veces y hay que regularizarlo (devolución o saldo a favor).
+    private const RECHAZOS_DEFINITIVOS = [
+        'ya figura pagado por otro medio',
+        'La deuda no existe',
+    ];
+
     public function __construct(private readonly CobranzasGatewayClient $gateway)
     {
     }
 
+    /**
+     * Factura el Recibo apenas termina la request que confirmó el pago (callback del banco o pago
+     * simulado), después de mandar la respuesta: así el cliente ve su factura en segundos en vez
+     * de esperar a la próxima vuelta del cron (hasta 1 min), y el banco no espera a la facturación.
+     * El cron (pagos:registrar-facturacion) sigue igual como respaldo y para los reintentos.
+     */
+    public static function facturarTrasRespuesta(Recibo $recibo): void
+    {
+        if (! config('services.cobranzas.enabled')) {
+            return;
+        }
+
+        $id = $recibo->id;
+
+        app()->terminating(function () use ($id): void {
+            if ($recibo = Recibo::find($id)) {
+                app(self::class)->procesar($recibo);
+            }
+        });
+    }
+
     public function procesar(Recibo $recibo): void
+    {
+        // Ahora puede llegar por dos lados a la vez (facturarTrasRespuesta y el cron): el lock
+        // por recibo evita facturarlo dos veces en paralelo, y se relee el estado ya adentro por
+        // si el otro lo terminó mientras tanto.
+        $lock = Cache::lock("facturar-recibo-{$recibo->id}", 120);
+
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $recibo->refresh();
+
+            if (! in_array($recibo->status, [PaymentStatus::Pagado, PaymentStatus::ErrorFacturacion], true)) {
+                return;
+            }
+
+            $this->facturar($recibo);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function facturar(Recibo $recibo): void
     {
         if (empty($recibo->debt_items)) {
             $this->marcarError($recibo, 'El recibo no tiene guardado el detalle de deuda (debt_items) -- no se puede facturar. Revisar manualmente contra SIIC.');
@@ -88,9 +144,13 @@ class FacturacionRecibo
 
     private function marcarError(Recibo $recibo, string $motivo): void
     {
+        $definitivo = collect(self::RECHAZOS_DEFINITIVOS)->contains(fn (string $t) => str_contains($motivo, $t));
+
         $recibo->update([
             'status' => PaymentStatus::ErrorFacturacion,
-            'facturacion_intentos' => $recibo->facturacion_intentos + 1,
+            'facturacion_intentos' => $definitivo
+                ? max($recibo->facturacion_intentos + 1, self::MAX_INTENTOS_AUTOMATICOS)
+                : $recibo->facturacion_intentos + 1,
             'facturacion_error' => $motivo,
         ]);
 

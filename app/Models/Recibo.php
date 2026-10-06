@@ -56,4 +56,13 @@ class Recibo extends Model
     {
         return $this->belongsTo(User::class, 'created_by_user_id');
     }
+
+    /**
+     * Pago simulado con el botón de pruebas (PagoQrController, PAGOS_SIMULACION_HABILITADA): no
+     * existe en el banco o su QR ya se inhabilitó, así que no tiene sentido consultarlo allí.
+     */
+    public function esSimulado(): bool
+    {
+        return (bool) ($this->callback_payload['simulado'] ?? false);
+    }
 }
