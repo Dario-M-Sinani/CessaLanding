@@ -55,6 +55,15 @@ class FacturacionReciboTest extends FacturacionTestCase
         Http::assertSent(fn (Request $r) => $r->url() === self::GATEWAY."/api/externo/recibos-web/{$recibo->alias}/comprobante/");
     }
 
+    public function test_envia_el_banco_del_recibo_para_el_banco_id_del_siic(): void
+    {
+        $this->fakeGatewayFacturaOk();
+
+        $this->procesar($this->crearRecibo(['provider' => 'bnb']));
+
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/liquidar/') && $r['banco'] === 'bnb');
+    }
+
     public function test_moneda_distinta_de_usd_se_envia_como_bob(): void
     {
         $this->fakeGatewayFacturaOk();

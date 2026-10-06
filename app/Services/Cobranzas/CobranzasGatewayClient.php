@@ -39,6 +39,7 @@ class CobranzasGatewayClient
         array $detalle,
         string $fechaPago,
         string $numeroOrdenOriginante = '',
+        string $banco = '',
     ): array {
         $response = $this->http()->post("{$this->baseUrl}/api/externo/recibos-web/liquidar/", [
             'alias' => $alias,
@@ -48,6 +49,9 @@ class CobranzasGatewayClient
             'detalle' => $detalle,
             'fecha_pago' => $fechaPago,
             'numero_orden_originante' => $numeroOrdenOriginante,
+            // Banco por el que entró la plata (Recibo::provider): el gateway elige con esto el
+            // banco_id del documento en el SIIC, así lo cobrado por BNB no figura como BISA.
+            'banco' => $banco,
         ]);
 
         // 200 = FACTURADO; 502 = el gateway sí procesó pero SIIC rechazó el pago (rechazo de

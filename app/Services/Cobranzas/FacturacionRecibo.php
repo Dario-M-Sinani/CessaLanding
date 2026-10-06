@@ -112,6 +112,7 @@ class FacturacionRecibo
                 detalle: $recibo->debt_items,
                 fechaPago: ($recibo->paid_at ?? now())->toIso8601String(),
                 numeroOrdenOriginante: $recibo->provider_order_number ?: '',
+                banco: (string) $recibo->provider,
             );
 
             if (! empty($resultado['cobranzas_uuid']) && ! $recibo->cobranzas_uuid) {
