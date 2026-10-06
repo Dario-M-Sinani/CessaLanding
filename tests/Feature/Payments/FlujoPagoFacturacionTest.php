@@ -165,7 +165,7 @@ class FlujoPagoFacturacionTest extends PaymentsTestCase
             'cobranzas_uuid' => 'x',
             'error' => $request['alias'] === 'CESSA-WEB-FLUJO-5'
                 ? 'El SIIC rechazó el pago: alguno de los comprobantes ya figura pagado por otro medio'
-                : 'El operador no puede aperturar caja fuera de horario',
+                : 'pagar transacción: Se superó el tiempo mínimo de ejecución',
         ])]);
         $definitivo = $this->reciboPendiente(['alias' => 'CESSA-WEB-FLUJO-5', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
         $pasajero = $this->reciboPendiente(['alias' => 'CESSA-WEB-FLUJO-6', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
@@ -178,5 +178,23 @@ class FlujoPagoFacturacionTest extends PaymentsTestCase
         $max = \App\Services\Cobranzas\FacturacionRecibo::MAX_INTENTOS_AUTOMATICOS;
         $this->assertSame($max, $definitivo->fresh()->facturacion_intentos);
         $this->assertSame(2, $pasajero->fresh()->facturacion_intentos);
+    }
+
+    public function test_caja_fuera_de_horario_no_gasta_intentos_y_se_sigue_reintentando(): void
+    {
+        Http::fake([self::GATEWAY.'/api/externo/recibos-web/liquidar/' => Http::response([
+            'estado' => 'ERROR', 'cobranzas_uuid' => '',
+            'error' => 'aperturar caja: El operador no puede aperturar caja fuera de horario (De 07:50:00 a 18:50:00)',
+        ])]);
+        $recibo = $this->reciboPendiente(['alias' => 'CESSA-WEB-FLUJO-7', 'status' => PaymentStatus::Pagado, 'paid_at' => now()]);
+
+        foreach (range(1, 7) as $_) {
+            $this->artisan('pagos:registrar-facturacion')->assertSuccessful();
+        }
+
+        // 7 corridas (más que el tope de 5) y sigue en 0 intentos: el cron no se rinde de noche.
+        $this->assertSame(PaymentStatus::ErrorFacturacion, $recibo->fresh()->status);
+        $this->assertSame(0, $recibo->fresh()->facturacion_intentos);
+        Http::assertSentCount(7);
     }
 }

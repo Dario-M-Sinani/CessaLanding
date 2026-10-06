@@ -36,6 +36,16 @@ class FacturacionRecibo
         'La deuda no existe',
     ];
 
+    // Rechazos por la caja del SIIC: se arreglan solos cuando la caja vuelve a estar en horario
+    // (operador de cobranza con horario en OPERCOB, ej. "De 07:50:00 a 18:50:00") o con la caja
+    // del día siguiente (la del día se cierra a mano). No gastan intentos: el cron lo sigue
+    // intentando cada minuto hasta que pase. Falla en "aperturar caja", antes de crear la
+    // Transacción, así que no deja transacciones FALLIDA en api-cobranzas.
+    private const RECHAZOS_DE_CAJA = [
+        'fuera de horario',
+        'la caja del día de hoy ha sido cerrada',
+    ];
+
     public function __construct(private readonly CobranzasGatewayClient $gateway)
     {
     }
@@ -144,13 +154,17 @@ class FacturacionRecibo
 
     private function marcarError(Recibo $recibo, string $motivo): void
     {
-        $definitivo = collect(self::RECHAZOS_DEFINITIVOS)->contains(fn (string $t) => str_contains($motivo, $t));
+        $contiene = fn (array $textos) => collect($textos)->contains(fn (string $t) => str_contains($motivo, $t));
+
+        $intentos = match (true) {
+            $contiene(self::RECHAZOS_DEFINITIVOS) => max($recibo->facturacion_intentos + 1, self::MAX_INTENTOS_AUTOMATICOS),
+            $contiene(self::RECHAZOS_DE_CAJA) => $recibo->facturacion_intentos,
+            default => $recibo->facturacion_intentos + 1,
+        };
 
         $recibo->update([
             'status' => PaymentStatus::ErrorFacturacion,
-            'facturacion_intentos' => $definitivo
-                ? max($recibo->facturacion_intentos + 1, self::MAX_INTENTOS_AUTOMATICOS)
-                : $recibo->facturacion_intentos + 1,
+            'facturacion_intentos' => $intentos,
             'facturacion_error' => $motivo,
         ]);
 
