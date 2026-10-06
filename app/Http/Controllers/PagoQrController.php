@@ -118,6 +118,8 @@ class PagoQrController extends Controller
             ->first();
 
         if ($qrActivo && ! $simular) {
+            Log::info('pago_qr.reusa_vigente', ['alias' => $qrActivo->alias]);
+
             return response()->json($this->reciboPayload($qrActivo));
         }
 
@@ -257,6 +259,15 @@ class PagoQrController extends Controller
                 ->get();
 
             foreach ($anteriores as $anterior) {
+                // Si esto pasa con un QR todavía vigente, el reuso de arriba falló: queda
+                // registrado para poder diagnosticarlo (ver §-1duoquinquagies del doc de continuidad).
+                Log::info('pago_qr.inhabilita_anterior', [
+                    'alias' => $anterior->alias,
+                    'expires_at' => (string) $anterior->expires_at,
+                    'now' => (string) now(),
+                    'vigente' => $anterior->expires_at > now(),
+                ]);
+
                 try {
                     // Un QR pendiente anterior pudo haberse generado con otro banco: se da de
                     // baja con el proveedor con el que se creó (Recibo::provider), no con el
