@@ -42,7 +42,7 @@
             <p class="text-base font-bold text-emerald-800">¡Pago recibido!</p>
             <p class="text-xs text-gray-500">Bs. {{ monto }}</p>
 
-            <ul class="inline-flex flex-col gap-1.5 text-left text-xs mx-auto">
+            <ul class="flex flex-col w-fit gap-1.5 text-left text-xs mx-auto">
               <li class="flex items-center gap-2 text-emerald-800 font-semibold">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
                 Pago recibido
@@ -62,7 +62,7 @@
               :href="comprobanteUrl"
               target="_blank"
               rel="noopener"
-              class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-lg text-xs transition-colors"
+              class="flex w-fit mx-auto items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-lg text-xs transition-colors"
             >
               <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
               Descargar comprobante
