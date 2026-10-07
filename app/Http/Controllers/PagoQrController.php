@@ -103,26 +103,6 @@ class PagoQrController extends Controller
             return response()->json(['message' => 'Los datos ingresados no coinciden con ningún abonado registrado.'], 422);
         }
 
-        // Un cliente no puede tener dos QR vivos a la vez. Si ya tiene uno Pendiente y todavía
-        // vigente (no vencido), se DEVUELVE ese mismo QR en vez de generar otro -- así, si cerró
-        // el modal por equivocación, al reabrir ve el mismo código y no se acumulan QR duplicados
-        // en el banco. Recién cuando ese venza (5 min) o se pague, la próxima genera uno nuevo.
-        // Se compara `expires_at` por fecha porque pagos:expirar-vencidos puede no haber corrido.
-        // Va después de verificar la cuenta contra SIIC, para no exponer el QR de un cliente a
-        // quien solo conoce su número sin el N° de cuenta.
-        $qrActivo = Recibo::where('nro_cliente', $validated['nro_cliente'])
-            ->where('status', PaymentStatus::Pendiente)
-            ->where('expires_at', '>', now())
-            ->whereNotNull('qr_image_path')
-            ->latest('expires_at')
-            ->first();
-
-        if ($qrActivo && ! $simular) {
-            Log::info('pago_qr.reusa_vigente', ['alias' => $qrActivo->alias]);
-
-            return response()->json($this->reciboPayload($qrActivo));
-        }
-
         // SIIC no permite pagar avisos recientes sin considerar los más antiguos primero
         // (misma regla que aplica la API de cobranzas al registrar el pago), así que acá
         // se ordena el detalle cronológicamente y solo se admite pagar los N más viejos --
@@ -165,6 +145,28 @@ class PagoQrController extends Controller
         // la validación autoritativa.
         if ($monto > self::LIMITE_MONTO_QR) {
             return response()->json(['message' => 'Este monto supera el límite permitido para pago por QR (Bs. '.number_format(self::LIMITE_MONTO_QR, 0, '.', '.').'). No se puede realizar esta transacción por este medio.'], 422);
+        }
+
+        // Un cliente no puede tener dos QR vivos a la vez. Si ya tiene uno Pendiente y todavía
+        // vigente (no vencido) por EXACTAMENTE lo mismo (mismos comprobantes, mismo monto), se
+        // DEVUELVE ese mismo QR en vez de generar otro -- así, si cerró el modal por equivocación,
+        // al reabrir ve el mismo código y no se acumulan QR duplicados en el banco. Si eligió otra
+        // cantidad de meses (otro monto), el anterior NO sirve: sigue de largo y el bloque de abajo
+        // lo inhabilita en el banco antes de generar el nuevo. Se compara `expires_at` por fecha
+        // porque pagos:expirar-vencidos puede no haber corrido. Va después de verificar la cuenta
+        // contra SIIC, para no exponer el QR de un cliente a quien solo conoce su número sin el
+        // N° de cuenta.
+        $qrActivo = Recibo::where('nro_cliente', $validated['nro_cliente'])
+            ->where('status', PaymentStatus::Pendiente)
+            ->where('expires_at', '>', now())
+            ->whereNotNull('qr_image_path')
+            ->latest('expires_at')
+            ->first();
+
+        if ($qrActivo && ! $simular && $this->mismaSeleccion($qrActivo, $aPagar->all(), $monto)) {
+            Log::info('pago_qr.reusa_vigente', ['alias' => $qrActivo->alias]);
+
+            return response()->json($this->reciboPayload($qrActivo));
         }
 
         $MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -350,6 +352,23 @@ class PagoQrController extends Controller
             'periodo' => $this->periodoDeItems($recibo->debt_items ?? []),
             'expires_at' => $recibo->expires_at,
         ];
+    }
+
+    /**
+     * ¿El QR vigente cobra exactamente lo mismo que se pide ahora? Mismo monto y mismos
+     * comprobantes (año, mes y N° de comprobante, en el mismo orden).
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function mismaSeleccion(Recibo $recibo, array $items, float $monto): bool
+    {
+        $claves = fn (array $lista) => array_map(
+            fn (array $i) => ((int) ($i['anio'] ?? 0)).'-'.((int) ($i['mes'] ?? 0)).'-'.trim((string) ($i['nro_comprobante'] ?? '')),
+            array_values($lista),
+        );
+
+        return round((float) $recibo->amount, 2) === round($monto, 2)
+            && $claves($recibo->debt_items ?? []) === $claves($items);
     }
 
     /**
