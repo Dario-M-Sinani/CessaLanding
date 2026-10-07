@@ -14,6 +14,7 @@ Artisan::command('inspire', function () {
 // Antes de expirar: confirma los pagos BNB por consulta (la web no recibe el aviso del BNB,
 // ver SincronizarPagosBnb).
 Schedule::command('pagos:sincronizar-bnb')->everyMinute();
+Schedule::command('pagos:sincronizar-sip')->everyMinute();
 
 Schedule::command('pagos:expirar-vencidos')->everyMinute();
 
