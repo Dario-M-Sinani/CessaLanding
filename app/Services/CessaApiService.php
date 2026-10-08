@@ -65,11 +65,7 @@ class CessaApiService
      */
     protected function consultaDeudaViaGateway(array $params): array
     {
-        $response = Http::baseUrl(rtrim((string) config('services.cobranzas.gateway_base_url'), '/'))
-            ->withHeaders([
-                'Accept' => 'application/json',
-                'X-Api-Key' => (string) config('services.cobranzas.gateway_api_key'),
-            ])
+        $response = $this->gateway()
             ->timeout(30)
             ->retry(2, 200, throw: false)
             ->get('/api/externo/consulta/cliente/', $params);
@@ -85,6 +81,16 @@ class CessaApiService
         }
 
         return $this->fixEncoding($data);
+    }
+
+    /** Cliente HTTP hacia el gateway (cobranza-cessa), autenticado con la API key compartida. */
+    protected function gateway()
+    {
+        return Http::baseUrl(rtrim((string) config('services.cobranzas.gateway_base_url'), '/'))
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Api-Key' => (string) config('services.cobranzas.gateway_api_key'),
+            ]);
     }
 
     public function calculoConsumo(array $params = []): array
@@ -106,7 +112,11 @@ class CessaApiService
      */
     public function ultimosPagos(string $nroCliente, int $limit = 12): array
     {
-        $response = $this->client()->timeout(30)->get("/v1/clientes/{$nroCliente}/pagos", ['limit' => $limit]);
+        // Con la deuda vía gateway, las facturas también: así las pagadas por QR (que se facturan
+        // en el SIIC del gateway) aparecen en "Tus últimas facturas" del mismo entorno.
+        $response = config('services.cobranzas.deuda_via_gateway')
+            ? $this->gateway()->timeout(30)->retry(2, 200, throw: false)->get("/api/externo/consulta/clientes/{$nroCliente}/pagos/", ['limit' => $limit])
+            : $this->client()->timeout(30)->get("/v1/clientes/{$nroCliente}/pagos", ['limit' => $limit]);
 
         if (! $response->successful()) {
             throw new \RuntimeException("SIIC /pagos respondió HTTP {$response->status()}");
@@ -123,10 +133,11 @@ class CessaApiService
      */
     public function comprobantePdf(array $comprobante): ?string
     {
-        $response = $this->client()
-            ->timeout(60)
-            ->withHeaders(['Accept' => 'application/pdf'])
-            ->post('/v1/comprobantes', ['formato' => 'pdf', 'items' => [$comprobante]]);
+        $response = config('services.cobranzas.deuda_via_gateway')
+            ? $this->gateway()->timeout(60)->withHeaders(['Accept' => 'application/pdf'])
+                ->post('/api/externo/consulta/comprobantes/pdf/', ['item' => $comprobante])
+            : $this->client()->timeout(60)->withHeaders(['Accept' => 'application/pdf'])
+                ->post('/v1/comprobantes', ['formato' => 'pdf', 'items' => [$comprobante]]);
 
         if (! $response->successful() || ! str_starts_with($response->body(), '%PDF')) {
             return null;

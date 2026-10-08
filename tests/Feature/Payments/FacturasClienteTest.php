@@ -150,4 +150,29 @@ class FacturasClienteTest extends PaymentsTestCase
         ])->post('/consulta-deuda', ['nro_cliente' => '197596', 'zona' => '9', 'manzano' => '223', 'correlativo' => '1345'])
             ->assertSessionMissing(FacturasClienteController::SESION_VERIFICADO);
     }
+
+    public function test_con_deuda_via_gateway_las_facturas_y_el_pdf_salen_del_gateway(): void
+    {
+        config([
+            'services.cobranzas.deuda_via_gateway' => true,
+            'services.cobranzas.gateway_base_url' => 'http://gateway.test',
+            'services.cobranzas.gateway_api_key' => 'clave-gw',
+        ]);
+        Http::fake([
+            'http://gateway.test/api/externo/consulta/clientes/197596/pagos/*' => Http::response(['items' => [self::ITEM]]),
+            'http://gateway.test/api/externo/consulta/comprobantes/pdf/' => Http::response('%PDF-1.7 factura', 200, ['Content-Type' => 'application/pdf']),
+        ]);
+
+        $this->verificado()->getJson('/consulta-deuda/facturas')
+            ->assertOk()
+            ->assertJsonPath('facturas.0.detalle', 'Fact Energia AGOSTO/2026');
+        $this->get('/consulta-deuda/facturas/0/pdf')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+        Http::assertSent(fn (Request $r) => str_starts_with($r->url(), 'http://gateway.test/api/externo/consulta/clientes/197596/pagos/')
+            && $r->hasHeader('X-Api-Key', 'clave-gw'));
+        Http::assertSent(fn (Request $r) => $r->url() === 'http://gateway.test/api/externo/consulta/comprobantes/pdf/'
+            && $r['item']['nro_comprobante'] === '3154854'
+            && ! isset($r['item']['detalle']));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), '/v1/'));
+    }
 }
