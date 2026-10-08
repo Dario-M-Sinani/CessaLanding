@@ -51,7 +51,7 @@
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
                 Facturado
               </li>
-              <li v-else-if="!facturaDemorada" class="flex items-center gap-2 text-gray-500">
+              <li v-else-if="!facturaDemorada && !revisionManual" class="flex items-center gap-2 text-gray-500">
                 <svg class="w-4 h-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-25" /><path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>
                 Emitiendo tu factura…
               </li>
@@ -67,6 +67,10 @@
               <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
               Descargar comprobante
             </a>
+            <p v-else-if="revisionManual" class="text-[11px] text-gray-600 max-w-xs mx-auto">
+              Tu pago quedó registrado. Tu deuda cambió mientras pagabas, así que lo vamos a aplicar a tu
+              cuenta manualmente; no necesitas volver a pagar. Si tienes dudas, comunícate con CESSA.
+            </p>
             <p v-else-if="facturaDemorada" class="text-[11px] text-gray-500 max-w-xs mx-auto">
               Tu pago quedó registrado. Tu factura va a aparecer en esta misma página, en
               "Tus últimas facturas", apenas esté lista.
@@ -158,6 +162,9 @@ const monto = ref('');
 const periodo = ref('');
 const comprobanteUrl = ref('');
 const facturaDemorada = ref(false);
+// El pago entró pero la factura no va a salir sola (ver PagoQrController::estado): se deja de
+// sondear y se le explica al cliente en vez de prometerle la factura.
+const revisionManual = ref(false);
 let alias = null;
 let pollTimer = null;
 let intentosComprobante = 0;
@@ -305,6 +312,10 @@ const startPolling = () => {
 
         if (json.comprobante_url) {
           comprobanteUrl.value = json.comprobante_url;
+          clearInterval(pollTimer);
+        } else if (json.revision_manual) {
+          // La factura no va a salir sola: no tiene sentido seguir sondeando.
+          revisionManual.value = true;
           clearInterval(pollTimer);
         } else if (++intentosComprobante >= MAX_INTENTOS_COMPROBANTE) {
           // Se deja de insistir, pero el pago ya quedó confirmado igual -- no es un error.

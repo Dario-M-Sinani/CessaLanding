@@ -31,10 +31,28 @@ class FacturacionRecibo
     // desde el panel ("Reintentar Facturación"). "Ya figura pagado por otro medio" en producción
     // significa que el cliente pagó esos meses por otro canal mientras pagaba el QR: el dinero
     // entró dos veces y hay que regularizarlo (devolución o saldo a favor).
+    //
+    // "La deuda cambió desde que se generó el QR" y "no coincide con la suma de los comprobantes"
+    // son las verificaciones que hace el gateway ANTES de pagar (cobranza-cessa, 2026-10-08): entre
+    // que se generó el QR y el pago algún comprobante se pagó por otro medio, cambió de importe o
+    // apareció uno más antiguo; o el monto del recibo no es la suma de sus comprobantes. Reintentar
+    // da siempre lo mismo -- el cliente ya pagó y hay que aplicarlo a mano.
     private const RECHAZOS_DEFINITIVOS = [
         'ya figura pagado por otro medio',
         'La deuda no existe',
+        'La deuda cambió desde que se generó el QR',
+        'no coincide con la suma de los comprobantes',
     ];
+
+    /**
+     * El error de facturación no se arregla reintentando: el Recibo queda para revisión manual
+     * (el cron no lo vuelve a intentar y al cliente no se le promete una factura automática).
+     */
+    public static function esRechazoDefinitivo(?string $motivo): bool
+    {
+        return $motivo !== null
+            && collect(self::RECHAZOS_DEFINITIVOS)->contains(fn (string $t) => str_contains($motivo, $t));
+    }
 
     // Rechazos por la caja del SIIC: se arreglan solos cuando la caja vuelve a estar en horario
     // (operador de cobranza con horario en OPERCOB, ej. "De 07:50:00 a 18:50:00") o con la caja
@@ -158,7 +176,7 @@ class FacturacionRecibo
         $contiene = fn (array $textos) => collect($textos)->contains(fn (string $t) => str_contains($motivo, $t));
 
         $intentos = match (true) {
-            $contiene(self::RECHAZOS_DEFINITIVOS) => max($recibo->facturacion_intentos + 1, self::MAX_INTENTOS_AUTOMATICOS),
+            self::esRechazoDefinitivo($motivo) => max($recibo->facturacion_intentos + 1, self::MAX_INTENTOS_AUTOMATICOS),
             $contiene(self::RECHAZOS_DE_CAJA) => $recibo->facturacion_intentos,
             default => $recibo->facturacion_intentos + 1,
         };

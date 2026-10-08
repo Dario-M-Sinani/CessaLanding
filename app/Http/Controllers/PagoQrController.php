@@ -476,6 +476,11 @@ class PagoQrController extends Controller
             'comprobante_url' => $recibo->comprobante_path
                 ? Storage::disk('public')->url($recibo->comprobante_path)
                 : null,
+            // El pago entró pero la factura no va a salir sola (ej. la deuda cambió entre el QR y
+            // el pago): el modal deja de prometer "emitiendo tu factura". Sin el motivo, que es
+            // interno y este endpoint no tiene autenticación.
+            'revision_manual' => $recibo->status === PaymentStatus::ErrorFacturacion
+                && FacturacionRecibo::esRechazoDefinitivo($recibo->facturacion_error),
         ]);
     }
 }
