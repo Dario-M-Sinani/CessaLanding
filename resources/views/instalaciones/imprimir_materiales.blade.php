@@ -217,82 +217,96 @@
             .sheet {
                 display: none !important;
             }
-            /* Tabla en vez de div: <thead> se repite solo en cada página impresa cuando el
-               contenido no entra en una sola etiqueta de 1.70" de alto -- así el encabezado
-               (título del tipo de instalación) aparece en todas las etiquetas de la tirada,
-               no solo en la primera. */
+            /* Una etiqueta por página (4.10" x 1.70"), cada una con su propio encabezado. Antes era
+               una <table> con <thead> repetido, pero Chrome no lo repetía en la 2ª etiqueta: ahora el
+               corte lo arma el servidor (array_chunk) y cada .etiqueta cierra con un salto de página. */
             .print-label {
-                display: table;
-                width: 4.10in;
-                border-collapse: collapse;
-                padding: 0.08in 0.16in;
+                display: block;
                 color: #000000;
                 font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
             }
-            .print-label thead {
-                display: table-header-group;
+            .etiqueta {
+                width: 4.10in;
+                height: 1.70in;
+                padding: 0.07in 0.14in;
+                overflow: hidden;
+                break-after: page;
+                page-break-after: always;
             }
-            .print-label .cabecera td {
-                padding: 0.08in 0.16in 0.05in 0.16in;
+            .etiqueta:last-child {
+                break-after: auto;
+                page-break-after: auto;
+            }
+            .etiqueta .cabecera {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                gap: 0.1in;
                 border-bottom: 1px solid #000;
+                padding-bottom: 0.03in;
+                margin-bottom: 0.02in;
             }
-            .print-label .marca {
-                font-size: 7px;
+            .etiqueta .marca {
+                font-size: 6.5px;
                 font-weight: 900;
                 letter-spacing: 0.5px;
                 text-transform: uppercase;
             }
-            .print-label .titulo {
+            .etiqueta .titulo {
                 font-size: 11px;
                 font-weight: 900;
                 line-height: 1.15;
-                margin-top: 2px;
             }
-            .print-label .meta {
-                font-size: 7px;
-                color: #333;
-                margin-top: 1px;
+            .etiqueta .pagina {
+                font-size: 6.5px;
+                font-weight: bold;
+                white-space: nowrap;
+                text-align: right;
             }
-            .print-label tbody tr {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-            .print-label td.item {
-                font-size: 8px;
-                line-height: 1.3;
-                padding: 2px 0.16in;
+            .etiqueta .item {
+                display: flex;
+                font-size: 8.5px;
+                line-height: 1.25;
+                padding: 1.5px 0;
                 border-bottom: 1px dashed #999;
             }
-            .print-label td.item .cant {
+            .etiqueta .item:last-child {
+                border-bottom: none;
+            }
+            .etiqueta .item .cant {
                 font-weight: bold;
-                display: inline-block;
-                min-width: 0.5in;
+                flex: 0 0 0.42in;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- Etiqueta chica (4.10" x 1.70"): solo esto se imprime, ver @media print. Es una <table>
-     para que el <thead> se repita solo en cada página cuando el listado no entra en una sola. -->
-<table class="print-label">
-    <thead>
-        <tr class="cabecera">
-            <td>
-                <div class="marca">CESSA - Nueva Instalación</div>
+<!-- Etiquetas chicas (4.10" x 1.70"): solo esto se imprime, ver @media print. Hasta
+     $porEtiqueta materiales por etiqueta; si no entran, sigue en la siguiente con el mismo encabezado. -->
+@php
+    $porEtiqueta = 5;
+    $grupos = array_chunk($instalacion['materiales'], $porEtiqueta);
+@endphp
+<div class="print-label">
+    @foreach($grupos as $n => $grupo)
+    <div class="etiqueta">
+        <div class="cabecera">
+            <div>
+                <div class="marca">CESSA - Materiales para nueva instalación</div>
                 <div class="titulo">{{ $instalacion['titulo'] }}</div>
-                <div class="meta">{{ count($instalacion['materiales']) }} materiales requeridos</div>
-            </td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($instalacion['materiales'] as $m)
-        <tr>
-            <td class="item"><span class="cant">{{ $m['cantidad'] }}</span>{{ $m['item'] }}</td>
-        </tr>
+            </div>
+            <div class="pagina">
+                {{ count($instalacion['materiales']) }} materiales<br>
+                Etiqueta {{ $n + 1 }} de {{ count($grupos) }}
+            </div>
+        </div>
+        @foreach($grupo as $m)
+        <div class="item"><span class="cant">{{ $m['cantidad'] }}</span><span>{{ $m['item'] }}</span></div>
         @endforeach
-    </tbody>
-</table>
+    </div>
+    @endforeach
+</div>
 
 <!-- Barra superior de acciones (No se imprime) -->
 <div class="no-print-bar">

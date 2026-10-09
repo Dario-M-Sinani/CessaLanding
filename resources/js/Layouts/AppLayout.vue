@@ -9,7 +9,7 @@
     </main>
 
     <!-- Footer (Charcoal Background, matching cessa.com.bo footer color #272727) -->
-    <footer class="bg-[#272727] border-t-4 border-amber-400 text-white">
+    <footer class="bg-[#272727] border-t-4 border-amber-400 text-white print:hidden">
 
       <!-- Contact Strip -->
       <div class="border-b border-neutral-700/80">

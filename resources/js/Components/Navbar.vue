@@ -2,7 +2,7 @@
   <header
     :class="[
       isHomePage ? 'fixed top-0 left-0 right-0' : 'sticky top-0',
-      'z-50 border-b transition-all duration-700',
+      'z-50 border-b transition-all duration-700 print:hidden',
       transparentActive ? 'border-transparent shadow-none nav-transparent' : 'bg-white border-gray-200 shadow-sm',
     ]"
     @mouseenter="onHeaderEnter"

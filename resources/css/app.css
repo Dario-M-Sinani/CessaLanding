@@ -31,3 +31,22 @@
     --color-amber-800: #7a6900;
     --color-amber-900: #4d4300;
 }
+
+/* Impresión de páginas del portal (Ctrl+P): márgenes de hoja, sin cortar imágenes ni dejar un
+   título solo al pie de página. Menú, footer y asistente se ocultan con print:hidden en cada uno. */
+@media print {
+    @page {
+        margin: 12mm;
+    }
+    body {
+        background: #fff !important;
+    }
+    img,
+    figure,
+    tr {
+        break-inside: avoid;
+    }
+    h1, h2, h3, h4 {
+        break-after: avoid;
+    }
+}

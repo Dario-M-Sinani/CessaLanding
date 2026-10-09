@@ -1,5 +1,5 @@
 <template>
-  <div class="my-10 bg-white border border-blue-100 rounded-3xl p-6 sm:p-8 shadow-md space-y-6">
+  <div class="my-10 bg-white border border-blue-100 rounded-3xl p-6 sm:p-8 shadow-md space-y-6 print:my-0 print:p-0 print:border-0 print:shadow-none print:break-after-page">
     <!-- Encabezado del Widget -->
     <div class="text-center sm:text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-6">
       <div>
@@ -15,7 +15,7 @@
       </div>
 
       <!-- Botón de Acción Principal Imprimir -->
-      <div class="flex flex-wrap gap-2 shrink-0">
+      <div class="flex flex-wrap gap-2 shrink-0 print:hidden">
         <a
           :href="`/instalaciones/imprimir/${currentTab}`"
           target="_blank"
@@ -35,8 +35,13 @@
       </div>
     </div>
 
+    <!-- Al imprimir no hay pestañas: se dice qué tipo quedó elegido -->
+    <p class="hidden print:block text-base font-extrabold text-blue-950">
+      {{ activeData.titulo }}<span v-if="activeData.variantes"> — {{ currentVariantData?.label }}</span>
+    </p>
+
     <!-- Pestañas de Selección de Tipo de Instalación -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-gray-100 rounded-2xl">
+    <div class="print:hidden grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-gray-100 rounded-2xl">
       <button
         v-for="tipo in tipos"
         :key="tipo.id"
@@ -56,11 +61,11 @@
     </div>
 
     <!-- Contenido del Tipo Seleccionado -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
+    <div class="grid grid-cols-1 lg:grid-cols-12 print:grid-cols-12 gap-8 print:gap-5 items-start pt-2">
       <!-- Columna Izquierda: Diagramas y Croquis de Puesto de Medición -->
-      <div class="lg:col-span-5 space-y-4">
+      <div class="lg:col-span-5 print:col-span-5 space-y-4">
         <!-- Sub-selector de Variante (1 Piso / 2 Pisos) -->
-        <div v-if="activeData.variantes" class="flex gap-2 p-1 bg-gray-50 border border-gray-200 rounded-xl">
+        <div v-if="activeData.variantes" class="print:hidden flex gap-2 p-1 bg-gray-50 border border-gray-200 rounded-xl">
           <button
             v-for="(v, k) in activeData.variantes"
             :key="k"
@@ -107,7 +112,7 @@
       </div>
 
       <!-- Columna Derecha: Checklist Interactivo de Materiales -->
-      <div class="lg:col-span-7 space-y-4">
+      <div class="lg:col-span-7 print:col-span-7 space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-extrabold text-blue-950">
             Lista de Materiales Reglamentarios
@@ -142,7 +147,7 @@
         </div>
 
         <!-- Botones al Pie del Checklist -->
-        <div class="pt-4 flex flex-col sm:flex-row gap-3 border-t border-gray-100">
+        <div class="pt-4 flex flex-col sm:flex-row gap-3 border-t border-gray-100 print:hidden">
           <a
             :href="`/instalaciones/imprimir/${currentTab}`"
             target="_blank"

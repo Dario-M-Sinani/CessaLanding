@@ -1,5 +1,7 @@
 <template>
   <Teleport to="body">
+    <!-- print:hidden: el botón flotante y el panel no salen al imprimir una página -->
+    <div class="print:hidden">
     <!-- Globito "¿Te ayudo?", solo antes de la primera vez que se abre -->
     <Transition
       enter-active-class="transition-all duration-300"
@@ -129,6 +131,7 @@
           </a>
         </div>
       </div>
+    </div>
     </div>
   </Teleport>
 </template>
