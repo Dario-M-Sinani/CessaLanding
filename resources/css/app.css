@@ -43,7 +43,8 @@
     }
     img,
     figure,
-    tr {
+    tr,
+    .doc-card {
         break-inside: avoid;
     }
     h1, h2, h3, h4 {
