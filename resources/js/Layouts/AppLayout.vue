@@ -142,14 +142,10 @@
 
       <!-- Regulatory / Partner Badges -->
       <div class="border-t border-neutral-800 bg-black/20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-3 gap-6 items-center">
           <a href="https://www.aetn.gob.bo/web/" target="_blank" class="flex flex-col items-center text-center gap-2">
             <img src="/img/footer/aetn.jpg" alt="AETN" class="h-12 w-auto rounded bg-white p-1" />
             <span class="text-[9px] text-neutral-500 leading-tight">Fiscalizada y regulada por la AETN</span>
-          </a>
-          <a href="https://www.felcn.gob.bo/" target="_blank" class="flex flex-col items-center text-center gap-2">
-            <img src="/img/footer/felcn.png" alt="FELCN" class="h-12 w-auto" />
-            <span class="text-[9px] text-neutral-500 leading-tight">Denuncia línea gratuita 800101344</span>
           </a>
           <a href="https://www.cndc.bo/home/index.php" target="_blank" class="flex flex-col items-center text-center gap-2">
             <img src="/img/footer/cndc.jpg" alt="CNDC" class="h-8 w-auto rounded bg-white p-1" />
