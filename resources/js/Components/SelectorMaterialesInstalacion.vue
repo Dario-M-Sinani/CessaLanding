@@ -17,14 +17,14 @@
       <!-- Botón de Acción Principal Imprimir -->
       <div class="flex flex-wrap gap-2 shrink-0 print:hidden">
         <a
-          :href="`/instalaciones/imprimir/${currentTab}`"
+          :href="printUrl"
           target="_blank"
           class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm hover:shadow"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
-          Imprimir Lista (B&N)
+          Imprimir Etiqueta
         </a>
         <a
           href="/nueva-conexion"
@@ -69,7 +69,7 @@
           <button
             v-for="(v, k) in activeData.variantes"
             :key="k"
-            @click="activeVariant = k"
+            @click="selectVariant(k)"
             type="button"
             class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all text-center"
             :class="activeVariant === k ? 'bg-blue-900 text-white shadow-xs' : 'text-gray-600 hover:text-blue-900'"
@@ -118,14 +118,14 @@
             Lista de Materiales Reglamentarios
           </h3>
           <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-            {{ checkedCount }} de {{ activeData.materiales.length }} marcados
+            {{ checkedCount }} de {{ materiales.length }} marcados
           </span>
         </div>
 
         <!-- Lista de Materiales con Checkboxes -->
         <div class="space-y-2">
           <label
-            v-for="(mat, idx) in activeData.materiales"
+            v-for="(mat, idx) in materiales"
             :key="idx"
             class="flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer"
             :class="checkedMaterials[idx] ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950' : 'bg-white border-gray-200 hover:border-blue-200 text-gray-800'"
@@ -149,14 +149,14 @@
         <!-- Botones al Pie del Checklist -->
         <div class="pt-4 flex flex-col sm:flex-row gap-3 border-t border-gray-100 print:hidden">
           <a
-            :href="`/instalaciones/imprimir/${currentTab}`"
+            :href="printUrl"
             target="_blank"
             class="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Imprimir Lista de Materiales (B&N)
+            Imprimir Etiqueta de Materiales
           </a>
           <a
             href="/nueva-conexion"
@@ -183,119 +183,34 @@ const currentTab = ref('monofasica');
 const activeVariant = ref('con_baston');
 const checkedMaterials = reactive({});
 
-const catalogo = {
-  monofasica: {
-    titulo: 'Instalación Monofásica (220V)',
-    variantes: {
-      con_baston: {
-        label: '1 Piso (Con Bastón)',
-        imagen: '/storage/nuevas_instalaciones/monofasico-con-baston2.png',
-        descripcion_variante: 'Para casas de una sola planta con bastón galvanizado para dar la altura reglamentaria a la acometida.',
-      },
-      sin_baston: {
-        label: '2 Pisos o más (Sin Bastón)',
-        imagen: '/storage/nuevas_instalaciones/monofasico-sin-baston2.png',
-        descripcion_variante: 'Para inmuebles de dos o más plantas con ingreso directo de acometida aérea a la fachada.',
-      },
-    },
-    materiales: [
-      { cantidad: '1 pza.', item: 'Caja metálica de acero de 1 mm de espesor para medidor monofásico.' },
-      { cantidad: '8 mts.', item: 'Alambre aislado de cobre Nro. 10 AWG (o cable según carga solicitada).' },
-      { cantidad: '1 pza.', item: 'Interruptor termomagnético bipolar (amperaje según carga calculada).' },
-      { cantidad: '1 pza.', item: 'Tubo plástico conduit (tubo PVC) de 3/4 de pulgada de diámetro.' },
-      { cantidad: '1 pza.', item: 'Bastón de cañería galvanizada de 3/4" de diámetro (para 1 piso).' },
-      { cantidad: '1 pza.', item: 'Medidor monofásico certificado (provisto por CESSA tras aprobación).' },
-      { cantidad: '1 pza.', item: 'Conector de varilla de tierra (grapa de bronce de alta presión).' },
-      { cantidad: '1 pza.', item: 'Varilla de tierra de cobre de 5/8" de diámetro (mínimo 0.80 m de longitud).' },
-      { cantidad: '6 pzas.', item: 'Tornillos de encarne de 3/4" con sus respectivos tarugos.' },
-      { cantidad: '1 pza.', item: 'Rack de 2 vías con aisladores de porcelana para anclaje de acometida.' },
-    ],
-    requisitos_tecnicos: [
-      'Puesto de medición ubicado en la línea municipal frontal hacia la calle.',
-      'Altura máxima de empotrado de la caja: 1.40 metros.',
-      'Distancia máxima a la red eléctrica de CESSA: 34 metros (NB 777).',
-      'Una sola acometida por predio.',
-    ],
-  },
-  trifasica: {
-    titulo: 'Instalación Trifásica (380V / 220V)',
-    variantes: {
-      con_baston: {
-        label: '1 Piso (Con Bastón)',
-        imagen: '/storage/nuevas_instalaciones/trifasico-con-baston3.png',
-        descripcion_variante: 'Para predios de una planta con bastón galvanizado trifásico.',
-      },
-      sin_baston: {
-        label: '2 Pisos o más (Sin Bastón)',
-        imagen: '/storage/nuevas_instalaciones/trifasico-sin-baston3.png',
-        descripcion_variante: 'Ingreso directo a fachada de acometida trifásica.',
-      },
-    },
-    materiales: [
-      { cantidad: '1 pza.', item: 'Caja metálica de acero de 1 mm de espesor para medidor trifásico.' },
-      { cantidad: '8 mts.', item: 'Alambre aislado de cobre Nro. 10 AWG (o calibre superior según potencia declarada).' },
-      { cantidad: '1 pza.', item: 'Interruptor termomagnético tripolar (amperaje según carga trifásica).' },
-      { cantidad: '1 pza.', item: 'Tubo plástico conduit (tubo PVC) de 3/4 de pulgada de diámetro.' },
-      { cantidad: '1 pza.', item: 'Bastón de cañería galvanizada de 3/4" o 1" de diámetro (si aplica 1 piso).' },
-      { cantidad: '1 pza.', item: 'Medidor trifásico certificado (homologado por CESSA).' },
-      { cantidad: '1 pza.', item: 'Conector de varilla de tierra de bronce.' },
-      { cantidad: '1 pza.', item: 'Varilla de tierra de cobre de 5/8" de diámetro (mínimo 0.80 m de longitud).' },
-      { cantidad: '6 pzas.', item: 'Tornillos de encarne de 3/4" con tarugos de fijación.' },
-      { cantidad: '1 pza.', item: 'Rack de 4 vías con aisladores de porcelana para acometida trifásica.' },
-    ],
-    requisitos_tecnicos: [
-      'Puesto de medición en fachada frontal con libre acceso para lectura.',
-      'Altura máxima de la caja: 1.40 metros sobre acera.',
-      'Distancia máxima a la red de baja tensión de CESSA: 34 metros (NB 777).',
-      'Aterramiento independiente con varilla de cobre certificada.',
-    ],
-  },
-  'tablero-centralizador': {
-    titulo: 'Tablero Centralizador de Medidores',
-    variantes: {
-      con_baston: {
-        label: 'Con Bastón Aéreo',
-        imagen: '/storage/nuevas_instalaciones/tablero-centralizador-con-baston.png',
-        descripcion_variante: 'Para acometidas aéreas con bastón centralizador de 1 pulgada.',
-      },
-      sin_baston: {
-        label: 'Sin Bastón (Acometida Directa)',
-        imagen: '/storage/nuevas_instalaciones/tablero-centralizador-sin-baston.png',
-        descripcion_variante: 'Para acometidas subterráneas o empotradas en muro.',
-      },
-    },
-    materiales: [
-      { cantidad: '1 pza.', item: 'Tablero centralizador metálico homologado según cantidad de suministros.' },
-      { cantidad: '8 mts.', item: 'Alambre aislado de cobre Nro. 10 AWG por cada medidor a instalar.' },
-      { cantidad: '1 pza.', item: 'Interruptor termomagnético por cada medidor + 1 interruptor general de corte.' },
-      { cantidad: '1 pza.', item: 'Tubo plástico conduit (PVC) de 3/4" o 1" según cantidad de cables.' },
-      { cantidad: '1 pza.', item: 'Bastón de cañería galvanizada de 1" de diámetro (si aplica acometida aérea).' },
-      { cantidad: 'N pzas.', item: 'Medidores certificados por cada suministro solicitado.' },
-      { cantidad: '4 pzas.', item: 'Conectores de varilla de tierra.' },
-      { cantidad: '1 pza.', item: 'Varilla de aterramiento de cobre de 5/8" (mínimo 0.80 m).' },
-      { cantidad: '6 pzas.', item: 'Tornillos de encarne de 3/4" para anclaje del gabinete.' },
-      { cantidad: '1 pza.', item: 'Conector grapa tipo Alcoa / Rack de 4 vías según acometida.' },
-    ],
-    requisitos_tecnicos: [
-      'Gabinete centralizador ubicado en planta baja o ingreso principal.',
-      'Espacio modular con compartimiento para barras generales y térmicos.',
-      'Altura reglamentaria: centro del tablero a 1.40 metros del piso.',
-      'Obligatorio a partir del 3er medidor en un mismo predio.',
-    ],
-  },
-};
+// Catálogo único: viene del servidor (InstalacionMaterialesController::getCatalogo), el mismo
+// que usa la etiqueta imprimible -- antes había una copia acá que ya difería en los textos.
+const props = defineProps({
+  catalogo: { type: Object, required: true },
+});
 
-const activeData = computed(() => catalogo[currentTab.value]);
+const activeData = computed(() => props.catalogo[currentTab.value]);
 const currentVariantData = computed(() => activeData.value.variantes?.[activeVariant.value] ?? Object.values(activeData.value.variantes ?? {})[0]);
+
+// Sin bastón no van los ítems 'solo_con_baston' (igual que en la etiqueta).
+const materiales = computed(() => activeData.value.materiales.filter((m) => activeVariant.value === 'con_baston' || !m.solo_con_baston));
+const printUrl = computed(() => `/instalaciones/imprimir/${currentTab.value}?variante=${activeVariant.value}`);
 
 const checkedCount = computed(() => {
   return Object.values(checkedMaterials).filter(Boolean).length;
 });
 
+const resetChecks = () => Object.keys(checkedMaterials).forEach((k) => delete checkedMaterials[k]);
+
 const selectTab = (tabId) => {
   currentTab.value = tabId;
   activeVariant.value = 'con_baston';
-  // reset checks
-  Object.keys(checkedMaterials).forEach((k) => delete checkedMaterials[k]);
+  resetChecks();
+};
+
+// Los checks van por índice: al cambiar de variante la lista cambia, así que se limpian.
+const selectVariant = (k) => {
+  activeVariant.value = k;
+  resetChecks();
 };
 </script>

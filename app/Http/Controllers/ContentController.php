@@ -15,6 +15,8 @@ class ContentController extends Controller
 
         return Inertia::render('Content/Show', [
             'content' => $content,
+            // Catálogo del widget de materiales: una sola fuente (la misma de la etiqueta imprimible).
+            'instalaciones' => $alias === 'nuevas-instalaciones' ? InstalacionMaterialesController::getCatalogo() : null,
         ]);
     }
 }

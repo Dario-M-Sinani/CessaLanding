@@ -18,7 +18,7 @@
         />
 
         <!-- Widget Interactivo de Materiales para Nuevas Instalaciones -->
-        <SelectorMaterialesInstalacion v-if="content.alias === 'nuevas-instalaciones'" />
+        <SelectorMaterialesInstalacion v-if="content.alias === 'nuevas-instalaciones' && instalaciones" :catalogo="instalaciones" />
 
         <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 sm:p-12 shadow-sm print:bg-white print:border-0 print:p-0 print:shadow-none">
           <ContentBody :html="content.full_text" />
@@ -38,6 +38,7 @@ import SelectorMaterialesInstalacion from '../../Components/SelectorMaterialesIn
 
 const props = defineProps({
   content: Object,
+  instalaciones: { type: Object, default: null },
 });
 
 const imageUrlFor = (url) => (url.startsWith('http') ? url : `/storage/${url}`);
