@@ -132,7 +132,7 @@
 
                 <div>
                   <label class="block text-xs font-medium text-gray-700 mb-2">Tipo de Servicio *</label>
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="grid grid-cols-2 gap-3">
                     <label v-for="opt in phaseTypeOptions" :key="opt.value" class="flex items-center gap-2 px-4 py-3 bg-white border rounded-xl text-sm cursor-pointer transition-colors" :class="form.phase_type === opt.value ? 'border-blue-900 ring-1 ring-blue-900' : 'border-gray-300'">
                       <input type="radio" :value="opt.value" v-model="form.phase_type" class="accent-blue-900" />
                       <span class="font-medium text-gray-800">{{ opt.label }}</span>
@@ -248,7 +248,6 @@ const consumerTypeOptions = [
 ];
 const phaseTypeOptions = [
   { value: 'MONOPHASE', label: 'Monofásico' },
-  { value: 'BIPHASIC', label: 'Bifásico' },
   { value: 'TRIPHASIC', label: 'Trifásico' },
 ];
 

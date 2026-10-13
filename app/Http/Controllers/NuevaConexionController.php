@@ -123,7 +123,7 @@ class NuevaConexionController extends Controller
             'request_type_id' => ['nullable', Rule::requiredIf($isOtras), Rule::in(array_keys(self::OTRAS_REQUEST_TYPE_IDS))],
             'area' => ['nullable', Rule::requiredIf($isNewConnection || $isOtras), Rule::in(['URBAN', 'RURAL'])],
             'consumer_type' => ['nullable', Rule::requiredIf($isNewConnection || $isOtras), Rule::in(['RESIDENTIAL', 'GENERAL', 'INDUSTRIAL'])],
-            'phase_type' => ['nullable', Rule::requiredIf($isNewConnection), Rule::in(['MONOPHASE', 'BIPHASIC', 'TRIPHASIC'])],
+            'phase_type' => ['nullable', Rule::requiredIf($isNewConnection), Rule::in(['MONOPHASE', 'TRIPHASIC'])],
             'url_document_front' => ['nullable', Rule::requiredIf($isNewConnection || $isSuspension || $isOtras), 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'url_document_back' => ['nullable', Rule::requiredIf($isNewConnection || $isSuspension || $isOtras), 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'url_invoice' => ['nullable', Rule::requiredIf($isSuspension || $isOtras), 'image', 'mimes:jpg,jpeg,png', 'max:5120'],

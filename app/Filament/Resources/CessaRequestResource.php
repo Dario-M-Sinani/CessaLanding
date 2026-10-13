@@ -104,7 +104,7 @@ class CessaRequestResource extends Resource
                             ->native(false),
                         Forms\Components\Select::make('phase_type')
                             ->label('Tipo de Servicio')
-                            ->options(['MONOPHASE' => 'Monofásico', 'BIPHASIC' => 'Bifásico', 'TRIPHASIC' => 'Trifásico'])
+                            ->options(['MONOPHASE' => 'Monofásico', 'TRIPHASIC' => 'Trifásico'])
                             ->native(false),
                     ])->columns(3),
 
