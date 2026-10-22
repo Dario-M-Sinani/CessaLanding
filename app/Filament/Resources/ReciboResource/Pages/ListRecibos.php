@@ -193,7 +193,7 @@ class ListRecibos extends ListRecords
                 currency: 'BOB',
                 description: $glosa,
                 expiresAt: $expiresAt,
-                callbackUrl: route('pagos.sip.callback'),
+                callbackUrl: config('services.sip.callback_url') ?: route('pagos.sip.callback'),
                 singleUse: true,
             ));
         } catch (QrPaymentException $e) {

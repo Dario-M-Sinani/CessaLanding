@@ -69,6 +69,31 @@ class SipCallbackControllerTest extends PaymentsTestCase
             ->assertStatus(401);
     }
 
+    public function test_reenvio_del_gateway_con_api_key_marca_pagado(): void
+    {
+        config(['services.cobranzas.gateway_api_key' => 'clave-gateway']);
+        $recibo = $this->crearReciboBnb(['provider' => 'sip_bisa', 'alias' => 'CESSA-WEB-SIP-GW', 'status' => PaymentStatus::Pendiente]);
+
+        $this->llamar($this->payload('CESSA-WEB-SIP-GW'), ['X-Api-Key' => 'clave-gateway'])
+            ->assertOk()
+            ->assertJson(['codigo' => '0000']);
+
+        $this->assertSame(PaymentStatus::Pagado, $recibo->fresh()->status);
+    }
+
+    public function test_api_key_incorrecta_o_sin_configurar_devuelve_401(): void
+    {
+        $recibo = $this->crearReciboBnb(['provider' => 'sip_bisa', 'alias' => 'CESSA-WEB-SIP-GW2', 'status' => PaymentStatus::Pendiente]);
+
+        config(['services.cobranzas.gateway_api_key' => null]);
+        $this->llamar($this->payload('CESSA-WEB-SIP-GW2'), ['X-Api-Key' => ''])->assertStatus(401);
+
+        config(['services.cobranzas.gateway_api_key' => 'clave-gateway']);
+        $this->llamar($this->payload('CESSA-WEB-SIP-GW2'), ['X-Api-Key' => 'otra'])->assertStatus(401);
+
+        $this->assertSame(PaymentStatus::Pendiente, $recibo->fresh()->status);
+    }
+
     public function test_alias_desconocido_responde_9999_sin_error(): void
     {
         $this->llamar($this->payload('NO-EXISTE'))

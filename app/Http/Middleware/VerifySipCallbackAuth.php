@@ -15,6 +15,14 @@ class VerifySipCallbackAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Reenvío desde el gateway (cobranza-cessa): SIP llama al callback único del gateway y
+        // este reenvía los alias CESSA-* acá con la misma API key que ya compartimos con él.
+        $apiKey = config('services.cobranzas.gateway_api_key');
+        $providedKey = $request->header('X-Api-Key');
+        if (filled($apiKey) && is_string($providedKey) && hash_equals($apiKey, $providedKey)) {
+            return $next($request);
+        }
+
         $username = config('services.sip.callback_username');
         $password = config('services.sip.callback_password');
 

@@ -296,7 +296,7 @@ class PagoQrController extends Controller
                 // hace cumplir nosotros mismos: se guarda acá abajo en $expiresAt y lo aplica
                 // el comando pagos:expirar-vencidos (corre cada minuto, ver routes/console.php).
                 expiresAt: $expiresAt,
-                callbackUrl: route('pagos.sip.callback'),
+                callbackUrl: config('services.sip.callback_url') ?: route('pagos.sip.callback'),
                 singleUse: true,
             ));
         } catch (QrPaymentException $e) {

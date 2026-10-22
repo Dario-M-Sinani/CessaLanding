@@ -56,6 +56,9 @@ return [
         'apikey_servicio' => env('SIP_SERVICE_API_KEY'),
         'callback_username' => env('SIP_CALLBACK_USERNAME'),
         'callback_password' => env('SIP_CALLBACK_PASSWORD'),
+        // URL de callback que se manda en cada generaQr. Vacío: la ruta propia
+        // (pagos.sip.callback). Con el gateway: su callback único, que reenvía los CESSA-* acá.
+        'callback_url' => env('SIP_CALLBACK_URL'),
     ],
 
     'bnb' => [
