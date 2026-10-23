@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Docroot real en Hostinger (el código vive fuera de public_html): lo usa bootstrap/app.php.
+    // Va por config y no por env() directo para que sobreviva a config:cache.
+    'public_path_override' => env('PUBLIC_PATH_OVERRIDE'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

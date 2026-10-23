@@ -67,10 +67,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
 // realmente pisa el usuario. En local no se define, así que no cambia nada.
 //
 // Tiene que ir en booting() y no suelto acá arriba: en este punto del archivo
-// el kernel todavía no cargó el .env (eso pasa recién durante el bootstrap
-// del kernel), así que un env() llamado directo acá siempre da null.
+// el kernel todavía no cargó la configuración. Y se lee de config('app.…'), no
+// con env(): con config:cache el .env no se carga y env() da null, así que
+// public_path() volvía a la carpeta "public/" equivocada (manifest viejo).
 $app->booting(function () use ($app) {
-    if ($publicPathOverride = env('PUBLIC_PATH_OVERRIDE')) {
+    if ($publicPathOverride = $app['config']->get('app.public_path_override')) {
         $app->usePublicPath($publicPathOverride);
     }
 });
