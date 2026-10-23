@@ -318,7 +318,7 @@
 
             <Link
               v-if="!pagoQrHabilitado"
-              href="/puntos-de-cobranza"
+              href="/informacion/puntos-de-cobranza"
               class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-sm font-bold transition-colors"
             >
               Ver puntos de cobranza

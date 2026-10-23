@@ -183,7 +183,7 @@ const intenciones = [
       : 'Podés ver cuánto debés en Consultar Deuda y pagar desde la App CESSA o en nuestros puntos de cobranza.',
     acciones: pagoQrHabilitado
       ? [{ label: 'Consultar Deuda', href: '/consulta-deuda' }]
-      : [{ label: 'Consultar Deuda', href: '/consulta-deuda' }, { label: 'Puntos de Cobranza', href: '/puntos-de-cobranza' }],
+      : [{ label: 'Consultar Deuda', href: '/consulta-deuda' }, { label: 'Puntos de Cobranza', href: '/informacion/puntos-de-cobranza' }],
   },
   {
     id: 'reclamo',
