@@ -32,6 +32,13 @@ class ReciboResource extends Resource
 
     protected static ?int $navigationSort = 15;
 
+    // Con el pago por QR apagado en este sitio (PAGOS_QR_HABILITADO) no hay cobros que ver ni
+    // se deben generar desde el panel: se oculta el menú y la URL directa da 403.
+    public static function canAccess(): bool
+    {
+        return \App\Http\Controllers\PagoQrController::qrHabilitado() && parent::canAccess();
+    }
+
     // Solo lectura desde el listado estándar de Filament -- los Recibos se crean con la acción
     // "Generar Cobro QR" (llama al proveedor real) y se editan solo a través de las acciones de
     // la vista de detalle (inhabilitar / actualizar estado), nunca con un formulario libre que

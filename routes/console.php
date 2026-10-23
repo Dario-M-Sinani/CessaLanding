@@ -8,16 +8,21 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// Con el pago por QR apagado (PAGOS_QR_HABILITADO, ej. cessa.com.bo mientras se prueba en
+// test.cessa.com.bo) no hay recibos que sincronizar/expirar/facturar, y sin credenciales de
+// los bancos estas tareas solo llenarían el log de errores cada minuto.
+$qrHabilitado = fn () => (bool) config('services.pagos.qr_habilitado');
+
 // Requiere el cron de Laravel corriendo (`* * * * * php artisan schedule:run`) en el hosting
 // -- ver PLAN_MIGRACION_LARAVEL.md, Hostinger es shared hosting sin daemon para queue:work,
 // así que esto se resuelve con el scheduler en vez de un job en cola.
 // Antes de expirar: confirma los pagos BNB por consulta (la web no recibe el aviso del BNB,
 // ver SincronizarPagosBnb).
-Schedule::command('pagos:sincronizar-bnb')->everyMinute();
-Schedule::command('pagos:sincronizar-sip')->everyMinute();
+Schedule::command('pagos:sincronizar-bnb')->everyMinute()->when($qrHabilitado);
+Schedule::command('pagos:sincronizar-sip')->everyMinute()->when($qrHabilitado);
 
-Schedule::command('pagos:expirar-vencidos')->everyMinute();
+Schedule::command('pagos:expirar-vencidos')->everyMinute()->when($qrHabilitado);
 
 // No hace nada mientras services.cobranzas.enabled esté en false (default) -- ver
 // RegistrarFacturacionCobranzas y config/services.php.
-Schedule::command('pagos:registrar-facturacion')->everyMinute();
+Schedule::command('pagos:registrar-facturacion')->everyMinute()->when($qrHabilitado);

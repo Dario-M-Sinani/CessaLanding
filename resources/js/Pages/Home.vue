@@ -49,8 +49,10 @@
             <span>✓ Consulta gratuita 24/7</span>
             <span>•</span>
             <span>✓ Detalle de avisos</span>
-            <span>•</span>
-            <span>✓ Pago por QR</span>
+            <template v-if="$page.props.pagoQrHabilitado">
+              <span>•</span>
+              <span>✓ Pago por QR</span>
+            </template>
           </div>
         </div>
 

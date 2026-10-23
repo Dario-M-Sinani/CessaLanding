@@ -40,6 +40,8 @@ abstract class FacturacionTestCase extends TestCase
             'services.cobranzas.enabled' => true,
             'services.cobranzas.gateway_base_url' => self::GATEWAY,
             'services.cobranzas.gateway_api_key' => 'clave-de-prueba',
+            // Facturar solo tiene sentido con el QR prendido (test.cessa.com.bo); por defecto va apagado.
+            'services.pagos.qr_habilitado' => true,
         ]);
 
         Storage::fake('public');

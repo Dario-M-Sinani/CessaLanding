@@ -140,11 +140,11 @@
 
           <!-- Desglose único: la misma lista sirve para mostrar cada factura/conciliación
                pendiente Y para seleccionar hasta qué mes pagar (checkbox visible solo cuando
-               hay algo que se puede cobrar por QR). Antes había una tabla de solo lectura acá
+               hay algo que se puede cobrar por QR y el QR está prendido en este sitio). Antes había una tabla de solo lectura acá
                arriba y otra lista de checkboxes duplicada adentro de la barra de pago -- se
                unificaron en una sola para no mostrar el mismo detalle dos veces. -->
           <div v-if="resultado.pendientes && resultado.pendientes.length" class="space-y-2">
-            <p v-if="totalDeudaNum > 0 && resultado.pendientes.length > 1" class="text-xs text-gray-500">
+            <p v-if="seleccionable && resultado.pendientes.length > 1" class="text-xs text-gray-500">
               Elegí hasta qué mes pagar (se marcan automáticamente los anteriores, siempre desde el más antiguo)
             </p>
             <div class="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
@@ -152,7 +152,7 @@
                 v-for="(p, idx) in resultado.pendientes"
                 :key="idx"
                 class="flex items-center gap-3 px-4 py-3.5"
-                :class="totalDeudaNum > 0 ? 'cursor-pointer hover:bg-blue-50' : ''"
+                :class="seleccionable ? 'cursor-pointer hover:bg-blue-50' : ''"
               >
                 <!-- Bug real reproducido: desmarcar un mes y después marcar uno posterior
                      dejaba ese último visualmente sin marcar (aunque sí quedaba incluido en el
@@ -167,7 +167,7 @@
                      siempre lo deja incluido (idx < nuevo mesesAPagar es siempre true para el
                      que se clickeó), por eso se puede fijar directo en `true`. -->
                 <input
-                  v-if="totalDeudaNum > 0"
+                  v-if="seleccionable"
                   type="checkbox"
                   :checked="idx < mesesAPagar"
                   @change="mesesAPagar = idx + 1; $event.target.checked = true"
@@ -197,12 +197,16 @@
             No registra facturas pendientes de pago.
           </div>
 
-          <!-- Payment Options CTA Bar: no se muestra si el saldo total es negativo (nada que cobrar por QR). -->
+          <!-- Payment Options CTA Bar: no se muestra si el saldo total es negativo (nada que cobrar por QR).
+               Con el QR apagado en este sitio (PAGOS_QR_HABILITADO, ej. cessa.com.bo mientras se
+               prueba en test.cessa.com.bo) solo quedan la App CESSA y los puntos de cobranza. -->
           <div v-if="resultado.pendientes && resultado.pendientes.length && totalDeudaNum > 0" class="p-5 sm:p-6 bg-blue-900 text-white rounded-xl space-y-4">
             <div class="text-xs space-y-0.5">
-              <span class="font-bold block text-sm">Elegí cómo pagar tu aviso</span>
-              <span class="text-blue-100">Pago rápido por QR, al instante.</span>
+              <span class="font-bold block text-sm">{{ pagoQrHabilitado ? 'Elegí cómo pagar tu aviso' : 'Cómo pagar tu aviso' }}</span>
+              <span class="text-blue-100">{{ pagoQrHabilitado ? 'Pago rápido por QR, al instante.' : 'Desde la App CESSA o en cualquiera de nuestros puntos de cobranza.' }}</span>
             </div>
+
+            <template v-if="pagoQrHabilitado">
 
             <!-- El total de esta selección cambia según qué meses se marquen arriba (a
                  diferencia del "Total Pendiente"/"Saldo a Favor" de la cabecera, que es fijo),
@@ -273,11 +277,12 @@
             <p v-if="horaRestringida" class="text-[11px] text-amber-300">
               El pago por QR no está disponible entre las 23:59 y las 00:00 por el corte diario del sistema. Volvé a intentar en unos minutos.
             </p>
+            </template>
 
             <!-- O desde la app: no tiene sentido ofrecerla si el monto ya supera el límite de
                  QR -- la app usa el mismo cobro por QR, así que tampoco lo va a poder cobrar. -->
-            <div v-if="!montoExcedeLimite" class="pt-1 space-y-2">
-              <p class="text-[11px] text-blue-100">O desde la <span class="font-semibold text-white">App CESSA</span></p>
+            <div v-if="!pagoQrHabilitado || !montoExcedeLimite" class="pt-1 space-y-2">
+              <p class="text-[11px] text-blue-100">{{ pagoQrHabilitado ? 'O desde la' : 'Desde la' }} <span class="font-semibold text-white">App CESSA</span></p>
               <div class="grid grid-cols-2 gap-2.5">
                 <a
                   href="https://apps.apple.com/bo/app/cessa/id6453522570"
@@ -311,7 +316,16 @@
               </div>
             </div>
 
-            <p class="text-[11px] text-blue-300 flex items-center gap-1.5">
+            <Link
+              v-if="!pagoQrHabilitado"
+              href="/puntos-de-cobranza"
+              class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-sm font-bold transition-colors"
+            >
+              Ver puntos de cobranza
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+            </Link>
+
+            <p v-if="pagoQrHabilitado" class="text-[11px] text-blue-300 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
               El pago se acredita al instante en tu factura.
             </p>
@@ -352,7 +366,7 @@
     </div>
 
     <PagoQrModal
-      v-if="mostrarPagoQr"
+      v-if="pagoQrHabilitado && mostrarPagoQr"
       :nro-cliente="filters.nro_cliente"
       :zona="filters.zona"
       :manzano="filters.manzano"
@@ -367,7 +381,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '../Layouts/AppLayout.vue';
 import PagoQrModal from '../Components/PagoQrModal.vue';
 
@@ -385,6 +399,11 @@ const mostrarPagoQr = ref(false);
 const simularPagoQr = ref(false);
 
 const totalDeudaNum = computed(() => parseFloat(props.resultado?.total_deuda ?? 0));
+
+// Pago por QR prendido en este sitio (prop compartida, ver HandleInertiaRequests). Apagado, la
+// lista de pendientes queda de solo lectura: elegir meses solo sirve para armar el QR.
+const pagoQrHabilitado = computed(() => Boolean(usePage().props.pagoQrHabilitado));
+const seleccionable = computed(() => pagoQrHabilitado.value && totalDeudaNum.value > 0);
 
 // `resultado.pendientes` ya viene ordenado del más antiguo al más reciente (ver
 // ConsultaDeudaController). Marcar el checkbox del mes N selecciona en cascada 1..N,

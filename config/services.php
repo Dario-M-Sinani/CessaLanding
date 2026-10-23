@@ -79,6 +79,13 @@ return [
     ],
 
     'pagos' => [
+        // Pago por QR (BISA/SIP + BNB) en Consulta de Deuda. Apagado por defecto a propósito:
+        // cessa.com.bo sale a producción solo con la consulta de deuda, y el QR se sigue
+        // probando en test.cessa.com.bo (PAGOS_QR_HABILITADO=true en ese .env) hasta pasar
+        // las pruebas de producción. Apagado: no se ofrece el botón, generar-qr/estado-qr/
+        // simular-pago dan 404, el menú "Cobros QR" del panel no aparece y el scheduler no
+        // corre las tareas de pagos. Prenderlo es solo .env + config:clear.
+        'qr_habilitado' => env('PAGOS_QR_HABILITADO', false),
         // Botón "Simular pago" en el modal del QR (Consulta de Deuda), para probar el circuito
         // de después del pago (facturación, comprobante, pantallas) sin pagar de verdad. Solo
         // aparece con esto en true Y logueado en el panel con rol SYSTEM. NUNCA dejarlo en true

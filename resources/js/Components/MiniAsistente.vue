@@ -138,7 +138,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 
 const open = ref(false);
 const mostrarGlobito = ref(false);
@@ -164,6 +164,10 @@ const accesos = [
 // preguntas frecuentes en lenguaje natural que no son búsqueda de FAQ sino
 // "llevame a la acción correcta", complementando los accesos rápidos de
 // arriba (que solo cubren un click directo, no una frase escrita).
+// Pago por QR prendido en este sitio (PAGOS_QR_HABILITADO, prop compartida): si no, no se
+// ofrece generarlo.
+const pagoQrHabilitado = Boolean(usePage().props.pagoQrHabilitado);
+
 const intenciones = [
   {
     id: 'emergencia',
@@ -174,8 +178,12 @@ const intenciones = [
   {
     id: 'pagar',
     palabrasClave: 'pagar factura pago recibo como pago mi deuda planilla aviso de cobro con qr',
-    respuesta: 'Podés generar tu código QR para pagar tu factura desde Consultar Deuda.',
-    acciones: [{ label: 'Consultar Deuda', href: '/consulta-deuda' }],
+    respuesta: pagoQrHabilitado
+      ? 'Podés generar tu código QR para pagar tu factura desde Consultar Deuda.'
+      : 'Podés ver cuánto debés en Consultar Deuda y pagar desde la App CESSA o en nuestros puntos de cobranza.',
+    acciones: pagoQrHabilitado
+      ? [{ label: 'Consultar Deuda', href: '/consulta-deuda' }]
+      : [{ label: 'Consultar Deuda', href: '/consulta-deuda' }, { label: 'Puntos de Cobranza', href: '/puntos-de-cobranza' }],
   },
   {
     id: 'reclamo',

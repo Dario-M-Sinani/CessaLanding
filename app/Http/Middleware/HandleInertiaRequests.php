@@ -37,6 +37,9 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            // Pago por QR prendido en este sitio (PAGOS_QR_HABILITADO, ver PagoQrController::qrHabilitado):
+            // lo usan Consulta de Deuda, el Home y el Mini Asistente para no ofrecer el QR donde está apagado.
+            'pagoQrHabilitado' => \App\Http\Controllers\PagoQrController::qrHabilitado(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

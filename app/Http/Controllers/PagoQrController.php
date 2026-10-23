@@ -44,6 +44,10 @@ class PagoQrController extends Controller
 
     public function generar(Request $request): JsonResponse
     {
+        if (! self::qrHabilitado()) {
+            abort(404);
+        }
+
         // El sistema de cobros hace su corte diario entre 23:59 y 00:00 (hora de Bolivia,
         // no la del servidor -- ver config/app.php, corre en UTC); generar un QR justo en
         // ese minuto no es confiable, así que se bloquea acá antes de gastar una llamada a
@@ -393,6 +397,15 @@ class PagoQrController extends Controller
     }
 
     /**
+     * Pago por QR prendido en este sitio (PAGOS_QR_HABILITADO). En cessa.com.bo va apagado
+     * hasta pasar las pruebas de producción en test.cessa.com.bo -- ver config/services.php.
+     */
+    public static function qrHabilitado(): bool
+    {
+        return (bool) config('services.pagos.qr_habilitado');
+    }
+
+    /**
      * Solo para pruebas: si la simulación está habilitada (PAGOS_SIMULACION_HABILITADA) y quien
      * mira la página está logueado en el panel con rol SYSTEM, el modal del QR muestra el botón
      * "Simular pago".
@@ -401,7 +414,8 @@ class PagoQrController extends Controller
     {
         $user = auth()->user();
 
-        return (bool) config('services.pagos.simulacion_habilitada')
+        return self::qrHabilitado()
+            && (bool) config('services.pagos.simulacion_habilitada')
             && $user instanceof User
             && $user->hasRole(User::ROLE_SYSTEM);
     }
@@ -463,6 +477,10 @@ class PagoQrController extends Controller
      */
     public function estado(string $alias): JsonResponse
     {
+        if (! self::qrHabilitado()) {
+            abort(404);
+        }
+
         $recibo = Recibo::where('alias', $alias)->first();
 
         if (! $recibo) {

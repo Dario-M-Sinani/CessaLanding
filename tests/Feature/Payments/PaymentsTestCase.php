@@ -54,6 +54,9 @@ abstract class PaymentsTestCase extends TestCase
             // Apagada por defecto: estos tests son del cobro, no de la facturación (que ahora se
             // dispara apenas se confirma el pago). Los que la prueban la prenden (FlujoPagoFacturacionTest).
             'services.cobranzas.enabled' => false,
+            // El QR va apagado por defecto (cessa.com.bo); estos tests son del QR prendido, como
+            // en test.cessa.com.bo. El caso apagado se prueba en PagoQrDeshabilitadoTest.
+            'services.pagos.qr_habilitado' => true,
         ]);
 
         Http::preventStrayRequests();
