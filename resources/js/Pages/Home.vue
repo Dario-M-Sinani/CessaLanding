@@ -269,16 +269,18 @@
             :key="outage.id"
             type="button"
             @click="selectedOutage = outage"
-            class="text-left bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:border-blue-900 hover:shadow-md transition-all cursor-pointer"
+            class="flex flex-col text-left bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:border-blue-900 hover:shadow-md transition-all cursor-pointer"
           >
-            <div class="bg-blue-950 text-white px-5 py-3.5 space-y-2">
+            <!-- flex-col: un <button> centra su contenido en vertical; sin esto, en las tarjetas más
+                 cortas la franja azul baja y deja un hueco blanco arriba. -->
+            <div class="w-full bg-blue-950 text-white px-5 py-3.5 space-y-2">
               <span class="block text-lg font-extrabold leading-snug">{{ formatFechaLarga(outage.execution_date) }}</span>
               <span class="inline-flex items-center gap-2 bg-amber-400 text-blue-950 px-3.5 py-1.5 rounded-full font-mono font-extrabold text-base">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
                 {{ formatHora(outage.start_time) }} - {{ formatHora(outage.finish_time) }}
               </span>
             </div>
-            <div class="p-5 space-y-2 text-sm text-gray-600 leading-relaxed">
+            <div class="w-full p-5 space-y-2 text-sm text-gray-600 leading-relaxed">
               <p class="line-clamp-3">{{ outage.location }}</p>
               <p v-if="outage.affected_institutions" class="line-clamp-2"><span class="font-semibold text-gray-800">Instituciones:</span> {{ outage.affected_institutions }}</p>
             </div>
