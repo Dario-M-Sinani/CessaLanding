@@ -278,7 +278,10 @@
                 {{ formatHora(outage.start_time) }} - {{ formatHora(outage.finish_time) }}
               </span>
             </div>
-            <p class="p-5 text-sm text-gray-600 leading-relaxed line-clamp-3">{{ outage.location }}</p>
+            <div class="p-5 space-y-2 text-sm text-gray-600 leading-relaxed">
+              <p class="line-clamp-3">{{ outage.location }}</p>
+              <p v-if="outage.affected_institutions" class="line-clamp-2"><span class="font-semibold text-gray-800">Instituciones:</span> {{ outage.affected_institutions }}</p>
+            </div>
           </button>
         </div>
         <div v-else class="p-8 bg-white border border-gray-200 rounded-2xl text-center text-base text-emerald-800 font-semibold flex items-center justify-center gap-2">
@@ -321,6 +324,10 @@
             <p class="text-base text-gray-600 leading-relaxed flex items-start gap-2">
               <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
               <span><span class="font-semibold">Zonas afectadas:</span> <span class="text-gray-800">{{ selectedOutage.location }}</span></span>
+            </p>
+            <p v-if="selectedOutage.affected_institutions" class="text-base text-gray-600 leading-relaxed flex items-start gap-2">
+              <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 00-1.5 0V4h-.5A2.75 2.75 0 006 6.75v.5H4.75a.75.75 0 000 1.5H6v7.5H4.75a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H14v-7.5h1.25a.75.75 0 000-1.5H14v-.5A2.75 2.75 0 0011.25 4h-.5V2.75zM9 8h2v7H9V8z" /></svg>
+              <span><span class="font-semibold">Instituciones afectadas:</span> <span class="text-gray-800">{{ selectedOutage.affected_institutions }}</span></span>
             </p>
           </div>
 
