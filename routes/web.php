@@ -140,6 +140,45 @@ Route::get('/galeria/imagenes', [GaleriaController::class, 'imagenes'])->name('g
 // Páginas institucionales genéricas (migradas de la CMS legacy)
 Route::get('/contenido/{alias}', [ContentController::class, 'show'])->name('contenido.show');
 
+// URLs del sitio anterior (CakePHP) que siguen en Google, Facebook y favoritos: 301 a la página
+// equivalente. Van antes de /personal/{categoria} y /la-compania/... para ganarles el match.
+// /noticias/{alias} viejo lo resuelve NoticiasController::show.
+foreach ([
+    '/importante/cortes-programados' => '/informacion/cortes-programados',
+    '/importante/puntos-de-cobranza' => '/informacion/puntos-de-cobranza',
+    '/importante/calculo-de-consumo' => '/calculadora',
+    '/servicios/consulta-tu-deuda' => '/consulta-deuda',
+    '/servicios/estado-de-tramites' => '/buscar-tramite',
+    '/pages/scheduled-power-outages' => '/informacion/cortes-programados',
+    '/pages/check-your-debt' => '/consulta-deuda',
+    '/pages/paperwork-status' => '/buscar-tramite',
+    '/pages/calculation-consumption' => '/calculadora',
+    '/pages/rate-structure' => '/importante/estructura-tarifaria',
+    '/pago-qr' => '/consulta-deuda',
+    '/solicitudes/nueva-conexion' => '/nueva-conexion',
+    '/solicitudes/suspension' => '/suspension-servicio',
+    '/solicitudes/otras' => '/otras-solicitudes',
+    '/consumidor/comunicados-aetn' => '/informacion/comunicados-aetn',
+    '/consumidor/consejos-de-seguridad' => '/informacion/consejos-de-seguridad',
+    '/consumidor/preguntas-frecuentes' => '/informacion/faqs',
+    '/la-compania/contactenos' => '/la-compania/contacto',
+    '/la-compania/estructura-organizacional' => '/la-compania/estructura',
+    '/la-compania/mision-y-vision' => '/la-compania/mision-vision',
+    '/la-compania/recursos-humanos' => '/la-compania/rrhh',
+    '/personal/personal-externo-autorizado-para-cortes-y-reconexiones-de-cessa' => '/personal/cortes-reconexiones',
+    '/personal/personal-externo-autorizado-para-lectura-de-medidores-gestion-2023' => '/personal/lectura-medidores',
+    '/galeria/videos' => '/galeria',
+    '/busqueda' => '/buscar',
+] as $viejo => $nuevo) {
+    Route::permanentRedirect($viejo, $nuevo);
+}
+Route::permanentRedirect('/documentos/{doc}', '/informacion/documentos')
+    ->where('doc', 'invitaciones|licitaciones|convocatorias|biblioteca');
+Route::get('/consumidor/{alias}', fn (string $alias) => redirect("/contenido/{$alias}", 301))
+    ->where('alias', '[a-z0-9\-]+');
+Route::get('/la-compania/{alias}', fn (string $alias) => redirect("/contenido/{$alias}", 301))
+    ->where('alias', '[a-z0-9\-]+');
+
 // Personal (categorías administrables desde el panel, ver PersonalCategoriaResource) -- /personal
 // redirige a la primera por posición en vez de un alias fijo, para no romper si algún día
 // "autorizado" deja de ser la primera categoría.

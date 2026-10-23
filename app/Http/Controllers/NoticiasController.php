@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\News;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,8 +22,15 @@ class NoticiasController extends Controller
         ]);
     }
 
-    public function show($id): Response
+    public function show($id): Response|RedirectResponse
     {
+        // Links del sitio anterior: /noticias/{alias} en vez de /noticias/{id}.
+        if (! ctype_digit((string) $id)) {
+            $news = News::where('published', 'S')->where('alias', $id)->firstOrFail();
+
+            return redirect()->route('noticias.show', $news->id, 301);
+        }
+
         $news = News::where('published', 'S')->findOrFail($id);
         $news->increment('hits');
 
