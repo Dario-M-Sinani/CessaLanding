@@ -47,6 +47,7 @@ class ImageResource extends Resource
                     ->maxLength(350)
                     ->live(onBlur: true)
                     ->suffixAction(FileManagerAction::make('url', 'galeria'))
+                    ->extraAttributes(FileManagerAction::soltarArchivoAqui())
                     ->columnSpanFull(),
                 Forms\Components\Placeholder::make('preview')
                     ->label('Vista Previa Actual')

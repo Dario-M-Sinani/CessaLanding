@@ -47,6 +47,7 @@ class BankResource extends Resource
                     ->required()
                     ->maxLength(300)
                     ->suffixAction(FileManagerAction::make('img_url', 'bancos'))
+                    ->extraAttributes(FileManagerAction::soltarArchivoAqui())
                     ->columnSpanFull(),
                 Forms\Components\Select::make('published')
                     ->label('Estado')

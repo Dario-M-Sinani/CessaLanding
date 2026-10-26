@@ -84,20 +84,24 @@ class FilePickerBrowser extends Component
             'nuevoArchivo' => 'file|max:102400|mimes:jpg,jpeg,png,webp,pdf,zip',
         ]);
 
-        $this->storeConvertingImagesToWebp($this->nuevoArchivo, $this->path);
+        $guardado = $this->storeConvertingImagesToWebp($this->nuevoArchivo, $this->path);
 
         $this->nuevoArchivo = null;
+
+        // Lo recién subido queda elegido solo (mismo evento que un click en la grilla): el
+        // modal del formulario escribe el valor en el campo y se cierra.
+        $this->dispatch('archivo-seleccionado', path: $guardado, url: $this->disk()->url($guardado));
     }
 
     /**
      * Guarda primero el original (storeAs crea la carpeta si no existe) y después convierte
      * jpg/jpeg/png a WebP -- ver ImagenWebp.
      */
-    public static function storeConvertingImagesToWebp($uploadedFile, string $path): void
+    public static function storeConvertingImagesToWebp($uploadedFile, string $path): string
     {
         $stored = $uploadedFile->storeAs($path, $uploadedFile->getClientOriginalName(), 'public');
 
-        ImagenWebp::convertir(Storage::disk('public'), $stored);
+        return ImagenWebp::convertir(Storage::disk('public'), $stored);
     }
 
     public function render()

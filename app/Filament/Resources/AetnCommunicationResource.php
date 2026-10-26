@@ -50,6 +50,7 @@ class AetnCommunicationResource extends Resource
                     ->maxLength(350)
                     ->live(onBlur: true)
                     ->suffixAction(FileManagerAction::make('image_url', 'comunicados_aetn'))
+                    ->extraAttributes(FileManagerAction::soltarArchivoAqui())
                     ->columnSpanFull(),
                 Forms\Components\Placeholder::make('preview')
                     ->label('Vista Previa Actual')
@@ -64,6 +65,7 @@ class AetnCommunicationResource extends Resource
                     ->helperText('Solo si además del afiche/imagen hay un PDF oficial para descargar.')
                     ->maxLength(350)
                     ->suffixAction(FileManagerAction::make('document_url', 'comunicados_aetn'))
+                    ->extraAttributes(FileManagerAction::soltarArchivoAqui())
                     ->columnSpanFull(),
                 Forms\Components\DatePicker::make('published_date')
                     ->label('Fecha del Comunicado')

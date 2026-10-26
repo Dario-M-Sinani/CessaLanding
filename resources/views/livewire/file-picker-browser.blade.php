@@ -45,8 +45,13 @@
     </div>
 
     {{-- Además del click, se puede soltar un archivo arrastrado encima: $wire.upload() hace lo
-         mismo que el input (sube a livewire-tmp y dispara updatedNuevoArchivo()). --}}
-    <div x-data="{ arrastrando: false }">
+         mismo que el input (sube a livewire-tmp y dispara updatedNuevoArchivo()). Si el archivo
+         se soltó sobre el campo del formulario (FileManagerAction::soltarArchivoAqui()), el modal
+         se abre con ese archivo esperando en window.cessaArchivoSoltado y se sube solo. --}}
+    <div
+        x-data="{ arrastrando: false }"
+        x-init="if (window.cessaArchivoSoltado) { const archivo = window.cessaArchivoSoltado; window.cessaArchivoSoltado = null; $wire.upload('nuevoArchivo', archivo) }"
+    >
         <label
             class="fp-upload"
             :class="arrastrando ? 'fp-drag' : ''"

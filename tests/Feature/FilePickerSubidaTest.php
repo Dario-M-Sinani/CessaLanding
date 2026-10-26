@@ -22,7 +22,9 @@ class FilePickerSubidaTest extends TestCase
 
         Livewire::test(FilePickerBrowser::class, ['path' => 'carpeta-nueva'])
             ->set('nuevoArchivo', UploadedFile::fake()->image('comunicado-08-2026.png', 300, 200))
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            // Lo subido queda elegido solo: el modal del formulario escucha este evento.
+            ->assertDispatched('archivo-seleccionado', path: 'carpeta-nueva/comunicado-08-2026.webp');
 
         Storage::disk('public')->assertExists('carpeta-nueva/comunicado-08-2026.webp');
         Storage::disk('public')->assertMissing('carpeta-nueva/comunicado-08-2026.png');

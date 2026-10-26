@@ -10,6 +10,21 @@ use Illuminate\Support\Facades\Storage;
 class FileManagerAction
 {
     /**
+     * extraAttributes() para el TextInput que lleva este picker como suffixAction: soltar un
+     * archivo arrastrado encima del campo abre el picker y lo sube a su carpeta (ver
+     * file-picker-browser.blade.php), que al terminar lo deja elegido en el campo. Los
+     * FileUpload no lo necesitan: FilePond ya acepta arrastrar.
+     */
+    public static function soltarArchivoAqui(): array
+    {
+        return [
+            'x-on:dragover.prevent' => '$el.style.outline = "2px dashed rgb(99 102 241)"',
+            'x-on:dragleave.prevent' => '$el.style.outline = ""',
+            'x-on:drop.prevent' => '$el.style.outline = ""; if ($event.dataTransfer.files.length) { window.cessaArchivoSoltado = $event.dataTransfer.files[0]; $el.querySelector(".fi-input-wrp-suffix button").click() }',
+        ];
+    }
+
+    /**
      * Convierte cualquiera de los dos formatos que este picker puede haber guardado
      * (ver make() más abajo) en una URL absoluta usable en un <img src>:
      * - 'url': hotlink https://... o ruta "/storage/..." ya relativa al dominio.
