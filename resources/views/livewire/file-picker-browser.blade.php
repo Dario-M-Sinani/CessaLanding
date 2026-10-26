@@ -16,7 +16,8 @@
         .fp-crumbs svg { width: 12px; height: 12px; color: #9ca3af; }
 
         .fp-upload { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border: 2px dashed #d1d5db; border-radius: 12px; cursor: pointer; font-size: 12px; color: #6b7280; }
-        .fp-upload:hover { border-color: rgb(99 102 241); color: rgb(79 70 229); }
+        .fp-upload:hover, .fp-upload.fp-drag { border-color: rgb(99 102 241); color: rgb(79 70 229); }
+        .fp-upload.fp-drag { background: rgb(238 242 255); }
         .fp-upload svg { width: 16px; height: 16px; }
 
         .fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 4px; max-height: 28rem; overflow-y: auto; padding-right: 4px; }
@@ -43,10 +44,18 @@
         @endforeach
     </div>
 
-    <div>
-        <label class="fp-upload">
+    {{-- Además del click, se puede soltar un archivo arrastrado encima: $wire.upload() hace lo
+         mismo que el input (sube a livewire-tmp y dispara updatedNuevoArchivo()). --}}
+    <div x-data="{ arrastrando: false }">
+        <label
+            class="fp-upload"
+            :class="arrastrando ? 'fp-drag' : ''"
+            @dragover.prevent="arrastrando = true"
+            @dragleave.prevent="arrastrando = false"
+            @drop.prevent="arrastrando = false; if ($event.dataTransfer.files.length) $wire.upload('nuevoArchivo', $event.dataTransfer.files[0])"
+        >
             <x-heroicon-o-arrow-up-tray />
-            <span wire:loading.remove wire:target="nuevoArchivo">Subir un archivo nuevo a esta carpeta&hellip;</span>
+            <span wire:loading.remove wire:target="nuevoArchivo">Arrastrá un archivo aquí o hacé click para subirlo a esta carpeta&hellip;</span>
             <span wire:loading wire:target="nuevoArchivo">Subiendo&hellip;</span>
             <input type="file" wire:model="nuevoArchivo" class="hidden" />
         </label>

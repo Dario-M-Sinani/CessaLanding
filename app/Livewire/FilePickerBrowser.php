@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Filament\Support\ImagenWebp;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -89,35 +90,14 @@ class FilePickerBrowser extends Component
     }
 
     /**
-     * jpg/jpeg/png se convierten a WebP antes de guardarse (más liviano, misma calidad
-     * visible) -- pdf/zip/webp se guardan tal cual, no hay nada que convertir.
+     * Guarda primero el original (storeAs crea la carpeta si no existe) y después convierte
+     * jpg/jpeg/png a WebP -- ver ImagenWebp.
      */
     public static function storeConvertingImagesToWebp($uploadedFile, string $path): void
     {
-        $ext = strtolower($uploadedFile->getClientOriginalExtension());
-        $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $stored = $uploadedFile->storeAs($path, $uploadedFile->getClientOriginalName(), 'public');
 
-        if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
-            $uploadedFile->storeAs($path, $uploadedFile->getClientOriginalName(), 'public');
-
-            return;
-        }
-
-        $source = $ext === 'png'
-            ? imagecreatefrompng($uploadedFile->getRealPath())
-            : imagecreatefromjpeg($uploadedFile->getRealPath());
-
-        if ($ext === 'png') {
-            imagepalettetotruecolor($source);
-            imagealphablending($source, true);
-            imagesavealpha($source, true);
-        }
-
-        $destRelative = trim($path . '/' . $baseName . '.webp', '/');
-        $destAbsolute = Storage::disk('public')->path($destRelative);
-
-        imagewebp($source, $destAbsolute, 82);
-        imagedestroy($source);
+        ImagenWebp::convertir(Storage::disk('public'), $stored);
     }
 
     public function render()

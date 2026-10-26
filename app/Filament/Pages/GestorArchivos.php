@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Support\ImagenWebp;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -114,38 +115,6 @@ class GestorArchivos extends Page
         $this->dispatch('open-modal', id: 'confirmar-eliminar');
     }
 
-    /**
-     * jpg/jpeg/png se convierten a WebP apenas se suben (más liviano, misma calidad
-     * visible) -- pdf/zip/webp quedan tal cual, no hay nada que convertir. Filament ya
-     * guardó el archivo original en su formato de origen antes de llegar acá, así que
-     * lo convertimos y borramos el original.
-     */
-    protected function convertToWebpIfImage(string $storedPath): void
-    {
-        $ext = strtolower(pathinfo($storedPath, PATHINFO_EXTENSION));
-
-        if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
-            return;
-        }
-
-        $disk = $this->disk();
-        $source = $ext === 'png'
-            ? imagecreatefrompng($disk->path($storedPath))
-            : imagecreatefromjpeg($disk->path($storedPath));
-
-        if ($ext === 'png') {
-            imagepalettetotruecolor($source);
-            imagealphablending($source, true);
-            imagesavealpha($source, true);
-        }
-
-        $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $storedPath);
-        imagewebp($source, $disk->path($webpPath), 82);
-        imagedestroy($source);
-
-        $disk->delete($storedPath);
-    }
-
     public function confirmDelete(): void
     {
         if ($this->confirmDeletePath === null) {
@@ -204,7 +173,7 @@ class GestorArchivos extends Page
                         ->preserveFilenames(),
                 ])
                 ->action(function (array $data): void {
-                    $this->convertToWebpIfImage($data['archivo']);
+                    ImagenWebp::convertir($this->disk(), $data['archivo']);
 
                     Notification::make()->title('Archivo subido')->success()->send();
                 }),
